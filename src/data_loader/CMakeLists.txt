@@ -21,6 +21,12 @@ if ( NOT TARGET lib_slam_utility_tick_tock )
     add_subdirectory( ${SLAM_UTILITY_PATH}/tick_tock ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_tick_tock )
 endif()
 
+# Add imu model.
+set( SENSOR_MODEL ${PROJECT_SOURCE_DIR}/../Sensor_Model/src )
+if ( NOT TARGET lib_imu_model )
+	add_subdirectory( ${SENSOR_MODEL}/imu ${PROJECT_SOURCE_DIR}/build/lib_imu_model )
+endif()
+
 # Create library.
 add_library( lib_vio_stereo_orb_slam3_data_loader ${AUX_SRC_VIO_STEREO_ORB_SLAM3_DATA_LOADER} )
 target_include_directories( lib_vio_stereo_orb_slam3_data_loader PUBLIC . )
@@ -31,4 +37,6 @@ target_link_libraries( lib_vio_stereo_orb_slam3_data_loader
     lib_slam_utility_log
     lib_slam_utility_memory
     lib_slam_utility_tick_tock
+
+    lib_imu_model
 )

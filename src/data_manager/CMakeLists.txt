@@ -21,9 +21,12 @@ if ( NOT TARGET lib_slam_utility_tick_tock )
     add_subdirectory( ${SLAM_UTILITY_PATH}/tick_tock ${PROJECT_SOURCE_DIR}/build/lib_slam_utility_tick_tock )
 endif()
 
-# Add covisible graph.
+# Add all components of slam utility data struct.
 if ( NOT TARGET lib_covisible_graph )
     add_subdirectory( ${SLAM_UTILITY_PATH}/data_struct/covisible_graph ${PROJECT_SOURCE_DIR}/build/lib_covisible_graph )
+endif()
+if ( NOT TARGET lib_object_pool )
+    add_subdirectory( ${SLAM_UTILITY_PATH}/data_struct/object_pool ${PROJECT_SOURCE_DIR}/build/lib_object_pool )
 endif()
 
 # Create library.
@@ -38,4 +41,5 @@ target_link_libraries( lib_vio_stereo_orb_slam3_data_manager
     lib_slam_utility_tick_tock
 
     lib_covisible_graph
+    lib_object_pool
 )
