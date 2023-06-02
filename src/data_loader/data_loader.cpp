@@ -25,8 +25,6 @@ bool DataLoader::PushImuMeasurement(const Vec3 &accel,
     object_ptr->time_stamp_s = time_stamp_s;
     imu_buffer_.emplace_back(std::move(object_ptr));
 
-    ReportDebug("Imu buffer size is " << imu_buffer_.size());
-
     return true;
 }
 
@@ -45,10 +43,8 @@ bool DataLoader::PushImageMeasurement(uint8_t *image_ptr,
 
     auto object_ptr = image_pool_.Get();
     object_ptr->time_stamp_s = time_stamp_s;
-    object_ptr->image = Eigen::Map<Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(image_ptr, image_width, image_height);
+    object_ptr->image = Eigen::Map<MatImg>(image_ptr, image_width, image_height);
     image_buffer_ptr->emplace_back(std::move(object_ptr));
-
-    ReportDebug("Camera buffer size is " << image_buffer_ptr->size());
 
     return true;
 }

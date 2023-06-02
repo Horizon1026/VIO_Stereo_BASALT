@@ -55,7 +55,7 @@ void PublishImuData(const std::string &csv_file_path, const int32_t period_us = 
     file.close();
 }
 
-void PublishCameraData(const std::string &csv_file_path, const std::string &image_file_root, const int32_t period_us = 50000) {
+void PublishCameraData(const std::string &csv_file_path, const std::string &image_file_root, const int32_t period_us = 50000, const bool is_left_camera = true) {
     std::ifstream file(csv_file_path.c_str());
     if (!file.is_open()) {
         ReportError("Failed to load camera data file " << csv_file_path);
@@ -87,9 +87,7 @@ void PublishCameraData(const std::string &csv_file_path, const std::string &imag
         }
 
         // Send data to dataloader of vio.
-        dataloader.PushImageMeasurement(image.data, image.rows, image.cols, static_cast<float>(time_stamp_s), true);
-        cv::imshow("Show image", image);
-        cv::waitKey(1);
+        dataloader.PushImageMeasurement(image.data, image.rows, image.cols, static_cast<float>(time_stamp_s), is_left_camera);
 
         usleep(period_us);
     }
@@ -105,7 +103,8 @@ int main(int argc, char **argv) {
     ReportInfo(YELLOW ">> Test vio stereo orb slam3 on euroc dataset." RESET_COLOR);
 
     PublishImuData(dataset_root_dir + "mav0/imu0/data.csv", 5000);
-    PublishCameraData(dataset_root_dir + "mav0/cam0/data.csv", dataset_root_dir + "mav0/cam0/data/", 50000);
+    PublishCameraData(dataset_root_dir + "mav0/cam0/data.csv", dataset_root_dir + "mav0/cam0/data/", 50000, true);
+    PublishCameraData(dataset_root_dir + "mav0/cam1/data.csv", dataset_root_dir + "mav0/cam1/data/", 50000, false);
 
     return 0;
 }
