@@ -13,7 +13,7 @@ void DataLoader::Clear() {
 bool DataLoader::PushImuMeasurement(const Vec3 &accel,
                                     const Vec3 &gyro,
                                     const float &time_stamp_s) {
-    if (imu_buffer_.back()->time_stamp_s > time_stamp_s) {
+    if (!imu_buffer_.empty() && imu_buffer_.back()->time_stamp_s > time_stamp_s) {
         ReportWarn("[Data Loader] Imu measurement pushed has invalid timestamp. Latest in buffer is "
             << imu_buffer_.back()->time_stamp_s << " s, but pushed is " << time_stamp_s << " s.");
         return false;
@@ -37,7 +37,7 @@ bool DataLoader::PushImageMeasurement(uint8_t *image_ptr,
                                       const bool is_left_image) {
     const auto image_buffer_ptr = is_left_image ? &left_image_buffer_ : &right_image_buffer_;
 
-    if (image_buffer_ptr->back()->time_stamp_s > time_stamp_s) {
+    if (!image_buffer_ptr->empty() && image_buffer_ptr->back()->time_stamp_s > time_stamp_s) {
         ReportWarn("[Data Loader] Camera measurement pushed has invalid timestamp. Latest in buffer is "
             << image_buffer_ptr->back()->time_stamp_s << " s, but pushed is " << time_stamp_s << " s.");
         return false;
