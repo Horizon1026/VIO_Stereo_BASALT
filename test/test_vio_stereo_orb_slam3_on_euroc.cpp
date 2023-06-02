@@ -48,6 +48,7 @@ void PublishImuData(const std::string &csv_file_path, const int32_t period_us = 
 
         // Send data to dataloader of vio.
         dataloader.PushImuMeasurement(accel.cast<float>(), gyro.cast<float>(), static_cast<float>(time_stamp_s));
+        ReportDebug("imu " << dataloader.imu_buffer().size());
 
         usleep(period_us);
     }
@@ -88,6 +89,11 @@ void PublishCameraData(const std::string &csv_file_path, const std::string &imag
 
         // Send data to dataloader of vio.
         dataloader.PushImageMeasurement(image.data, image.rows, image.cols, static_cast<float>(time_stamp_s), is_left_camera);
+        if (is_left_camera) {
+            ReportDebug("left " << dataloader.left_image_buffer().size());
+        } else {
+            ReportDebug("right " << dataloader.right_image_buffer().size());
+        }
 
         usleep(period_us);
     }
@@ -102,9 +108,14 @@ int main(int argc, char **argv) {
 
     ReportInfo(YELLOW ">> Test vio stereo orb slam3 on euroc dataset." RESET_COLOR);
 
-    PublishImuData(dataset_root_dir + "mav0/imu0/data.csv", 5000);
-    PublishCameraData(dataset_root_dir + "mav0/cam0/data.csv", dataset_root_dir + "mav0/cam0/data/", 50000, true);
-    PublishCameraData(dataset_root_dir + "mav0/cam1/data.csv", dataset_root_dir + "mav0/cam1/data/", 50000, false);
+    std::thread thread_pub_imu_data(PublishImuData, dataset_root_dir + "mav0/imu0/data.csv", 5000);
+    std::thread thread_pub_cam_left_data(PublishCameraData, dataset_root_dir + "mav0/cam0/data.csv", dataset_root_dir + "mav0/cam0/data/", 50000, true);
+    std::thread thread_pub_cam_right_data(PublishCameraData, dataset_root_dir + "mav0/cam1/data.csv", dataset_root_dir + "mav0/cam1/data/", 50000, false);
+
+    // Waiting for the end of the threads. Recover their resources.
+    thread_pub_imu_data.join();
+    thread_pub_cam_left_data.join();
+    thread_pub_cam_right_data.join();
 
     return 0;
 }
