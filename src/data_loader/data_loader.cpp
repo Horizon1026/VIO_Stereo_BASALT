@@ -19,10 +19,13 @@ bool DataLoader::PushImuMeasurement(const Vec3 &accel,
         return false;
     }
 
-    imu_buffer_.emplace_back(imu_pool_.Get());
-    imu_buffer_.back()->accel = accel;
-    imu_buffer_.back()->gyro = gyro;
-    imu_buffer_.back()->time_stamp_s = time_stamp_s;
+    auto object_ptr = imu_pool_.Get();
+    object_ptr->accel = accel;
+    object_ptr->gyro = gyro;
+    object_ptr->time_stamp_s = time_stamp_s;
+    imu_buffer_.emplace_back(std::move(object_ptr));
+
+    ReportDebug("Imu buffer size is " << imu_buffer_.size());
 
     return true;
 }
@@ -40,9 +43,12 @@ bool DataLoader::PushImageMeasurement(uint8_t *image_ptr,
         return false;
     }
 
-    image_buffer_ptr->emplace_back(image_pool_.Get());
-    image_buffer_ptr->back()->time_stamp_s = time_stamp_s;
-    image_buffer_ptr->back()->image = Eigen::Map<Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(image_ptr, image_width, image_height);
+    auto object_ptr = image_pool_.Get();
+    object_ptr->time_stamp_s = time_stamp_s;
+    object_ptr->image = Eigen::Map<Eigen::Matrix<uint8_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(image_ptr, image_width, image_height);
+    image_buffer_ptr->emplace_back(std::move(object_ptr));
+
+    ReportDebug("Camera buffer size is " << image_buffer_ptr->size());
 
     return true;
 }
