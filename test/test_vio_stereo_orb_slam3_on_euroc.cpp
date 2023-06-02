@@ -18,6 +18,9 @@
 // Root direction of Euroc dataset.
 std::string dataset_root_dir;
 
+// Debug.
+VIO::DataLoader dataloader;
+
 void PublishImuData(const std::string &csv_file_path, const int32_t period_us = 5000) {
     std::ifstream file(csv_file_path.c_str());
     if (!file.is_open()) {
@@ -44,7 +47,7 @@ void PublishImuData(const std::string &csv_file_path, const int32_t period_us = 
         imu_data >> time_stamp_s >> gyro.x() >> gyro.y() >> gyro.z() >> accel.x() >> accel.y() >> accel.z();
 
         // Send data to dataloader of vio.
-        // TODO:
+        dataloader.PushImuMeasurement(accel.cast<float>(), gyro.cast<float>(), static_cast<float>(time_stamp_s));
 
         usleep(period_us);
     }
@@ -55,7 +58,7 @@ void PublishImuData(const std::string &csv_file_path, const int32_t period_us = 
 void PublishCameraData(const std::string &csv_file_path, const std::string &image_file_root, const int32_t period_us = 50000) {
     std::ifstream file(csv_file_path.c_str());
     if (!file.is_open()) {
-        ReportError("Faile to load camera data file " << csv_file_path);
+        ReportError("Failed to load camera data file " << csv_file_path);
         return;
     }
 
@@ -84,7 +87,7 @@ void PublishCameraData(const std::string &csv_file_path, const std::string &imag
         }
 
         // Send data to dataloader of vio.
-        // TODO:
+        dataloader.PushImageMeasurement(image.data, image.rows, image.cols, static_cast<float>(time_stamp_s), true);
         cv::imshow("Show image", image);
         cv::waitKey(1);
 
@@ -101,6 +104,7 @@ int main(int argc, char **argv) {
 
     ReportInfo(YELLOW ">> Test vio stereo orb slam3 on euroc dataset." RESET_COLOR);
 
+    PublishImuData(dataset_root_dir + "mav0/imu0/data.csv", 5000);
     PublishCameraData(dataset_root_dir + "mav0/cam0/data.csv", dataset_root_dir + "mav0/cam0/data/", 50000);
 
     return 0;
