@@ -23,3 +23,12 @@ target_link_libraries( test_vio_stereo_orb_slam3_on_euroc
     lib_vio_stereo_orb_slam3
     ${OpenCV_LIBS}
 )
+
+# Add test_dataloader
+add_executable( test_dataloader
+    test/test_dataloader.cpp
+)
+target_link_libraries( test_dataloader
+    lib_vio_stereo_orb_slam3
+    ${OpenCV_LIBS}
+)

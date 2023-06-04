@@ -29,6 +29,10 @@ struct PackedMeasurement {
     ObjectPtr<CameraMeasurement> right_image = nullptr;
 };
 
+struct DataLoaderOptions {
+    float kMaxToleranceTimeDifferenceOfStereoImageInSeconds = 0.005f;
+};
+
 /* Class Data Loader Declaration. */
 class DataLoader final {
 
@@ -53,22 +57,24 @@ public:
     bool PopPackedMeasurement(PackedMeasurement &measure);
 
     // Reference for member variables.
+    DataLoaderOptions &options() { return options_; }
     std::deque<ObjectPtr<ImuMeasurement>> &imu_buffer() { return imu_buffer_; }
     std::deque<ObjectPtr<CameraMeasurement>> &left_image_buffer() { return left_image_buffer_; }
     std::deque<ObjectPtr<CameraMeasurement>> &right_image_buffer() { return right_image_buffer_; }
-
     ObjectPool<ImuMeasurement> &imu_pool() { return imu_pool_; }
     ObjectPool<CameraMeasurement> &image_pool() { return image_pool_; }
 
     // Const reference for member variables.
+    const DataLoaderOptions &options() const { return options_; }
     const std::deque<ObjectPtr<ImuMeasurement>> &imu_buffer() const { return imu_buffer_; }
     const std::deque<ObjectPtr<CameraMeasurement>> &left_image_buffer() const { return left_image_buffer_; }
     const std::deque<ObjectPtr<CameraMeasurement>> &right_image_buffer() const { return right_image_buffer_; }
-
     const ObjectPool<ImuMeasurement> &imu_pool() const { return imu_pool_; }
     const ObjectPool<CameraMeasurement> &image_pool() const { return image_pool_; }
 
 private:
+    DataLoaderOptions options_;
+
     std::deque<ObjectPtr<ImuMeasurement>> imu_buffer_;
     std::deque<ObjectPtr<CameraMeasurement>> left_image_buffer_;
     std::deque<ObjectPtr<CameraMeasurement>> right_image_buffer_;
