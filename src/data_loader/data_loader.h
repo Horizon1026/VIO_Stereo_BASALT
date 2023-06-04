@@ -7,8 +7,8 @@
 
 #include "object_pool.h"
 
-#include "imu_state.h"
-#include "camera_basic.h"
+#include "imu_measurement.h"
+#include "camera_measurement.h"
 
 #include "deque"
 
