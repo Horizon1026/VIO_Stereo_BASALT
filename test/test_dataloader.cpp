@@ -17,6 +17,7 @@
 
 // Root direction of Euroc dataset.
 std::string dataset_root_dir;
+double time_stamp_offset = 1403638518.0;
 
 VIO::DataLoader dataloader;
 
@@ -46,7 +47,7 @@ void PublishImuData(const std::string &csv_file_path, const int32_t period_us = 
         imu_data >> time_stamp_s >> gyro.x() >> gyro.y() >> gyro.z() >> accel.x() >> accel.y() >> accel.z();
 
         // Send data to dataloader of vio.
-        dataloader.PushImuMeasurement(accel.cast<float>(), gyro.cast<float>(), static_cast<float>(time_stamp_s));
+        dataloader.PushImuMeasurement(accel.cast<float>(), gyro.cast<float>(), static_cast<float>(time_stamp_s * 1e-9 - time_stamp_offset));
         // ReportDebug("imu " << dataloader.imu_buffer().size());
 
         usleep(period_us);
@@ -87,7 +88,7 @@ void PublishCameraData(const std::string &csv_file_path, const std::string &imag
         }
 
         // Send data to dataloader of vio.
-        dataloader.PushImageMeasurement(image.data, image.rows, image.cols, static_cast<float>(time_stamp_s), is_left_camera);
+        dataloader.PushImageMeasurement(image.data, image.rows, image.cols, static_cast<float>(time_stamp_s * 1e-9 - time_stamp_offset), is_left_camera);
         // if (is_left_camera) {
         //     ReportDebug("left " << dataloader.left_image_buffer().size());
         // } else {
@@ -117,16 +118,17 @@ void TestPopSingleMeasurement(const int32_t period_us = 5000, const int32_t max_
         if (meas.imu != nullptr) {
             ReportInfo("Data loader pop imu measure at time " << meas.imu->time_stamp_s << " s.");
             cnt = max_wait_ticks;
-            continue;
         }
 
         if (meas.left_image != nullptr) {
-            ReportInfo("Data loader pop camera measure at time " << meas.left_image->time_stamp_s << " s.");
-            if (meas.right_image == nullptr) {
-                ReportInfo("    But only left image is valid.");
-            }
-            continue;
+            ReportInfo("Data loader pop left camera measure at time " << meas.left_image->time_stamp_s << " s.");
         }
+
+        if (meas.right_image != nullptr) {
+            ReportInfo("Data loader pop right camera measure at time " << meas.right_image->time_stamp_s << " s.");
+        }
+
+        cnt = max_wait_ticks;
     }
 }
 

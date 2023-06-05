@@ -60,47 +60,97 @@ bool DataLoader::PopSingleMeasurement(SingleMeasurement &measure) {
         return false;
     }
 
-    const float oldest_imu_timestamp_s = imu_buffer_empty ? -1 : imu_buffer_.front()->time_stamp_s;
-    const float oldest_left_timestamp_s = left_buffer_empty ? -1 : left_image_buffer_.front()->time_stamp_s;
-    const float oldest_right_timestamp_s = right_buffer_empty ? -1 : right_image_buffer_.front()->time_stamp_s;
-
-    if (imu_buffer_empty || (oldest_imu_timestamp_s > oldest_left_timestamp_s && oldest_imu_timestamp_s > oldest_right_timestamp_s)) {
-        // Pop image only.
-        measure.imu = nullptr;
-
-        if ((!left_buffer_empty && !right_buffer_empty) && std::fabs(oldest_left_timestamp_s - oldest_right_timestamp_s) < options_.kMaxToleranceTimeDifferenceOfStereoImageInSeconds) {
-            // Pop both left and right image if their timestamp is nearby.
-            measure.left_image = std::move(left_image_buffer_.front());
-            measure.right_image = std::move(right_image_buffer_.front());
-            left_image_buffer_.pop_front();
-            right_image_buffer_.pop_front();
-        } else {
-            // Pop the oldest one only.
-            if (!left_buffer_empty && oldest_left_timestamp_s < oldest_right_timestamp_s) {
-                measure.right_image = nullptr;
-                measure.left_image = std::move(left_image_buffer_.front());
-                left_image_buffer_.pop_front();
-            } else {
-                measure.left_image = nullptr;
-                measure.right_image = std::move(right_image_buffer_.front());
-                right_image_buffer_.pop_front();
-            }
-        }
-    } else if (!imu_buffer_empty) {
-        // Pop imu only.
-        measure.left_image = nullptr;
-        measure.right_image = nullptr;
-        measure.imu = std::move(imu_buffer_.front());
-        imu_buffer_.pop_front();
-
-        return true;
-    }
-
     measure.imu = nullptr;
     measure.left_image = nullptr;
     measure.right_image = nullptr;
 
-    return false;
+    if (imu_buffer_empty) {
+        // If imu buffer is empty, consider about stereo image.
+        if (left_buffer_empty) {
+            measure.right_image = std::move(right_image_buffer_.front());
+            right_image_buffer_.pop_front();
+        } else if (right_buffer_empty) {
+            measure.left_image = std::move(left_image_buffer_.front());
+            left_image_buffer_.pop_front();
+        } else {
+            // Pop both left and right image, only if their timestamp is nearby.
+            const float oldest_left_timestamp_s = left_image_buffer_.front()->time_stamp_s;
+            const float oldest_right_timestamp_s = right_image_buffer_.front()->time_stamp_s;
+            if (std::fabs(oldest_left_timestamp_s - oldest_right_timestamp_s) < options_.kMaxToleranceTimeDifferenceOfStereoImageInSeconds) {
+                measure.left_image = std::move(left_image_buffer_.front());
+                measure.right_image = std::move(right_image_buffer_.front());
+                left_image_buffer_.pop_front();
+                right_image_buffer_.pop_front();
+            } else {
+                // Pop the oldest image.
+                if (oldest_left_timestamp_s < oldest_right_timestamp_s) {
+                    measure.left_image = std::move(left_image_buffer_.front());
+                    left_image_buffer_.pop_front();
+                } else {
+                    measure.right_image = std::move(right_image_buffer_.front());
+                    right_image_buffer_.pop_front();
+                }
+            }
+        }
+    } else {
+        // If imu buffer is not empty, consider of all.
+        const float oldest_imu_timestamp_s = imu_buffer_.front()->time_stamp_s;
+
+        if (left_buffer_empty && right_buffer_empty) {
+            // Only imu buffer is not empty.
+            measure.imu = std::move(imu_buffer_.front());
+            imu_buffer_.pop_front();
+        } else if (left_buffer_empty) {
+            // Imu buffer and right image buffer are not empty.
+            const float oldest_right_timestamp_s = right_image_buffer_.front()->time_stamp_s;
+            if (oldest_imu_timestamp_s < oldest_right_timestamp_s) {
+                measure.imu = std::move(imu_buffer_.front());
+                imu_buffer_.pop_front();
+            } else {
+                measure.right_image = std::move(right_image_buffer_.front());
+                right_image_buffer_.pop_front();
+            }
+        } else if (right_buffer_empty) {
+            // Imu buffer and left image buffer are not empty.
+            const float oldest_left_timestamp_s = left_image_buffer_.front()->time_stamp_s;
+            if (oldest_imu_timestamp_s < oldest_left_timestamp_s) {
+                measure.imu = std::move(imu_buffer_.front());
+                imu_buffer_.pop_front();
+            } else {
+                measure.left_image = std::move(left_image_buffer_.front());
+                left_image_buffer_.pop_front();
+            }
+        } else {
+            // Imu buffer and left/right image buffer are all not empty.
+            const float oldest_left_timestamp_s = left_image_buffer_.front()->time_stamp_s;
+            const float oldest_right_timestamp_s = right_image_buffer_.front()->time_stamp_s;
+
+            if (oldest_imu_timestamp_s <= oldest_left_timestamp_s || oldest_imu_timestamp_s <= oldest_right_timestamp_s) {
+                // Imu data will be popped priorly.
+                measure.imu = std::move(imu_buffer_.front());
+                imu_buffer_.pop_front();
+            } else {
+                // Pop both left and right image, only if their timestamp is nearby.
+                if (std::fabs(oldest_left_timestamp_s - oldest_right_timestamp_s) < options_.kMaxToleranceTimeDifferenceOfStereoImageInSeconds) {
+                    measure.left_image = std::move(left_image_buffer_.front());
+                    measure.right_image = std::move(right_image_buffer_.front());
+                    left_image_buffer_.pop_front();
+                    right_image_buffer_.pop_front();
+                } else {
+                    // Pop the oldest image.
+                    if (oldest_left_timestamp_s < oldest_right_timestamp_s) {
+                        measure.left_image = std::move(left_image_buffer_.front());
+                        left_image_buffer_.pop_front();
+                    } else {
+                        measure.right_image = std::move(right_image_buffer_.front());
+                        right_image_buffer_.pop_front();
+                    }
+                }
+            }
+        }
+    }
+
+    return true;
 }
 
 bool DataLoader::PopPackedMeasurement(PackedMeasurement &measure) {
