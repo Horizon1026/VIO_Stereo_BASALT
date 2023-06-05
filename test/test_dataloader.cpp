@@ -142,13 +142,13 @@ int main(int argc, char **argv) {
     std::thread thread_pub_imu_data(PublishImuData, dataset_root_dir + "mav0/imu0/data.csv", 5000);
     std::thread thread_pub_cam_left_data(PublishCameraData, dataset_root_dir + "mav0/cam0/data.csv", dataset_root_dir + "mav0/cam0/data/", 50000, true);
     std::thread thread_pub_cam_right_data(PublishCameraData, dataset_root_dir + "mav0/cam1/data.csv", dataset_root_dir + "mav0/cam1/data/", 50000, false);
-    std::thread thread_test_single_pop(TestPopSingleMeasurement, 5000, 10);
+    std::thread thread_test_pop(TestPopSingleMeasurement, 5000, 10);
 
     // Waiting for the end of the threads. Recovery their resources.
     thread_pub_imu_data.join();
     thread_pub_cam_left_data.join();
     thread_pub_cam_right_data.join();
-    thread_test_single_pop.join();
+    thread_test_pop.join();
 
     return 0;
 }

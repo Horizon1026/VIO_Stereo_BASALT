@@ -31,6 +31,7 @@ struct PackedMeasurement {
 
 struct DataLoaderOptions {
     float kMaxToleranceTimeDifferenceOfStereoImageInSeconds = 0.005f;
+    float kMaxToleranceTimeDifferenceBetweenImuAndImageInSeconds = 0.001f;
 };
 
 /* Class Data Loader Declaration. */

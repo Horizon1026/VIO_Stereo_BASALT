@@ -154,6 +154,82 @@ bool DataLoader::PopSingleMeasurement(SingleMeasurement &measure) {
 }
 
 bool DataLoader::PopPackedMeasurement(PackedMeasurement &measure) {
+    const bool imu_buffer_empty = imu_buffer_.empty();
+    const bool left_buffer_empty = left_image_buffer_.empty();
+    const bool right_buffer_empty = right_image_buffer_.empty();
+
+    // If imu buffer or left image buffer is empty, nothing can be popped.
+    if (imu_buffer_empty || left_buffer_empty) {
+        return false;
+    }
+
+    // Imu data needs waiting.
+    if (imu_buffer_.back()->time_stamp_s <= left_image_buffer_.front()->time_stamp_s) {
+        return false;
+    }
+    if (!right_buffer_empty && imu_buffer_.back()->time_stamp_s <= right_image_buffer_.front()->time_stamp_s) {
+        return false;
+    }
+
+    // Useless image data need to be discarded.
+    if (imu_buffer_.front()->time_stamp_s >= left_image_buffer_.front()->time_stamp_s) {
+        left_image_buffer_.pop_front();
+        return false;
+    }
+    if (!right_buffer_empty && imu_buffer_.front()->time_stamp_s >= right_image_buffer_.front()->time_stamp_s) {
+        right_image_buffer_.pop_front();
+        return false;
+    }
+
+    // Clear measurement.
+    measure.imus.clear();
+    measure.left_image = nullptr;
+    measure.right_image = nullptr;
+
+    // Pack mono image or stereo image.
+    measure.left_image = std::move(left_image_buffer_.front());
+    left_image_buffer_.pop_front();
+    if (!right_buffer_empty) {
+        const float oldest_left_timestamp_s = left_image_buffer_.front()->time_stamp_s;
+        const float oldest_right_timestamp_s = right_image_buffer_.front()->time_stamp_s;
+        if (std::fabs(oldest_left_timestamp_s - oldest_right_timestamp_s) < options_.kMaxToleranceTimeDifferenceOfStereoImageInSeconds) {
+            measure.right_image = std::move(right_image_buffer_.front());
+            right_image_buffer_.pop_front();
+        } else if (oldest_right_timestamp_s < oldest_left_timestamp_s) {
+            right_image_buffer_.pop_front();
+        }
+    }
+
+    // Pack sequence of imu data.
+    while (imu_buffer_.front()->time_stamp_s <= measure.left_image->time_stamp_s) {
+        measure.imus.emplace_back(std::move(imu_buffer_.front()));
+        imu_buffer_.pop_front();
+    }
+
+    if (std::fabs(measure.imus.back()->time_stamp_s - measure.left_image->time_stamp_s) > options_.kMaxToleranceTimeDifferenceBetweenImuAndImageInSeconds) {
+        // Linear interpolation for imu at the timestamp of left image.
+        auto mid = imu_pool_.Get();
+        auto prev = measure.imus.back().get();
+        auto next = imu_buffer_.front().get();
+        const float scale = (mid->time_stamp_s - prev->time_stamp_s) / (next->time_stamp_s - prev->time_stamp_s);
+        mid->time_stamp_s = measure.left_image->time_stamp_s;
+        mid->gyro = prev->gyro * (1 - scale) + next->gyro * scale;
+        mid->accel = prev->accel * (1 - scale) + next->accel * scale;
+
+        auto new_item = imu_pool_.Get();
+        new_item->time_stamp_s = mid->time_stamp_s;
+        new_item->gyro = mid->gyro;
+        new_item->accel = mid->accel;
+
+        measure.imus.emplace_back(std::move(mid));
+        imu_buffer_.emplace_front(std::move(new_item));
+    } else {
+        auto new_item = imu_pool_.Get();
+        new_item->time_stamp_s = measure.imus.back()->time_stamp_s;
+        new_item->gyro = measure.imus.back()->gyro;
+        new_item->accel = measure.imus.back()->accel;
+        imu_buffer_.emplace_front(std::move(new_item));
+    }
 
     return true;
 }
