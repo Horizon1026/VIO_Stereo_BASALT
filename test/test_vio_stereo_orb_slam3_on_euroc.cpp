@@ -49,7 +49,6 @@ void PublishImuData(const std::string &csv_file_path, const int32_t period_us = 
 
         // Send data to dataloader of vio.
         dataloader.PushImuMeasurement(accel.cast<float>(), gyro.cast<float>(), static_cast<float>(time_stamp_s * 1e-9 - time_stamp_offset));
-        ReportDebug("imu " << dataloader.imu_buffer().size());
 
         usleep(period_us);
     }
@@ -90,11 +89,6 @@ void PublishCameraData(const std::string &csv_file_path, const std::string &imag
 
         // Send data to dataloader of vio.
         dataloader.PushImageMeasurement(image.data, image.rows, image.cols, static_cast<float>(time_stamp_s * 1e-9 - time_stamp_offset), is_left_camera);
-        if (is_left_camera) {
-            ReportDebug("left " << dataloader.left_image_buffer().size());
-        } else {
-            ReportDebug("right " << dataloader.right_image_buffer().size());
-        }
 
         usleep(period_us);
     }
