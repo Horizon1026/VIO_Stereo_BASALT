@@ -190,7 +190,7 @@ bool DataLoader::PopPackedMeasurement(PackedMeasurement &measure) {
     measure.left_image = std::move(left_image_buffer_.front());
     left_image_buffer_.pop_front();
     if (!right_buffer_empty) {
-        const float oldest_left_timestamp_s = left_image_buffer_.front()->time_stamp_s;
+        const float oldest_left_timestamp_s = measure.left_image->time_stamp_s;
         const float oldest_right_timestamp_s = right_image_buffer_.front()->time_stamp_s;
         if (std::fabs(oldest_left_timestamp_s - oldest_right_timestamp_s) < options_.kMaxToleranceTimeDifferenceOfStereoImageInSeconds) {
             measure.right_image = std::move(right_image_buffer_.front());

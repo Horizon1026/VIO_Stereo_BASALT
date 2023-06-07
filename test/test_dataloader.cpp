@@ -115,8 +115,44 @@ void TestPopSingleMeasurement(const int32_t period_us = 5000, const int32_t max_
             continue;
         }
 
+        ReportInfo(">> Data loader popped one single measurement.");
+
         if (meas.imu != nullptr) {
             ReportInfo("Data loader pop imu measure at time " << meas.imu->time_stamp_s << " s.");
+            cnt = max_wait_ticks;
+        }
+
+        if (meas.left_image != nullptr) {
+            ReportInfo("Data loader pop left camera measure at time " << meas.left_image->time_stamp_s << " s.");
+        }
+
+        if (meas.right_image != nullptr) {
+            ReportInfo("Data loader pop right camera measure at time " << meas.right_image->time_stamp_s << " s.");
+        }
+
+        cnt = max_wait_ticks;
+    }
+}
+
+void TestPopPackedMeasurement(const int32_t period_us = 50000, const int32_t max_wait_ticks = 10) {
+    int32_t cnt = max_wait_ticks;
+
+    while (cnt) {
+        usleep(period_us);
+
+        VIO::PackedMeasurement meas;
+        const bool res = dataloader.PopPackedMeasurement(meas);
+
+        if (!res) {
+            --cnt;
+            continue;
+        }
+
+        ReportInfo(">> Data loader popped one packed measurement.");
+
+        if (!meas.imus.empty()) {
+            ReportInfo("Data loader pop " << meas.imus.size() << " imu measure at time " << meas.imus.front()->time_stamp_s <<
+                " - " << meas.imus.back()->time_stamp_s << " s.");
             cnt = max_wait_ticks;
         }
 
@@ -142,7 +178,8 @@ int main(int argc, char **argv) {
     std::thread thread_pub_imu_data(PublishImuData, dataset_root_dir + "mav0/imu0/data.csv", 5000);
     std::thread thread_pub_cam_left_data(PublishCameraData, dataset_root_dir + "mav0/cam0/data.csv", dataset_root_dir + "mav0/cam0/data/", 50000, true);
     std::thread thread_pub_cam_right_data(PublishCameraData, dataset_root_dir + "mav0/cam1/data.csv", dataset_root_dir + "mav0/cam1/data/", 50000, false);
-    std::thread thread_test_pop(TestPopSingleMeasurement, 5000, 10);
+    // std::thread thread_test_pop(TestPopSingleMeasurement, 5000, 10);
+    std::thread thread_test_pop(TestPopPackedMeasurement, 50000, 10);
 
     // Waiting for the end of the threads. Recovery their resources.
     thread_pub_imu_data.join();
