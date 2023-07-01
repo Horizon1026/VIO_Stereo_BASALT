@@ -2,6 +2,7 @@
 A simple visual-inertial odometry reconstructed from orb-slam3.
 
 # Components
+- [x] Data loader.
 - [ ] Frontend.
 - [ ] Backend.
 
