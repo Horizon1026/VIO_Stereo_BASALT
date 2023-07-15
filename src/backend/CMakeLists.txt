@@ -1,4 +1,4 @@
-aux_source_directory( . AUX_SRC_VIO_STEREO_ORB_SLAM3_BACKEND )
+aux_source_directory( . AUX_SRC_VIO_STEREO_BASALT_BACKEND )
 
 # Add all components of slam utility.
 set( SLAM_UTILITY_PATH ${PROJECT_SOURCE_DIR}/../Slam_Utility/src )
@@ -22,9 +22,9 @@ if ( NOT TARGET lib_slam_utility_tick_tock )
 endif()
 
 # Create library.
-add_library( lib_vio_stereo_orb_slam3_backend ${AUX_SRC_VIO_STEREO_ORB_SLAM3_BACKEND} )
-target_include_directories( lib_vio_stereo_orb_slam3_backend PUBLIC . )
-target_link_libraries( lib_vio_stereo_orb_slam3_backend
+add_library( lib_vio_stereo_basalt_backend ${AUX_SRC_VIO_STEREO_BASALT_BACKEND} )
+target_include_directories( lib_vio_stereo_basalt_backend PUBLIC . )
+target_link_libraries( lib_vio_stereo_basalt_backend
     lib_slam_utility_datatype
     lib_slam_utility_math
     lib_slam_utility_operate

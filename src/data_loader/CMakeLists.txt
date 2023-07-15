@@ -1,4 +1,4 @@
-aux_source_directory( . AUX_SRC_VIO_STEREO_ORB_SLAM3_DATA_LOADER )
+aux_source_directory( . AUX_SRC_VIO_STEREO_BASALT_DATA_LOADER )
 
 # Add all components of slam utility.
 set( SLAM_UTILITY_PATH ${PROJECT_SOURCE_DIR}/../Slam_Utility/src )
@@ -39,9 +39,9 @@ if ( NOT TARGET lib_camera_model )
 endif()
 
 # Create library.
-add_library( lib_vio_stereo_orb_slam3_data_loader ${AUX_SRC_VIO_STEREO_ORB_SLAM3_DATA_LOADER} )
-target_include_directories( lib_vio_stereo_orb_slam3_data_loader PUBLIC . )
-target_link_libraries( lib_vio_stereo_orb_slam3_data_loader
+add_library( lib_vio_stereo_basalt_data_loader ${AUX_SRC_VIO_STEREO_BASALT_DATA_LOADER} )
+target_include_directories( lib_vio_stereo_basalt_data_loader PUBLIC . )
+target_link_libraries( lib_vio_stereo_basalt_data_loader
     lib_slam_utility_datatype
     lib_slam_utility_math
     lib_slam_utility_operate
