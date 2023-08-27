@@ -7,7 +7,14 @@ A simple visual-inertial odometry reconstructed from basalt.
 - [ ] Backend.
 
 # Dependence
-Slam_Utility, Feature_Detector, Feature_Tracker, Sensor_Model, Vision_Geometry, Image_Processor, Slam_Solver(private), OpenCV4(only for test)
+- Slam_Utility
+- Feature_Detector
+- Feature_Tracker
+- Sensor_Model
+- Vision_Geometry
+- Image_Processor
+- Slam_Solver
+- OpenCV (only for test)
 
 # Tips
 - 这是为了学习 BASALT 而创建的用于复现 paper 的代码仓库；
