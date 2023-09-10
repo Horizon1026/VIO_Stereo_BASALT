@@ -1,5 +1,5 @@
-#ifndef _VIO_STEREO_ORB_SLAM3_DATA_LOADER_H_
-#define _VIO_STEREO_ORB_SLAM3_DATA_LOADER_H_
+#ifndef _VIO_STEREO_BASALT_DATA_LOADER_H_
+#define _VIO_STEREO_BASALT_DATA_LOADER_H_
 
 #include "datatype_basic.h"
 #include "datatype_image.h"
@@ -48,8 +48,8 @@ public:
                             const Vec3 &gyro,
                             const float &time_stamp_s);
     bool PushImageMeasurement(uint8_t *image_ptr,
-                              const int32_t image_width,
-                              const int32_t image_height,
+                              const int32_t image_rows,
+                              const int32_t image_cols,
                               const float &time_stamp_s,
                               const bool is_left_image = true);
 
@@ -87,4 +87,4 @@ private:
 
 }
 
-#endif // end of _VIO_STEREO_ORB_SLAM3_DATA_LOADER_H_
+#endif // end of _VIO_STEREO_BASALT_DATA_LOADER_H_

@@ -4,7 +4,7 @@
 #include "unistd.h"
 #include "thread"
 
-#include "opencv2/opencv.hpp"
+#include "visualizor.h"
 
 #include "frontend.h"
 #include "backend.h"
@@ -80,14 +80,16 @@ void PublishCameraData(const std::string &csv_file_path, const std::string &imag
         camera_data >> time_stamp_s >> image_file_name;
         image_file_name.erase(std::remove(image_file_name.begin(), image_file_name.end(), ','), image_file_name.end());
 
-        cv::Mat image = cv::imread((image_file_root + image_file_name).c_str(), 0);
-        if (image.empty()) {
+        GrayImage image;
+        Visualizor::LoadImage(image_file_root + image_file_name, image);
+        image.memory_owner() = false;
+        if (image.data() == nullptr) {
             ReportError("Failed to load image file.");
             return;
         }
 
         // Send data to dataloader of vio.
-        dataloader.PushImageMeasurement(image.data, image.rows, image.cols, static_cast<float>(time_stamp_s * 1e-9 - time_stamp_offset), is_left_camera);
+        dataloader.PushImageMeasurement(image.data(), image.rows(), image.cols(), static_cast<float>(time_stamp_s * 1e-9 - time_stamp_offset), is_left_camera);
 
         usleep(period_us);
     }
@@ -117,10 +119,14 @@ void TestPopSingleMeasurement(const int32_t period_us = 5000, const int32_t max_
         }
 
         if (meas.left_image != nullptr) {
+            Visualizor::ShowImage("Left camera image", meas.left_image->image);
+            Visualizor::WaitKey(1);
             ReportInfo("Data loader pop left camera measure at time " << meas.left_image->time_stamp_s << " s.");
         }
 
         if (meas.right_image != nullptr) {
+            Visualizor::ShowImage("Right camera image", meas.right_image->image);
+            Visualizor::WaitKey(1);
             ReportInfo("Data loader pop right camera measure at time " << meas.right_image->time_stamp_s << " s.");
         }
 
@@ -151,10 +157,14 @@ void TestPopPackedMeasurement(const int32_t period_us = 50000, const int32_t max
         }
 
         if (meas.left_image != nullptr) {
+            Visualizor::ShowImage("Left camera image", meas.left_image->image);
+            Visualizor::WaitKey(1);
             ReportInfo("Data loader pop left camera measure at time " << meas.left_image->time_stamp_s << " s.");
         }
 
         if (meas.right_image != nullptr) {
+            Visualizor::ShowImage("Right camera image", meas.right_image->image);
+            Visualizor::WaitKey(1);
             ReportInfo("Data loader pop right camera measure at time " << meas.right_image->time_stamp_s << " s.");
         }
 
