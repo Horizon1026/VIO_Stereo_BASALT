@@ -22,7 +22,6 @@ bool Vio::RunOnce() {
     }
 
     // Process image measurements.
-    ReportInfo("[Vio] Frontend run once.");
     frontend_->RunOnce(measure.left_image->image, measure.right_image->image);
 
     return true;
