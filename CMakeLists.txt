@@ -19,3 +19,11 @@ add_executable( test_dataloader
 target_link_libraries( test_dataloader
     lib_vio_stereo_basalt
 )
+
+# Add test_vio
+add_executable( test_vio
+    test/test_vio.cpp
+)
+target_link_libraries( test_vio
+    lib_vio_stereo_basalt
+)
