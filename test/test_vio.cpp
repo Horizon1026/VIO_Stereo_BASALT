@@ -98,6 +98,8 @@ void TestRunVio(const int32_t period_us,
     int32_t cnt = max_wait_ticks;
     while (cnt) {
         const bool res = vio.RunOnce();
+        ReportInfo("[Vio] " << cnt);
+
         if (!res) {
             --cnt;
             continue;
@@ -124,7 +126,7 @@ int main(int argc, char **argv) {
     std::thread thread_pub_imu_data{PublishImuData, dataset_root_dir + "mav0/imu0/data.csv", 5000};
     std::thread thread_pub_cam_left_data(PublishCameraData, dataset_root_dir + "mav0/cam0/data.csv", dataset_root_dir + "mav0/cam0/data/", 33000, true);
     std::thread thread_pub_cam_right_data(PublishCameraData, dataset_root_dir + "mav0/cam1/data.csv", dataset_root_dir + "mav0/cam1/data/", 33000, false);
-    std::thread thread_test_vio(TestRunVio, 5000, 10);
+    std::thread thread_test_vio(TestRunVio, 5000, 100);
 
     // Waiting for the end of the threads. Recovery their resources.
     thread_pub_imu_data.join();
