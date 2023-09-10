@@ -37,6 +37,7 @@ void PublishImuData(const std::string &csv_file_path,
         imu_data >> time_stamp_s >> gyro.x() >> gyro.y() >> gyro.z() >> accel.x() >> accel.y() >> accel.z();
 
         // Send data to dataloader of vio.
+        ReportInfo("[Imu] " << one_line);
         vio.data_loader()->PushImuMeasurement(accel.cast<float>(), gyro.cast<float>(), static_cast<float>(time_stamp_s * 1e-9 - time_stamp_offset));
 
         usleep(period_us);
@@ -82,6 +83,7 @@ void PublishCameraData(const std::string &csv_file_path,
         }
 
         // Send data to dataloader of vio.
+        ReportInfo("[Image] " << one_line);
         vio.data_loader()->PushImageMeasurement(image.data(), image.rows(), image.cols(), static_cast<float>(time_stamp_s * 1e-9 - time_stamp_offset), is_left_camera);
 
         usleep(period_us);
@@ -90,78 +92,19 @@ void PublishCameraData(const std::string &csv_file_path,
     file.close();
 }
 
-void TestPopSingleMeasurement(const int32_t period_us,
-                              const int32_t max_wait_ticks) {
+
+void TestRunVio(const int32_t period_us,
+                const int32_t max_wait_ticks) {
     int32_t cnt = max_wait_ticks;
-
     while (cnt) {
-        usleep(period_us);
-
-        VIO::SingleMeasurement meas;
-        const bool res = vio.data_loader()->PopSingleMeasurement(meas);
-
+        const bool res = vio.RunOnce();
         if (!res) {
             --cnt;
             continue;
         }
-
-        ReportInfo(">> Data loader popped one single measurement.");
-
-        if (meas.imu != nullptr) {
-            ReportInfo("Data loader pop imu measure at time " << meas.imu->time_stamp_s << " s.");
-            cnt = max_wait_ticks;
-        }
-
-        if (meas.left_image != nullptr) {
-            Visualizor::ShowImage("Left camera image", meas.left_image->image);
-            ReportInfo("Data loader pop left camera measure at time " << meas.left_image->time_stamp_s << " s.");
-        }
-
-        if (meas.right_image != nullptr) {
-            Visualizor::ShowImage("Right camera image", meas.right_image->image);
-            ReportInfo("Data loader pop right camera measure at time " << meas.right_image->time_stamp_s << " s.");
-        }
-        Visualizor::WaitKey(1);
-
         cnt = max_wait_ticks;
-    }
-}
 
-void TestPopPackedMeasurement(const int32_t period_us,
-                              const int32_t max_wait_ticks) {
-    int32_t cnt = max_wait_ticks;
-
-    while (cnt) {
         usleep(period_us);
-
-        VIO::PackedMeasurement meas;
-        const bool res = vio.data_loader()->PopPackedMeasurement(meas);
-
-        if (!res) {
-            --cnt;
-            continue;
-        }
-
-        ReportInfo(">> Data loader popped one packed measurement.");
-
-        if (!meas.imus.empty()) {
-            ReportInfo("Data loader pop " << meas.imus.size() << " imu measure at time " << meas.imus.front()->time_stamp_s <<
-                " - " << meas.imus.back()->time_stamp_s << " s.");
-            cnt = max_wait_ticks;
-        }
-
-        if (meas.left_image != nullptr) {
-            Visualizor::ShowImage("Left camera image", meas.left_image->image);
-            ReportInfo("Data loader pop left camera measure at time " << meas.left_image->time_stamp_s << " s.");
-        }
-
-        if (meas.right_image != nullptr) {
-            Visualizor::ShowImage("Right camera image", meas.right_image->image);
-            ReportInfo("Data loader pop right camera measure at time " << meas.right_image->time_stamp_s << " s.");
-        }
-        Visualizor::WaitKey(1);
-
-        cnt = max_wait_ticks;
     }
 }
 
@@ -173,21 +116,21 @@ int main(int argc, char **argv) {
     }
 
     ReportInfo(YELLOW ">> Test vio." RESET_COLOR);
-    vio.ConfigAllComponents(VIO::VioOptions {
-        .image_rows = 480,
-        .image_cols = 752,
-    });
+    VIO::VioOptions options;
+    options.frontend.image_rows = 480;
+    options.frontend.image_cols = 752;
+    vio.ConfigAllComponents(options);
 
-    std::thread thread_pub_imu_data{PublishImuData, dataset_root_dir + "mav0/imu0/data.csv", 150};
-    std::thread thread_pub_cam_left_data(PublishCameraData, dataset_root_dir + "mav0/cam0/data.csv", dataset_root_dir + "mav0/cam0/data/", 1000, true);
-    std::thread thread_pub_cam_right_data(PublishCameraData, dataset_root_dir + "mav0/cam1/data.csv", dataset_root_dir + "mav0/cam1/data/", 1000, false);
-    std::thread thread_test_pop(TestPopPackedMeasurement, 1000, 10);
+    std::thread thread_pub_imu_data{PublishImuData, dataset_root_dir + "mav0/imu0/data.csv", 5000};
+    std::thread thread_pub_cam_left_data(PublishCameraData, dataset_root_dir + "mav0/cam0/data.csv", dataset_root_dir + "mav0/cam0/data/", 33000, true);
+    std::thread thread_pub_cam_right_data(PublishCameraData, dataset_root_dir + "mav0/cam1/data.csv", dataset_root_dir + "mav0/cam1/data/", 33000, false);
+    std::thread thread_test_vio(TestRunVio, 5000, 10);
 
     // Waiting for the end of the threads. Recovery their resources.
     thread_pub_imu_data.join();
     thread_pub_cam_left_data.join();
     thread_pub_cam_right_data.join();
-    thread_test_pop.join();
+    thread_test_vio.join();
 
     return 0;
 }

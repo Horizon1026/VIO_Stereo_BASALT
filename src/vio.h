@@ -1,6 +1,8 @@
 #ifndef _VIO_STEREO_BASALT_H_
 #define _VIO_STEREO_BASALT_H_
 
+#include "vio_config.h"
+
 #include "data_manager.h"
 #include "data_loader.h"
 #include "visual_frontend.h"
@@ -8,12 +10,6 @@
 #include "memory"
 
 namespace VIO {
-
-/* Options for vio. */
-struct VioOptions {
-    uint32_t image_rows = 0;
-    uint32_t image_cols = 0;
-};
 
 /* Class Vio Declaration. */
 class Vio final {

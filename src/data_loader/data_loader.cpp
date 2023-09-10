@@ -14,7 +14,7 @@ bool DataLoader::PushImuMeasurement(const Vec3 &accel,
                                     const Vec3 &gyro,
                                     const float &time_stamp_s) {
     if (!imu_buffer_.empty() && imu_buffer_.back()->time_stamp_s > time_stamp_s) {
-        ReportWarn("[Data Loader] Imu measurement pushed has invalid timestamp. Latest in buffer is "
+        ReportWarn("[Vio] Imu measurement pushed has invalid timestamp. Latest in buffer is "
             << imu_buffer_.back()->time_stamp_s << " s, but pushed is " << time_stamp_s << " s.");
         return false;
     }
@@ -23,6 +23,8 @@ bool DataLoader::PushImuMeasurement(const Vec3 &accel,
     object_ptr->accel = accel;
     object_ptr->gyro = gyro;
     object_ptr->time_stamp_s = time_stamp_s;
+
+    std::unique_lock<std::mutex> lck(imu_mutex_);
     imu_buffer_.emplace_back(std::move(object_ptr));
 
     return true;
@@ -34,9 +36,10 @@ bool DataLoader::PushImageMeasurement(uint8_t *image_ptr,
                                       const float &time_stamp_s,
                                       const bool is_left_image) {
     const auto image_buffer_ptr = is_left_image ? &left_image_buffer_ : &right_image_buffer_;
+    auto &image_mutex = is_left_image ? left_image_mutex_ : right_image_mutex_;
 
     if (!image_buffer_ptr->empty() && image_buffer_ptr->back()->time_stamp_s > time_stamp_s) {
-        ReportWarn("[Data Loader] Camera measurement pushed has invalid timestamp. Latest in buffer is "
+        ReportWarn("[Vio] Camera measurement pushed has invalid timestamp. Latest in buffer is "
             << image_buffer_ptr->back()->time_stamp_s << " s, but pushed is " << time_stamp_s << " s.");
         return false;
     }
@@ -44,6 +47,8 @@ bool DataLoader::PushImageMeasurement(uint8_t *image_ptr,
     auto object_ptr = image_pool_.Get();
     object_ptr->time_stamp_s = time_stamp_s;
     object_ptr->image.SetImage(image_ptr, image_rows, image_cols, true);
+
+    std::unique_lock<std::mutex> lck(image_mutex);
     image_buffer_ptr->emplace_back(std::move(object_ptr));
 
     return true;
@@ -51,6 +56,10 @@ bool DataLoader::PushImageMeasurement(uint8_t *image_ptr,
 
 // Pop measurements from dataloader.
 bool DataLoader::PopSingleMeasurement(SingleMeasurement &measure) {
+    std::unique_lock<std::mutex> lck1(imu_mutex_);
+    std::unique_lock<std::mutex> lck2(left_image_mutex_);
+    std::unique_lock<std::mutex> lck3(right_image_mutex_);
+
     const bool imu_buffer_empty = imu_buffer_.empty();
     const bool left_buffer_empty = left_image_buffer_.empty();
     const bool right_buffer_empty = right_image_buffer_.empty();
@@ -154,6 +163,10 @@ bool DataLoader::PopSingleMeasurement(SingleMeasurement &measure) {
 }
 
 bool DataLoader::PopPackedMeasurement(PackedMeasurement &measure) {
+    std::unique_lock<std::mutex> lck1(imu_mutex_);
+    std::unique_lock<std::mutex> lck2(left_image_mutex_);
+    std::unique_lock<std::mutex> lck3(right_image_mutex_);
+
     const bool imu_buffer_empty = imu_buffer_.empty();
     const bool left_buffer_empty = left_image_buffer_.empty();
     const bool right_buffer_empty = right_image_buffer_.empty();

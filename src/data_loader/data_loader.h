@@ -11,6 +11,7 @@
 #include "camera_measurement.h"
 
 #include "deque"
+#include "mutex"
 
 namespace VIO {
 
@@ -82,6 +83,10 @@ private:
 
     ObjectPool<ImuMeasurement> imu_pool_;
     ObjectPool<CameraMeasurement> image_pool_;
+
+    std::mutex imu_mutex_;
+    std::mutex left_image_mutex_;
+    std::mutex right_image_mutex_;
 
 };
 
