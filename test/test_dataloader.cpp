@@ -177,11 +177,11 @@ int main(int argc, char **argv) {
 
     ReportInfo(YELLOW ">> Test data loader." RESET_COLOR);
 
-    std::thread thread_pub_imu_data(PublishImuData, dataset_root_dir + "mav0/imu0/data.csv", 5000);
-    std::thread thread_pub_cam_left_data(PublishCameraData, dataset_root_dir + "mav0/cam0/data.csv", dataset_root_dir + "mav0/cam0/data/", 50000, true);
-    std::thread thread_pub_cam_right_data(PublishCameraData, dataset_root_dir + "mav0/cam1/data.csv", dataset_root_dir + "mav0/cam1/data/", 50000, false);
-    // std::thread thread_test_pop(TestPopSingleMeasurement, 5000, 10);
-    std::thread thread_test_pop(TestPopPackedMeasurement, 50000, 10);
+    std::thread thread_pub_imu_data(PublishImuData, dataset_root_dir + "mav0/imu0/data.csv", 300);
+    std::thread thread_pub_cam_left_data(PublishCameraData, dataset_root_dir + "mav0/cam0/data.csv", dataset_root_dir + "mav0/cam0/data/", 2000, true);
+    std::thread thread_pub_cam_right_data(PublishCameraData, dataset_root_dir + "mav0/cam1/data.csv", dataset_root_dir + "mav0/cam1/data/", 2000, false);
+    // std::thread thread_test_pop(TestPopSingleMeasurement, 1000, 10);
+    std::thread thread_test_pop(TestPopPackedMeasurement, 2000, 10);
 
     // Waiting for the end of the threads. Recovery their resources.
     thread_pub_imu_data.join();
