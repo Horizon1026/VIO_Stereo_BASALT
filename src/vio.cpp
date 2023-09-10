@@ -10,8 +10,7 @@ bool Vio::RunOnce() {
     PackedMeasurement measure;
     const bool res = data_loader_->PopPackedMeasurement(measure);
     if (!res) {
-        ReportWarn("[Vio] Load measure failed : imu " << measure.imus.size() << ", left " << LogPtr(measure.left_image.get()) <<
-            ", right " << LogPtr(measure.right_image.get()));
+        ReportInfo("[Vio] Failed to load packed measures. Skip this tick.");
         return false;
     }
 

@@ -6,12 +6,14 @@
 
 #include "visualizor.h"
 #include "vio.h"
+#include "tick_tock.h"
 
 VIO::Vio vio;
 double time_stamp_offset = 1403638518.0;
 
 void PublishImuData(const std::string &csv_file_path,
-                    const int32_t period_us) {
+                    const float period_ms) {
+
     std::ifstream file(csv_file_path.c_str());
     if (!file.is_open()) {
         ReportError("Failed to load imu data file " << csv_file_path);
@@ -32,14 +34,20 @@ void PublishImuData(const std::string &csv_file_path,
     double time_stamp_s = 0.0;
     TVec3<double> accel;
     TVec3<double> gyro;
+
     while (std::getline(file, one_line) && !one_line.empty()) {
+        TickTock timer;
+
         std::istringstream imu_data(one_line);
         imu_data >> time_stamp_s >> gyro.x() >> gyro.y() >> gyro.z() >> accel.x() >> accel.y() >> accel.z();
 
         // Send data to dataloader of vio.
         vio.data_loader()->PushImuMeasurement(accel.cast<float>(), gyro.cast<float>(), static_cast<float>(time_stamp_s * 1e-9 - time_stamp_offset));
 
-        usleep(period_us);
+        // Waiting for next timestamp.
+        while (timer.TockInMillisecond() < period_ms) {
+            usleep(100);
+        }
     }
 
     file.close();
@@ -47,7 +55,7 @@ void PublishImuData(const std::string &csv_file_path,
 
 void PublishCameraData(const std::string &csv_file_path,
                        const std::string &image_file_root,
-                       const int32_t period_us,
+                       const float period_ms,
                        const bool is_left_camera) {
     std::ifstream file(csv_file_path.c_str());
     if (!file.is_open()) {
@@ -69,6 +77,8 @@ void PublishCameraData(const std::string &csv_file_path,
     double time_stamp_s = 0.0;
     std::string image_file_name;
     while (std::getline(file, one_line) && !one_line.empty()) {
+        TickTock timer;
+
         std::istringstream camera_data(one_line);
         camera_data >> time_stamp_s >> image_file_name;
         image_file_name.erase(std::remove(image_file_name.begin(), image_file_name.end(), ','), image_file_name.end());
@@ -84,21 +94,23 @@ void PublishCameraData(const std::string &csv_file_path,
         // Send data to dataloader of vio.
         vio.data_loader()->PushImageMeasurement(image.data(), image.rows(), image.cols(), static_cast<float>(time_stamp_s * 1e-9 - time_stamp_offset), is_left_camera);
 
-        usleep(period_us);
+        // Waiting for next timestamp.
+        while (timer.TockInMillisecond() < period_ms) {
+            usleep(100);
+        }
     }
 
     file.close();
 }
 
 
-void TestRunVio(const int32_t period_us,
-                const int32_t max_wait_ticks) {
+void TestRunVio(const int32_t max_wait_ticks) {
     int32_t cnt = max_wait_ticks;
     while (cnt) {
         const bool res = vio.RunOnce();
 
         if (!res) {
-            usleep(period_us);
+            usleep(1000);
             --cnt;
             continue;
         }
@@ -119,13 +131,13 @@ int main(int argc, char **argv) {
     options.frontend.image_cols = 752;
     vio.ConfigAllComponents(options);
 
-    int32_t imu_timeout_us = 5000 - 4000;
-    int32_t image_timeout_us = 33333 - 30000;
+    float imu_timeout_ms = 4.5f;
+    float image_timeout_ms = 32.5f;
 
-    std::thread thread_pub_imu_data{PublishImuData, dataset_root_dir + "mav0/imu0/data.csv", imu_timeout_us};
-    std::thread thread_pub_cam_left_data(PublishCameraData, dataset_root_dir + "mav0/cam0/data.csv", dataset_root_dir + "mav0/cam0/data/", image_timeout_us, true);
-    std::thread thread_pub_cam_right_data(PublishCameraData, dataset_root_dir + "mav0/cam1/data.csv", dataset_root_dir + "mav0/cam1/data/", image_timeout_us, false);
-    std::thread thread_test_vio(TestRunVio, 10, 1000);
+    std::thread thread_pub_imu_data{PublishImuData, dataset_root_dir + "mav0/imu0/data.csv", imu_timeout_ms};
+    std::thread thread_pub_cam_left_data(PublishCameraData, dataset_root_dir + "mav0/cam0/data.csv", dataset_root_dir + "mav0/cam0/data/", image_timeout_ms, true);
+    std::thread thread_pub_cam_right_data(PublishCameraData, dataset_root_dir + "mav0/cam1/data.csv", dataset_root_dir + "mav0/cam1/data/", image_timeout_ms, false);
+    std::thread thread_test_vio(TestRunVio, 11000);
 
     // Waiting for the end of the threads. Recovery their resources.
     thread_pub_imu_data.join();
