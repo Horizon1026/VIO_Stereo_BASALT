@@ -120,15 +120,14 @@ void TestPopSingleMeasurement(const int32_t period_us = 5000, const int32_t max_
 
         if (meas.left_image != nullptr) {
             Visualizor::ShowImage("Left camera image", meas.left_image->image);
-            Visualizor::WaitKey(1);
             ReportInfo("Data loader pop left camera measure at time " << meas.left_image->time_stamp_s << " s.");
         }
 
         if (meas.right_image != nullptr) {
             Visualizor::ShowImage("Right camera image", meas.right_image->image);
-            Visualizor::WaitKey(1);
             ReportInfo("Data loader pop right camera measure at time " << meas.right_image->time_stamp_s << " s.");
         }
+        Visualizor::WaitKey(1);
 
         cnt = max_wait_ticks;
     }
@@ -158,15 +157,14 @@ void TestPopPackedMeasurement(const int32_t period_us = 50000, const int32_t max
 
         if (meas.left_image != nullptr) {
             Visualizor::ShowImage("Left camera image", meas.left_image->image);
-            Visualizor::WaitKey(1);
             ReportInfo("Data loader pop left camera measure at time " << meas.left_image->time_stamp_s << " s.");
         }
 
         if (meas.right_image != nullptr) {
             Visualizor::ShowImage("Right camera image", meas.right_image->image);
-            Visualizor::WaitKey(1);
             ReportInfo("Data loader pop right camera measure at time " << meas.right_image->time_stamp_s << " s.");
         }
+        Visualizor::WaitKey(1);
 
         cnt = max_wait_ticks;
     }
