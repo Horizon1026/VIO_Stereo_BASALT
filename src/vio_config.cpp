@@ -64,10 +64,8 @@ bool Vio::ConfigComponentOfFrontend(const VioOptions &options) {
     frontend_->camera_model() = std::make_unique<CameraType>();
     frontend_->camera_model()->SetIntrinsicParameter(
         options.camera.fx, options.camera.fy, options.camera.cx, options.camera.cy);
-    Vec5 distort_param;
-    distort_param << options.camera.k1, options.camera.k2, options.camera.k3,
-        options.camera.p1, options.camera.p2;
-    frontend_->camera_model()->SetDistortionParameter(distort_param);
+    frontend_->camera_model()->SetDistortionParameter(std::vector<float>{
+        options.camera.k1, options.camera.k2, options.camera.k3, options.camera.p1, options.camera.p2});
 
     // Config feature detector.
     frontend_->feature_detector() = std::make_unique<FeatureType>();
