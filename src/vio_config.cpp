@@ -41,6 +41,10 @@ bool Vio::ConfigComponentOfDataManager(const VioOptions &options) {
 
 bool Vio::ConfigComponentOfDataLoader(const VioOptions &options) {
     data_loader_ = std::make_unique<DataLoader>();
+    data_loader_->options().kMaxToleranceTimeDifferenceOfStereoImageInSeconds = 0.005f;
+    data_loader_->options().kMaxToleranceTimeDifferenceBetweenImuAndImageInSeconds = 0.001f;
+    data_loader_->options().kEnableRecordBinaryLog = true;
+    RETURN_FALSE_IF_FALSE(data_loader_->Initialize(options.log_file_root_name + options.data_loader.log_file_name));
 
     ReportInfo("[Vio] Data loader initialized.");
     return true;
@@ -58,7 +62,7 @@ bool Vio::ConfigComponentOfFrontend(const VioOptions &options) {
     frontend_->options().kSelfSelectKeyframe = options.frontend.select_keyframe;
     frontend_->options().kMaxStoredFeaturePointsNumber = options.frontend.max_feature_number;
     frontend_->options().kMinDetectedFeaturePointsNumberInCurrentImage = options.frontend.min_feature_number;
-    frontend_->Initialize(options.frontend.log_file_name);
+    RETURN_FALSE_IF_FALSE(frontend_->Initialize(options.log_file_root_name + options.frontend.log_file_name));
 
     // Config camera model.
     frontend_->camera_model() = std::make_unique<CameraType>();

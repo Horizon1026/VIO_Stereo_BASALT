@@ -131,8 +131,8 @@ int main(int argc, char **argv) {
     options.frontend.image_cols = 752;
     vio.ConfigAllComponents(options);
 
-    float imu_timeout_ms = 4.5f;
-    float image_timeout_ms = 32.5f;
+    float imu_timeout_ms = 3.5f;
+    float image_timeout_ms = 34.5f;
 
     std::thread thread_pub_imu_data{PublishImuData, dataset_root_dir + "mav0/imu0/data.csv", imu_timeout_ms};
     std::thread thread_pub_cam_left_data(PublishCameraData, dataset_root_dir + "mav0/cam0/data.csv", dataset_root_dir + "mav0/cam0/data/", image_timeout_ms, true);

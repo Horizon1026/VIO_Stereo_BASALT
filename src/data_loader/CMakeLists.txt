@@ -38,6 +38,12 @@ if ( NOT TARGET lib_camera_model )
     add_subdirectory( ${SENSOR_MODEL}/camera ${PROJECT_SOURCE_DIR}/build/lib_camera_model )
 endif()
 
+# Add binary data logger.
+set( BINARY_DATA_LOG_PATH ${PROJECT_SOURCE_DIR}/../Binary_Data_Log/src )
+if ( NOT TARGET lib_binary_data_log )
+    add_subdirectory( ${BINARY_DATA_LOG_PATH} ${PROJECT_SOURCE_DIR}/build/lib_binary_data_log )
+endif()
+
 # Create library.
 add_library( lib_vio_stereo_basalt_data_loader ${AUX_SRC_VIO_STEREO_BASALT_DATA_LOADER} )
 target_include_directories( lib_vio_stereo_basalt_data_loader PUBLIC . )
@@ -54,4 +60,6 @@ target_link_libraries( lib_vio_stereo_basalt_data_loader
 
     lib_imu_model
     lib_camera_model
+
+    lib_binary_data_log
 )

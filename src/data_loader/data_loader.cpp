@@ -1,7 +1,10 @@
 #include "data_loader.h"
 #include "log_report.h"
+#include "memory"
 
 namespace VIO {
+
+constexpr uint32_t kDataLoaderLogIndex = 0;
 
 void DataLoader::Clear() {
     imu_buffer_.clear();
@@ -9,12 +12,45 @@ void DataLoader::Clear() {
     right_image_buffer_.clear();
 }
 
+bool DataLoader::Initialize(const std::string &log_file_name) {
+    // Register packages for log file.
+    if (options_.kEnableRecordBinaryLog) {
+        if (!logger_.CreateLogFile(log_file_name)) {
+            ReportError("[DataLoader] cannot create log file.");
+            options_.kEnableRecordBinaryLog = false;
+            return false;
+        }
+
+        RegisterLogPackages();
+        logger_.PrepareForRecording();
+    }
+
+    return true;
+}
+
+void DataLoader::RegisterLogPackages() {
+    using namespace SLAM_DATA_LOG;
+
+    std::unique_ptr<PackageInfo> package_ptr = std::make_unique<PackageInfo>();
+    package_ptr->id = kDataLoaderLogIndex;
+    package_ptr->name = "data_loader";
+    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_imu_in_package"});
+    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint8, .name = "is_left_image_valid_in_package"});
+    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint8, .name = "is_right_image_valid_in_package"});
+    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_imu_in_buffer"});
+    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_left_image_in_buffer"});
+    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_right_image_in_buffer"});
+    if (!logger_.RegisterPackage(package_ptr)) {
+        ReportError("[DataLoader] Failed to register package.");
+    }
+}
+
 // Push measurements into dataloader.
 bool DataLoader::PushImuMeasurement(const Vec3 &accel,
                                     const Vec3 &gyro,
                                     const float &time_stamp_s) {
     if (!imu_buffer_.empty() && imu_buffer_.back()->time_stamp_s > time_stamp_s) {
-        ReportWarn("[Vio] Imu measurement pushed has invalid timestamp. Latest in buffer is "
+        ReportWarn("[DataLoader] Imu measurement pushed has invalid timestamp. Latest in buffer is "
             << imu_buffer_.back()->time_stamp_s << " s, but pushed is " << time_stamp_s << " s.");
         return false;
     }
@@ -39,7 +75,7 @@ bool DataLoader::PushImageMeasurement(uint8_t *image_ptr,
     auto &image_mutex = is_left_image ? left_image_mutex_ : right_image_mutex_;
 
     if (!image_buffer_ptr->empty() && image_buffer_ptr->back()->time_stamp_s > time_stamp_s) {
-        ReportWarn("[Vio] Camera measurement pushed has invalid timestamp. Latest in buffer is "
+        ReportWarn("[DataLoader] Camera measurement pushed has invalid timestamp. Latest in buffer is "
             << image_buffer_ptr->back()->time_stamp_s << " s, but pushed is " << time_stamp_s << " s.");
         return false;
     }
@@ -242,6 +278,17 @@ bool DataLoader::PopPackedMeasurement(PackedMeasurement &measure) {
         new_item->gyro = measure.imus.back()->gyro;
         new_item->accel = measure.imus.back()->accel;
         imu_buffer_.emplace_front(std::move(new_item));
+    }
+
+    // Record log.
+    if (options().kEnableRecordBinaryLog) {
+        log_package_data_.num_of_imu_in_package = static_cast<uint32_t>(measure.imus.size());
+        log_package_data_.is_left_image_valid_in_package = static_cast<uint8_t>(measure.left_image != nullptr);
+        log_package_data_.is_right_image_valid_in_package = static_cast<uint8_t>(measure.right_image != nullptr);
+        log_package_data_.num_of_imu_in_buffer = static_cast<uint32_t>(imu_buffer_.size());
+        log_package_data_.num_of_left_image_in_buffer = static_cast<uint32_t>(left_image_buffer_.size());
+        log_package_data_.num_of_right_image_in_buffer = static_cast<uint32_t>(right_image_buffer_.size());
+        logger_.RecordPackage(kDataLoaderLogIndex, reinterpret_cast<const char *>(&log_package_data_));
     }
 
     return true;

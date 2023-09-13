@@ -34,7 +34,7 @@ struct VioOptionsOfFrontend {
     uint32_t image_rows = 0;
     uint32_t image_cols = 0;
     bool enable_recording_binlog = true;
-    bool enable_drawing_track_result = true;
+    bool enable_drawing_track_result = false;
     bool select_keyframe = true;
     uint32_t max_feature_number = 100;
     uint32_t min_feature_number = 30;
@@ -45,8 +45,12 @@ struct VioOptionsOfFrontend {
 
 struct VioOptionsOfBackend {
     bool enable_recording_binlog = true;
-    std::string log_file_name = "frontend.binlog";
+    std::string log_file_name = "backend.binlog";
     // TODO:
+};
+
+struct VioOptionsOfDataLoader {
+    std::string log_file_name = "data_loader.binlog";
 };
 
 /* Options for vio. */
@@ -55,6 +59,7 @@ struct VioOptions {
     VioOptionsOfCamera camera;
     VioOptionsOfFrontend frontend;
     VioOptionsOfBackend backend;
+    VioOptionsOfDataLoader data_loader;
 };
 
 }

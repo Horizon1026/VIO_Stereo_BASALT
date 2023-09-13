@@ -10,6 +10,8 @@
 #include "imu_measurement.h"
 #include "camera_measurement.h"
 
+#include "binary_data_log.h"
+
 #include "deque"
 #include "mutex"
 
@@ -18,22 +20,36 @@ namespace VIO {
 using namespace SLAM_UTILITY;
 using namespace SENSOR_MODEL;
 
+/* Measurement Definition. */
 struct SingleMeasurement {
     ObjectPtr<ImuMeasurement> imu = nullptr;
     ObjectPtr<CameraMeasurement> left_image = nullptr;
     ObjectPtr<CameraMeasurement> right_image = nullptr;
 };
-
 struct PackedMeasurement {
     std::vector<ObjectPtr<ImuMeasurement>> imus;
     ObjectPtr<CameraMeasurement> left_image = nullptr;
     ObjectPtr<CameraMeasurement> right_image = nullptr;
 };
 
+/* Options for Data Loader. */
 struct DataLoaderOptions {
     float kMaxToleranceTimeDifferenceOfStereoImageInSeconds = 0.005f;
     float kMaxToleranceTimeDifferenceBetweenImuAndImageInSeconds = 0.001f;
+    bool kEnableRecordBinaryLog = true;
 };
+
+/* Packages of log to be recorded. */
+#pragma pack(1)
+struct DataLoaderLog {
+    uint32_t num_of_imu_in_package = 0;
+    uint8_t is_left_image_valid_in_package = 0;
+    uint8_t is_right_image_valid_in_package = 0;
+    uint32_t num_of_imu_in_buffer = 0;
+    uint32_t num_of_left_image_in_buffer = 0;
+    uint32_t num_of_right_image_in_buffer = 0;
+};
+#pragma pack()
 
 /* Class Data Loader Declaration. */
 class DataLoader final {
@@ -43,6 +59,8 @@ public:
     ~DataLoader() = default;
 
     void Clear();
+    bool Initialize(const std::string &log_file_name);
+    void RegisterLogPackages();
 
     // Push measurements into dataloader.
     bool PushImuMeasurement(const Vec3 &accel,
@@ -87,6 +105,10 @@ private:
     std::mutex imu_mutex_;
     std::mutex left_image_mutex_;
     std::mutex right_image_mutex_;
+
+    // Record log.
+    SLAM_DATA_LOG::BinaryDataLog logger_;
+    DataLoaderLog log_package_data_;
 
 };
 
