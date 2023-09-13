@@ -40,16 +40,18 @@ struct VioOptionsOfFrontend {
     uint32_t min_feature_number = 30;
     VioOptionsOfFeatureDetector feature_detector;
     VioOptionsOfFeatureTracker feature_tracker;
-    std::string log_file_name = "../output/frontend_stereo_log.binlog";
+    std::string log_file_name = "frontend.binlog";
 };
 
 struct VioOptionsOfBackend {
     bool enable_recording_binlog = true;
+    std::string log_file_name = "frontend.binlog";
     // TODO:
 };
 
 /* Options for vio. */
 struct VioOptions {
+    std::string log_file_root_name = "../output/";
     VioOptionsOfCamera camera;
     VioOptionsOfFrontend frontend;
     VioOptionsOfBackend backend;
