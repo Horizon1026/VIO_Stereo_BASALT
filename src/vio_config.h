@@ -33,7 +33,8 @@ struct VioOptionsOfFeatureTracker {
 struct VioOptionsOfFrontend {
     uint32_t image_rows = 0;
     uint32_t image_cols = 0;
-    bool enable_recording_binlog = true;
+    bool enable_recording_curve_binlog = true;
+    bool enable_recording_image_binlog = false;
     bool enable_drawing_track_result = false;
     bool select_keyframe = true;
     uint32_t max_feature_number = 100;

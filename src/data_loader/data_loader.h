@@ -36,7 +36,7 @@ struct PackedMeasurement {
 struct DataLoaderOptions {
     float kMaxToleranceTimeDifferenceOfStereoImageInSeconds = 0.005f;
     float kMaxToleranceTimeDifferenceBetweenImuAndImageInSeconds = 0.001f;
-    bool kEnableRecordBinaryLog = true;
+    bool kEnableRecordBinaryCurveLog = true;
 };
 
 /* Packages of log to be recorded. */

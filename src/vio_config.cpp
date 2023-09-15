@@ -43,7 +43,7 @@ bool Vio::ConfigComponentOfDataLoader(const VioOptions &options) {
     data_loader_ = std::make_unique<DataLoader>();
     data_loader_->options().kMaxToleranceTimeDifferenceOfStereoImageInSeconds = 0.005f;
     data_loader_->options().kMaxToleranceTimeDifferenceBetweenImuAndImageInSeconds = 0.001f;
-    data_loader_->options().kEnableRecordBinaryLog = true;
+    data_loader_->options().kEnableRecordBinaryCurveLog = true;
     RETURN_FALSE_IF_FALSE(data_loader_->Initialize(options.log_file_root_name + options.data_loader.log_file_name));
 
     ReportInfo("[Vio] Data loader initialized.");
@@ -57,8 +57,9 @@ bool Vio::ConfigComponentOfFrontend(const VioOptions &options) {
 
     // Config visual frontend.
     frontend_ = std::make_unique<VisualFrontend>(options.frontend.image_rows, options.frontend.image_cols);
-    frontend_->options().kEnableRecordBinaryLog = options.frontend.enable_recording_binlog;
-    frontend_->options().kEnableVisualizeResult = options.frontend.enable_drawing_track_result;
+    frontend_->options().kEnableRecordBinaryCurveLog = options.frontend.enable_recording_curve_binlog;
+    frontend_->options().kEnableRecordBinaryImageLog = options.frontend.enable_recording_image_binlog;
+    frontend_->options().kEnableShowVisualizeResult = options.frontend.enable_drawing_track_result;
     frontend_->options().kSelfSelectKeyframe = options.frontend.select_keyframe;
     frontend_->options().kMaxStoredFeaturePointsNumber = options.frontend.max_feature_number;
     frontend_->options().kMinDetectedFeaturePointsNumberInCurrentImage = options.frontend.min_feature_number;

@@ -14,10 +14,10 @@ void DataLoader::Clear() {
 
 bool DataLoader::Initialize(const std::string &log_file_name) {
     // Register packages for log file.
-    if (options_.kEnableRecordBinaryLog) {
+    if (options_.kEnableRecordBinaryCurveLog) {
         if (!logger_.CreateLogFile(log_file_name)) {
             ReportError("[DataLoader] cannot create log file.");
-            options_.kEnableRecordBinaryLog = false;
+            options_.kEnableRecordBinaryCurveLog = false;
             return false;
         }
 
@@ -281,7 +281,7 @@ bool DataLoader::PopPackedMeasurement(PackedMeasurement &measure) {
     }
 
     // Record log.
-    if (options().kEnableRecordBinaryLog) {
+    if (options().kEnableRecordBinaryCurveLog) {
         log_package_data_.num_of_imu_in_package = static_cast<uint32_t>(measure.imus.size());
         log_package_data_.is_left_image_valid_in_package = static_cast<uint8_t>(measure.left_image != nullptr);
         log_package_data_.is_right_image_valid_in_package = static_cast<uint8_t>(measure.right_image != nullptr);
