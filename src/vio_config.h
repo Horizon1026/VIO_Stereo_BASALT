@@ -45,12 +45,13 @@ struct VioOptionsOfFrontend {
 };
 
 struct VioOptionsOfBackend {
-    bool enable_recording_binlog = true;
+    bool enable_recording_curve_binlog = true;
     std::string log_file_name = "backend.binlog";
     // TODO:
 };
 
 struct VioOptionsOfDataLoader {
+    bool enable_recording_curve_binlog = true;
     std::string log_file_name = "data_loader.binlog";
 };
 

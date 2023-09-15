@@ -43,7 +43,7 @@ bool Vio::ConfigComponentOfDataLoader(const VioOptions &options) {
     data_loader_ = std::make_unique<DataLoader>();
     data_loader_->options().kMaxToleranceTimeDifferenceOfStereoImageInSeconds = 0.005f;
     data_loader_->options().kMaxToleranceTimeDifferenceBetweenImuAndImageInSeconds = 0.001f;
-    data_loader_->options().kEnableRecordBinaryCurveLog = true;
+    data_loader_->options().kEnableRecordBinaryCurveLog = options.data_loader.enable_recording_curve_binlog;
     RETURN_FALSE_IF_FALSE(data_loader_->Initialize(options.log_file_root_name + options.data_loader.log_file_name));
 
     ReportInfo("[Vio] Data loader initialized.");
