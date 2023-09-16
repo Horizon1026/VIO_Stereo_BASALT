@@ -58,6 +58,8 @@ struct VioOptionsOfDataLoader {
 /* Options for vio. */
 struct VioOptions {
     std::string log_file_root_name = "../output/";
+    float max_tolerence_time_s_for_no_data = 2.0f;
+    float heart_beat_period_time_s = 1.0f;
     VioOptionsOfCamera camera;
     VioOptionsOfFrontend frontend;
     VioOptionsOfBackend backend;

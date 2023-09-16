@@ -3,6 +3,7 @@
 
 #include "vio_config.h"
 
+#include "tick_tock.h"
 #include "data_manager.h"
 #include "data_loader.h"
 #include "visual_frontend.h"
@@ -21,29 +22,39 @@ public:
     // Run once without loop.
     bool RunOnce();
     // Config all components of vio.
-    bool ConfigAllComponents(const VioOptions &options);
+    bool ConfigAllComponents();
 
     // Reference for member variables.
+    VioOptions &options() { return options_; }
     std::unique_ptr<DataManager> &data_manager() { return data_manager_; }
     std::unique_ptr<DataLoader> &data_loader() { return data_loader_; }
     std::unique_ptr<VisualFrontend> &frontend() { return frontend_; }
 
     // Const reference for member variables.
+    const VioOptions &options() const { return options_; }
     const std::unique_ptr<DataManager> &data_manager() const { return data_manager_; }
     const std::unique_ptr<DataLoader> &data_loader() const { return data_loader_; }
     const std::unique_ptr<VisualFrontend> &frontend() const { return frontend_; }
 
 private:
     // Config all components of vio.
-    bool ConfigComponentOfDataManager(const VioOptions &options);
-    bool ConfigComponentOfDataLoader(const VioOptions &options);
-    bool ConfigComponentOfFrontend(const VioOptions &options);
+    bool ConfigComponentOfDataManager();
+    bool ConfigComponentOfDataLoader();
+    bool ConfigComponentOfFrontend();
 
 private:
+    // Options for vio.
+    VioOptions options_;
+
     // All components.
     std::unique_ptr<DataManager> data_manager_ = nullptr;
     std::unique_ptr<DataLoader> data_loader_ = nullptr;
     std::unique_ptr<VisualFrontend> frontend_ = nullptr;
+
+    // Vio timers.
+    TickTock vio_sys_timer_;
+    TickTock vio_heart_beat_timer_;
+    TickTock measure_invalid_timer_;
 
 };
 

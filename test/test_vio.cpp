@@ -4,9 +4,14 @@
 #include "unistd.h"
 #include "thread"
 
+#include "backward.h"
 #include "visualizor.h"
 #include "vio.h"
 #include "tick_tock.h"
+
+#ifndef _WIN32
+backward::SignalHandling sh;
+#endif
 
 VIO::Vio vio;
 double time_stamp_offset = 1403638518.0;
@@ -126,13 +131,15 @@ int main(int argc, char **argv) {
     }
 
     ReportInfo(YELLOW ">> Test vio." RESET_COLOR);
-    VIO::VioOptions options;
-    options.frontend.image_rows = 480;
-    options.frontend.image_cols = 752;
-    vio.ConfigAllComponents(options);
+    vio.options().frontend.image_rows = 480;
+    vio.options().frontend.image_cols = 752;
+    vio.options().frontend.enable_recording_curve_binlog = true;
+    vio.options().frontend.enable_recording_image_binlog = false;
+    vio.options().frontend.enable_drawing_track_result = false;
+    vio.ConfigAllComponents();
 
     float imu_timeout_ms = 3.5f;
-    float image_timeout_ms = 33.8f;
+    float image_timeout_ms = 33.0f;
 
     std::thread thread_pub_imu_data{PublishImuData, dataset_root_dir + "mav0/imu0/data.csv", imu_timeout_ms};
     std::thread thread_pub_cam_left_data(PublishCameraData, dataset_root_dir + "mav0/cam0/data.csv", dataset_root_dir + "mav0/cam0/data/", image_timeout_ms, true);
