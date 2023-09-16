@@ -4,14 +4,11 @@
 #include "unistd.h"
 #include "thread"
 
-#include "backward.h"
 #include "visualizor.h"
 #include "vio.h"
 #include "tick_tock.h"
 
-#ifndef _WIN32
-backward::SignalHandling sh;
-#endif
+#include "enable_stack_backward.h"
 
 VIO::Vio vio;
 double time_stamp_offset = 1403638518.0;
