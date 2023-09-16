@@ -36,6 +36,7 @@ struct PackedMeasurement {
 struct DataLoaderOptions {
     float kMaxToleranceTimeDifferenceOfStereoImageInSeconds = 0.005f;
     float kMaxToleranceTimeDifferenceBetweenImuAndImageInSeconds = 0.001f;
+    float kMaxToleranceTimeDelayBetweenImuAndImageInSeconds = 1.0f;
     bool kEnableRecordBinaryCurveLog = true;
 };
 
@@ -75,6 +76,10 @@ public:
     // Pop measurements from dataloader.
     bool PopSingleMeasurement(SingleMeasurement &measure);
     bool PopPackedMeasurement(PackedMeasurement &measure);
+
+    // Sync signal for imu and image buffer.
+    bool ShouldWaitingForImuData();
+    bool ShouldWaitingForImageData();
 
     // Reference for member variables.
     DataLoaderOptions &options() { return options_; }

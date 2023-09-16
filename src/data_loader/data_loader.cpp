@@ -294,4 +294,25 @@ bool DataLoader::PopPackedMeasurement(PackedMeasurement &measure) {
     return true;
 }
 
+bool DataLoader::ShouldWaitingForImuData() {
+    std::unique_lock<std::mutex> lck(imu_mutex_);
+
+    if (left_image_buffer_.empty() || imu_buffer_.empty()) {
+        return false;
+    }
+
+    return left_image_buffer_.back()->time_stamp_s - imu_buffer_.back()->time_stamp_s > options().kMaxToleranceTimeDelayBetweenImuAndImageInSeconds;
+}
+
+bool DataLoader::ShouldWaitingForImageData() {
+    std::unique_lock<std::mutex> lck1(left_image_mutex_);
+    std::unique_lock<std::mutex> lck2(right_image_mutex_);
+
+    if (left_image_buffer_.empty() || imu_buffer_.empty()) {
+        return false;
+    }
+
+    return imu_buffer_.back()->time_stamp_s - left_image_buffer_.back()->time_stamp_s > options().kMaxToleranceTimeDelayBetweenImuAndImageInSeconds;
+}
+
 }
