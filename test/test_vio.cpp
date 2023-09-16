@@ -42,9 +42,6 @@ void PublishImuData(const std::string &csv_file_path,
         imu_data >> time_stamp_s >> gyro.x() >> gyro.y() >> gyro.z() >> accel.x() >> accel.y() >> accel.z();
 
         // Send data to dataloader of vio.
-        if (vio.data_loader()->ShouldWaitingForImageData()) {
-            usleep(800000);
-        }
         vio.data_loader()->PushImuMeasurement(accel.cast<float>(), gyro.cast<float>(), static_cast<float>(time_stamp_s * 1e-9 - time_stamp_offset));
 
         // Waiting for next timestamp.
@@ -95,9 +92,6 @@ void PublishCameraData(const std::string &csv_file_path,
         }
 
         // Send data to dataloader of vio.
-        if (vio.data_loader()->ShouldWaitingForImuData()) {
-            usleep(800000);
-        }
         vio.data_loader()->PushImageMeasurement(image.data(), image.rows(), image.cols(), static_cast<float>(time_stamp_s * 1e-9 - time_stamp_offset), is_left_camera);
 
         // Waiting for next timestamp.
@@ -110,8 +104,8 @@ void PublishCameraData(const std::string &csv_file_path,
 }
 
 
-void TestRunVio(const int32_t max_wait_ticks) {
-    int32_t cnt = max_wait_ticks;
+void TestRunVio(const uint32_t max_wait_ticks) {
+    uint32_t cnt = max_wait_ticks;
     while (cnt) {
         const bool res = vio.RunOnce();
 
@@ -138,12 +132,12 @@ int main(int argc, char **argv) {
     vio.ConfigAllComponents(options);
 
     float imu_timeout_ms = 3.5f;
-    float image_timeout_ms = 34.5f;
+    float image_timeout_ms = 33.8f;
 
     std::thread thread_pub_imu_data{PublishImuData, dataset_root_dir + "mav0/imu0/data.csv", imu_timeout_ms};
     std::thread thread_pub_cam_left_data(PublishCameraData, dataset_root_dir + "mav0/cam0/data.csv", dataset_root_dir + "mav0/cam0/data/", image_timeout_ms, true);
     std::thread thread_pub_cam_right_data(PublishCameraData, dataset_root_dir + "mav0/cam1/data.csv", dataset_root_dir + "mav0/cam1/data/", image_timeout_ms, false);
-    std::thread thread_test_vio(TestRunVio, 11000);
+    std::thread thread_test_vio(TestRunVio, 1500);
 
     // Waiting for the end of the threads. Recovery their resources.
     thread_pub_imu_data.join();
