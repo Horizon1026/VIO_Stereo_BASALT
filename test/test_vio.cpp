@@ -43,7 +43,7 @@ void PublishImuData(const std::string &csv_file_path,
 
         // Send data to dataloader of vio.
         if (vio.data_loader()->ShouldWaitingForImageData()) {
-            usleep(1000);
+            usleep(800000);
         }
         vio.data_loader()->PushImuMeasurement(accel.cast<float>(), gyro.cast<float>(), static_cast<float>(time_stamp_s * 1e-9 - time_stamp_offset));
 
@@ -96,7 +96,7 @@ void PublishCameraData(const std::string &csv_file_path,
 
         // Send data to dataloader of vio.
         if (vio.data_loader()->ShouldWaitingForImuData()) {
-            usleep(30000);
+            usleep(800000);
         }
         vio.data_loader()->PushImageMeasurement(image.data(), image.rows(), image.cols(), static_cast<float>(time_stamp_s * 1e-9 - time_stamp_offset), is_left_camera);
 
