@@ -29,6 +29,12 @@ if ( NOT TARGET lib_object_pool )
     add_subdirectory( ${SLAM_UTILITY_PATH}/data_struct/object_pool ${PROJECT_SOURCE_DIR}/build/lib_object_pool )
 endif()
 
+# Add imu model.
+set( SENSOR_MODEL_PATH ${PROJECT_SOURCE_DIR}/../Sensor_Model/src )
+if ( NOT TARGET lib_imu_model )
+    add_subdirectory( ${SENSOR_MODEL_PATH}/imu ${PROJECT_SOURCE_DIR}/build/lib_imu_model )
+endif()
+
 # Create library.
 add_library( lib_vio_stereo_basalt_data_manager ${AUX_SRC_VIO_STEREO_BASALT_DATA_MANAGER} )
 target_include_directories( lib_vio_stereo_basalt_data_manager PUBLIC . )
@@ -42,4 +48,5 @@ target_link_libraries( lib_vio_stereo_basalt_data_manager
 
     lib_covisible_graph
     lib_object_pool
+    lib_imu_model
 )
