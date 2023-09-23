@@ -14,31 +14,31 @@ namespace VIO {
 
 bool Vio::ConfigAllComponents() {
     if (!ConfigComponentOfDataManager()) {
-        ReportError(RED "[Vio] Failed to config data manager." RESET_COLOR);
+        ReportError(RED "[Vio] Failed to configure data manager." RESET_COLOR);
         return false;
     } else {
-        ReportInfo(GREEN "[Vio] Data manager initialized." RESET_COLOR);
+        ReportInfo(GREEN "[Vio] Data manager configured." RESET_COLOR);
     }
 
     if (!ConfigComponentOfDataLoader()) {
-        ReportError(RED "[Vio] Failed to config data loader." RESET_COLOR);
+        ReportError(RED "[Vio] Failed to configure data loader." RESET_COLOR);
         return false;
     } else {
-        ReportInfo(GREEN "[Vio] Data loader initialized." RESET_COLOR);
+        ReportInfo(GREEN "[Vio] Data loader configured." RESET_COLOR);
     }
 
     if (!ConfigComponentOfFrontend()) {
-        ReportError(RED "[Vio] Failed to config visual frontend." RESET_COLOR);
+        ReportError(RED "[Vio] Failed to configure visual frontend." RESET_COLOR);
         return false;
     } else {
-        ReportInfo(GREEN "[Vio] Visual frontend initialized." RESET_COLOR);
+        ReportInfo(GREEN "[Vio] Visual frontend configured." RESET_COLOR);
     }
 
     if (!ConfigComponentOfBackend()) {
-        ReportError(RED "[Vio] Failed to config backend." RESET_COLOR);
+        ReportError(RED "[Vio] Failed to configure backend." RESET_COLOR);
         return false;
     } else {
-        ReportInfo(GREEN "[Vio] backend initialized." RESET_COLOR);
+        ReportInfo(GREEN "[Vio] backend configured." RESET_COLOR);
     }
 
     return true;
@@ -46,6 +46,9 @@ bool Vio::ConfigAllComponents() {
 
 bool Vio::ConfigComponentOfDataManager() {
     data_manager_ = std::make_unique<DataManager>();
+    data_manager_->options().kMaxStoredKeyframes = options_.data_manager.max_num_of_stored_keyframes;
+    data_manager_->options().kMaxStoredNewFrames = options_.data_manager.max_num_of_stored_new_frames;
+    data_manager_->options().kEnableRecordBinaryCurveLog = options_.data_manager.enable_recording_curve_binlog;
     return true;
 }
 

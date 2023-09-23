@@ -54,6 +54,13 @@ struct VioOptionsOfDataLoader {
     std::string log_file_name = "data_loader.binlog";
 };
 
+struct VioOptionsOfDataManager {
+    uint32_t max_num_of_stored_keyframes = 5;
+    uint32_t max_num_of_stored_new_frames = 3;
+    bool enable_recording_curve_binlog = true;
+    std::string log_file_name = "data_manager.binlog";
+};
+
 /* Options for vio. */
 struct VioOptions {
     std::string log_file_root_name = "../output/";
@@ -63,6 +70,7 @@ struct VioOptions {
     VioOptionsOfFrontend frontend;
     VioOptionsOfBackend backend;
     VioOptionsOfDataLoader data_loader;
+    VioOptionsOfDataManager data_manager;
 };
 
 }

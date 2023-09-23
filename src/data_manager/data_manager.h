@@ -4,6 +4,7 @@
 #include "datatype_basic.h"
 #include "covisible_graph.h"
 #include "imu.h"
+
 #include "data_loader.h"
 #include "visual_frontend.h"
 
@@ -14,6 +15,13 @@ namespace VIO {
 
 using namespace SLAM_UTILITY;
 using namespace SENSOR_MODEL;
+
+/* Options for Data Manager. */
+struct DataManagerOptions {
+    uint32_t kMaxStoredKeyframes = 5;
+    uint32_t kMaxStoredNewFrames = 3;
+    bool kEnableRecordBinaryCurveLog = false;
+};
 
 /* Definition of Feature Points. */
 struct FeatureParameter {
@@ -35,7 +43,7 @@ struct FrameWithBias {
     // Imu bias of accel and gyro is inside imu_preint_block.
     ImuPreintegrateBlock imu_preint_block;
     float time_stamp_s_ = 0.0f;
-
+    // Measurement of raw imu(gyro, acc), raw image(left, right) and visual features.
     std::unique_ptr<PackedMeasurement> packed_measure = nullptr;
     std::unique_ptr<FrontendOutputData> visual_measure = nullptr;
 };
@@ -49,13 +57,16 @@ public:
 
     // Transform packed measurements to a new frame.
     bool ProcessMeasure(std::unique_ptr<PackedMeasurement> &new_packed_measure,
-                        FrontendOutputData &visual_frontend_data);
+                        std::unique_ptr<FrontendOutputData> &new_visual_measure);
 
     // Reference for member variables.
+    DataManagerOptions &options() { return options_; }
     CovisibleGraphType *visual_local_map() { return visual_local_map_.get(); }
     std::deque<FrameWithBias> &new_frames() { return new_frames_; }
 
 private:
+    // Options for data manager.
+    DataManagerOptions options_;
     // All keyframes and map points.
     // Keyframes : [ p_wc, q_wc ]
     // Feature Points : [ p_w | invdep ]

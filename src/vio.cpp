@@ -7,8 +7,8 @@ namespace VIO {
 
 bool Vio::RunOnce() {
     // Try to load packed measurements.
-    std::unique_ptr<PackedMeasurement> measure = std::make_unique<PackedMeasurement>();
-    const bool res = data_loader_->PopPackedMeasurement(*measure);
+    std::unique_ptr<PackedMeasurement> packed_measure = std::make_unique<PackedMeasurement>();
+    const bool res = data_loader_->PopPackedMeasurement(*packed_measure);
     if (!res) {
         const float time_s_for_no_data = measure_invalid_timer_.TockInSecond();
         if (time_s_for_no_data > options_.max_tolerence_time_s_for_no_data) {
@@ -19,21 +19,33 @@ bool Vio::RunOnce() {
     measure_invalid_timer_.TockTickInSecond();
 
     // Check integrity of the packed measurements.
-    if (measure->imus.empty() || measure->left_image == nullptr || measure->right_image == nullptr) {
+    if (packed_measure->imus.empty() || packed_measure->left_image == nullptr || packed_measure->right_image == nullptr) {
         ReportWarn("[Vio] Packed measurements is not valid at " << vio_sys_timer_.TockInSecond() << " s.");
         return false;
     }
 
-    // Preprocess image measurements.
-    if (!frontend_->RunOnce(GrayImage(measure->left_image->image), GrayImage(measure->right_image->image))) {
+    // Transform image measurement to be features measurement.
+    if (!frontend_->RunOnce(GrayImage(packed_measure->left_image->image), GrayImage(packed_measure->right_image->image))) {
         ReportWarn("[Vio] Visual frontend failed to run once at " << vio_sys_timer_.TockInSecond() << " s.");
         return false;
     }
 
-    // Process image and imu measurements.
-    if (!data_manager_->ProcessMeasure(measure, frontend_->output_data())) {
-        ReportWarn("[Vio] Data manager failed to process image and imu measurements at " << vio_sys_timer_.TockInSecond() << " s.");
+    // Store feature and imu measurements.
+    std::unique_ptr<FrontendOutputData> visual_measure = std::make_unique<FrontendOutputData>(frontend_->output_data());
+    if (!data_manager_->ProcessMeasure(packed_measure, visual_measure)) {
+        ReportWarn("[Vio] Data manager failed to store feature and imu measurements at " << vio_sys_timer_.TockInSecond() << " s.");
         return false;
+    }
+
+    // Process feature and imu measurements.
+    if (!backend_->RunOnce()) {
+        ReportWarn("[Vio] Backend failed to process feature and imu measurements at " << vio_sys_timer_.TockInSecond() << " s.");
+        return false;
+    }
+
+    // Control the dimension of problem.
+    if (data_manager_->new_frames().size() >= data_manager_->options().kMaxStoredNewFrames) {
+        data_manager_->new_frames().pop_front();
     }
 
     // Heart beat.

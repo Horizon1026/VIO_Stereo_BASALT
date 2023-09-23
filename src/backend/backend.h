@@ -23,12 +23,24 @@ struct BackendLog {
 };
 #pragma pack()
 
+/* Status of Backend. */
+union BackendStatus {
+    struct {
+        uint32_t is_initialized : 1;
+        uint32_t reserved : 31;
+    };
+    uint32_t all_bits = 0;
+};
+static_assert(sizeof(BackendStatus) == sizeof(uint32_t), "Size of BackendStatus should be equal to size of uint32_t.");
+
 /* Class Backend Declaration. */
 class Backend final {
 
 public:
     Backend() = default;
     ~Backend() = default;
+
+    bool RunOnce();
 
     // Support for vio initialization.
     bool TryToInitialize();
@@ -41,8 +53,9 @@ public:
     const BackendOptions &options() const { return options_; }
 
 private:
-    // Options for backend.
+    // Options and status of backend.
     BackendOptions options_;
+    BackendStatus status_;
 
     // Regiser data manager.
     DataManager *data_manager_ = nullptr;
