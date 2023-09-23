@@ -35,12 +35,10 @@ public:
 
     // Reference for member variables.
     BackendOptions &options() { return options_; }
-    DataManager *data_manager() { return data_manager_; }
+    DataManager *&data_manager() { return data_manager_; }
 
     // Const reference for member variables.
     const BackendOptions &options() const { return options_; }
-    const DataManager *data_manager() const { return data_manager_; }
-
 
 private:
     // Options for backend.

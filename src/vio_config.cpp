@@ -16,21 +16,29 @@ bool Vio::ConfigAllComponents() {
     if (!ConfigComponentOfDataManager()) {
         ReportError(RED "[Vio] Failed to config data manager." RESET_COLOR);
         return false;
+    } else {
+        ReportInfo(GREEN "[Vio] Data manager initialized." RESET_COLOR);
     }
 
     if (!ConfigComponentOfDataLoader()) {
         ReportError(RED "[Vio] Failed to config data loader." RESET_COLOR);
         return false;
+    } else {
+        ReportInfo(GREEN "[Vio] Data loader initialized." RESET_COLOR);
     }
 
     if (!ConfigComponentOfFrontend()) {
         ReportError(RED "[Vio] Failed to config visual frontend." RESET_COLOR);
         return false;
+    } else {
+        ReportInfo(GREEN "[Vio] Visual frontend initialized." RESET_COLOR);
     }
 
     if (!ConfigComponentOfBackend()) {
         ReportError(RED "[Vio] Failed to config backend." RESET_COLOR);
         return false;
+    } else {
+        ReportInfo(GREEN "[Vio] backend initialized." RESET_COLOR);
     }
 
     return true;
@@ -38,8 +46,6 @@ bool Vio::ConfigAllComponents() {
 
 bool Vio::ConfigComponentOfDataManager() {
     data_manager_ = std::make_unique<DataManager>();
-
-    ReportInfo("[Vio] Data manager initialized.");
     return true;
 }
 
@@ -51,7 +57,6 @@ bool Vio::ConfigComponentOfDataLoader() {
     data_loader_->options().kEnableRecordBinaryCurveLog = options_.data_loader.enable_recording_curve_binlog;
     RETURN_FALSE_IF_FALSE(data_loader_->Initialize(options_.log_file_root_name + options_.data_loader.log_file_name));
 
-    ReportInfo("[Vio] Data loader initialized.");
     return true;
 }
 
@@ -90,7 +95,6 @@ bool Vio::ConfigComponentOfFrontend() {
     frontend_->feature_tracker()->options().kPatchColHalfSize = options_.frontend.feature_tracker.half_col_size_of_patch;
     frontend_->feature_tracker()->options().kMaxIteration = options_.frontend.feature_tracker.max_iterations;
 
-    ReportInfo("[Vio] Visual frontend initialized.");
     return true;
 }
 
@@ -99,7 +103,9 @@ bool Vio::ConfigComponentOfBackend() {
     backend_ = std::make_unique<Backend>();
     backend_->options().kEnableRecordBinaryCurveLog = options_.backend.enable_recording_curve_binlog;
 
-    ReportInfo("[Vio] Backend initialized.");
+    // Register components.
+    backend_->data_manager() = data_manager_.get();
+
     return true;
 }
 
