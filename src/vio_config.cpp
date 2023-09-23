@@ -14,17 +14,22 @@ namespace VIO {
 
 bool Vio::ConfigAllComponents() {
     if (!ConfigComponentOfDataManager()) {
-        ReportError("[Vio] Failed to config data manager.");
+        ReportError(RED "[Vio] Failed to config data manager." RESET_COLOR);
         return false;
     }
 
     if (!ConfigComponentOfDataLoader()) {
-        ReportError("[Vio] Failed to config data loader.");
+        ReportError(RED "[Vio] Failed to config data loader." RESET_COLOR);
         return false;
     }
 
     if (!ConfigComponentOfFrontend()) {
-        ReportError("[Vio] Failed to config visual frontend.");
+        ReportError(RED "[Vio] Failed to config visual frontend." RESET_COLOR);
+        return false;
+    }
+
+    if (!ConfigComponentOfBackend()) {
+        ReportError(RED "[Vio] Failed to config backend." RESET_COLOR);
         return false;
     }
 
@@ -86,6 +91,15 @@ bool Vio::ConfigComponentOfFrontend() {
     frontend_->feature_tracker()->options().kMaxIteration = options_.frontend.feature_tracker.max_iterations;
 
     ReportInfo("[Vio] Visual frontend initialized.");
+    return true;
+}
+
+bool Vio::ConfigComponentOfBackend() {
+    // Config backend.
+    backend_ = std::make_unique<Backend>();
+    backend_->options().kEnableRecordBinaryCurveLog = options_.backend.enable_recording_curve_binlog;
+
+    ReportInfo("[Vio] Backend initialized.");
     return true;
 }
 

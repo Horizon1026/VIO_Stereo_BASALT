@@ -127,7 +127,8 @@ int main(int argc, char **argv) {
         dataset_root_dir = argv[1];
     }
 
-    ReportInfo(YELLOW ">> Test vio." RESET_COLOR);
+    // Config vio.
+    ReportInfo(YELLOW ">> Test vio on " << dataset_root_dir << "." RESET_COLOR);
     vio.options().frontend.image_rows = 480;
     vio.options().frontend.image_cols = 752;
     vio.options().frontend.enable_recording_curve_binlog = true;
@@ -135,9 +136,9 @@ int main(int argc, char **argv) {
     vio.options().frontend.enable_drawing_track_result = false;
     vio.ConfigAllComponents();
 
-    float imu_timeout_ms = 3.5f;
-    float image_timeout_ms = 33.0f;
-
+    // Start threads for data pipeline and vio node.
+    const float imu_timeout_ms = 3.5f;
+    const float image_timeout_ms = 30.0f;
     std::thread thread_pub_imu_data{PublishImuData, dataset_root_dir + "mav0/imu0/data.csv", imu_timeout_ms};
     std::thread thread_pub_cam_left_data(PublishCameraData, dataset_root_dir + "mav0/cam0/data.csv", dataset_root_dir + "mav0/cam0/data/", image_timeout_ms, true);
     std::thread thread_pub_cam_right_data(PublishCameraData, dataset_root_dir + "mav0/cam1/data.csv", dataset_root_dir + "mav0/cam1/data/", image_timeout_ms, false);

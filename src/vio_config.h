@@ -47,7 +47,6 @@ struct VioOptionsOfFrontend {
 struct VioOptionsOfBackend {
     bool enable_recording_curve_binlog = true;
     std::string log_file_name = "backend.binlog";
-    // TODO:
 };
 
 struct VioOptionsOfDataLoader {
