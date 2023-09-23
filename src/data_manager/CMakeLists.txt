@@ -29,6 +29,18 @@ if ( NOT TARGET lib_object_pool )
     add_subdirectory( ${SLAM_UTILITY_PATH}/data_struct/object_pool ${PROJECT_SOURCE_DIR}/build/lib_object_pool )
 endif()
 
+# Add data loader.
+set( DATA_LOADER_PATH ${PROJECT_SOURCE_DIR}/../VIO_Stereo_BASALT/src/data_loader )
+if ( NOT TARGET lib_vio_stereo_basalt_data_loader )
+    add_subdirectory( ${DATA_LOADER_PATH} ${PROJECT_SOURCE_DIR}/build/lib_vio_stereo_basalt_data_loader )
+endif()
+
+# Add visual frontend.
+set( VISUAL_FRONTEND_PATH ${PROJECT_SOURCE_DIR}/../VIO_Stereo_BASALT/src/frontend )
+if ( NOT TARGET lib_vio_stereo_basalt_frontend )
+    add_subdirectory( ${VISUAL_FRONTEND_PATH} ${PROJECT_SOURCE_DIR}/build/lib_vio_stereo_basalt_frontend )
+endif()
+
 # Add imu model.
 set( SENSOR_MODEL_PATH ${PROJECT_SOURCE_DIR}/../Sensor_Model/src )
 if ( NOT TARGET lib_imu_model )
@@ -45,6 +57,9 @@ target_link_libraries( lib_vio_stereo_basalt_data_manager
     lib_slam_utility_log
     lib_slam_utility_memory
     lib_slam_utility_tick_tock
+
+    lib_vio_stereo_basalt_data_loader
+    lib_vio_stereo_basalt_frontend
 
     lib_covisible_graph
     lib_object_pool

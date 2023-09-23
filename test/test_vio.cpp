@@ -133,7 +133,7 @@ int main(int argc, char **argv) {
     vio.options().frontend.image_cols = 752;
     vio.options().frontend.enable_recording_curve_binlog = true;
     vio.options().frontend.enable_recording_image_binlog = false;
-    vio.options().frontend.enable_drawing_track_result = false;
+    vio.options().frontend.enable_drawing_track_result = true;
     vio.ConfigAllComponents();
 
     // Start threads for data pipeline and vio node.

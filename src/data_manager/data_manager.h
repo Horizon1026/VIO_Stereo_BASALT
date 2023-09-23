@@ -4,6 +4,8 @@
 #include "datatype_basic.h"
 #include "covisible_graph.h"
 #include "imu.h"
+#include "data_loader.h"
+#include "visual_frontend.h"
 
 #include "memory"
 #include "deque"
@@ -26,11 +28,16 @@ using CovisibleGraphType = CovisibleGraph<FeatureParameter, FeatureObserve>;
 /* Definition of Frame and FrameWithBias. */
 using FrameType = VisualFrame<FeatureType>;
 struct FrameWithBias {
-    FrameType frame;
-    Vec3 bias_accel = Vec3::Zero();
-    Vec3 bias_gyro = Vec3::Zero();
+    // Camera position, velocity, attitude combined with this frame.
+    Quat q_wc = Quat::Identity();
+    Vec3 p_wc = Vec3::Zero();
+    Vec3 v_wc = Vec3::Zero();
+    // Imu bias of accel and gyro is inside imu_preint_block.
     ImuPreintegrateBlock imu_preint_block;
-    std::vector<ImuMeasurement> raw_imu_data;
+    float time_stamp_s_ = 0.0f;
+
+    std::unique_ptr<PackedMeasurement> packed_measure = nullptr;
+    std::unique_ptr<FrontendOutputData> visual_measure = nullptr;
 };
 
 /* Class Data Manager Declaration. */
@@ -39,6 +46,10 @@ class DataManager final {
 public:
     DataManager() = default;
     ~DataManager() = default;
+
+    // Transform packed measurements to a new frame.
+    bool ProcessMeasure(std::unique_ptr<PackedMeasurement> &new_packed_measure,
+                        FrontendOutputData &visual_frontend_data);
 
     // Reference for member variables.
     CovisibleGraphType *visual_local_map() { return visual_local_map_.get(); }

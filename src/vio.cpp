@@ -7,8 +7,8 @@ namespace VIO {
 
 bool Vio::RunOnce() {
     // Try to load packed measurements.
-    PackedMeasurement measure;
-    const bool res = data_loader_->PopPackedMeasurement(measure);
+    std::unique_ptr<PackedMeasurement> measure = std::make_unique<PackedMeasurement>();
+    const bool res = data_loader_->PopPackedMeasurement(*measure);
     if (!res) {
         const float time_s_for_no_data = measure_invalid_timer_.TockInSecond();
         if (time_s_for_no_data > options_.max_tolerence_time_s_for_no_data) {
@@ -19,13 +19,22 @@ bool Vio::RunOnce() {
     measure_invalid_timer_.TockTickInSecond();
 
     // Check integrity of the packed measurements.
-    if (measure.imus.empty() || measure.left_image == nullptr || measure.right_image == nullptr) {
+    if (measure->imus.empty() || measure->left_image == nullptr || measure->right_image == nullptr) {
         ReportWarn("[Vio] Packed measurements is not valid at " << vio_sys_timer_.TockInSecond() << " s.");
         return false;
     }
 
-    // Process image measurements.
-    frontend_->RunOnce(measure.left_image->image, measure.right_image->image);
+    // Preprocess image measurements.
+    if (!frontend_->RunOnce(GrayImage(measure->left_image->image), GrayImage(measure->right_image->image))) {
+        ReportWarn("[Vio] Visual frontend failed to run once at " << vio_sys_timer_.TockInSecond() << " s.");
+        return false;
+    }
+
+    // Process image and imu measurements.
+    if (!data_manager_->ProcessMeasure(measure, frontend_->output_data())) {
+        ReportWarn("[Vio] Data manager failed to process image and imu measurements at " << vio_sys_timer_.TockInSecond() << " s.");
+        return false;
+    }
 
     // Heart beat.
     if (vio_heart_beat_timer_.TockInSecond() > options_.heart_beat_period_time_s) {

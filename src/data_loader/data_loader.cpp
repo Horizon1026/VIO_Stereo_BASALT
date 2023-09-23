@@ -82,7 +82,7 @@ bool DataLoader::PushImageMeasurement(uint8_t *image_ptr,
 
     auto object_ptr = image_pool_.Get();
     object_ptr->time_stamp_s = time_stamp_s;
-    object_ptr->image.SetImage(image_ptr, image_rows, image_cols, true);
+    object_ptr->image = Eigen::Map<MatImg>(image_ptr, image_rows, image_cols);
 
     std::unique_lock<std::mutex> lck(image_mutex);
     image_buffer_ptr->emplace_back(std::move(object_ptr));
