@@ -42,7 +42,7 @@ struct FrameWithBias {
     Vec3 v_wc = Vec3::Zero();
     // Imu bias of accel and gyro is inside imu_preint_block.
     ImuPreintegrateBlock imu_preint_block;
-    float time_stamp_s_ = 0.0f;
+    float time_stamp_s = 0.0f;
     // Measurement of raw imu(gyro, acc), raw image(left, right) and visual features.
     std::unique_ptr<PackedMeasurement> packed_measure = nullptr;
     std::unique_ptr<FrontendOutputData> visual_measure = nullptr;

@@ -40,6 +40,9 @@ public:
     const std::unique_ptr<Backend> &backend() const { return backend_; }
 
 private:
+    // Basic methods.
+    void HeartBeat();
+
     // Config all components of vio.
     bool ConfigComponentOfDataManager();
     bool ConfigComponentOfDataLoader();

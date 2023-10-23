@@ -33,6 +33,21 @@ if ( NOT TARGET lib_vio_stereo_basalt_data_manager )
     add_subdirectory( ${DATA_MANAGER_PATH}/data_manager ${PROJECT_SOURCE_DIR}/build/lib_vio_stereo_basalt_data_manager )
 endif()
 
+# Add all components of vision geometry.
+set( VISION_GEOMETRY_PATH ${PROJECT_SOURCE_DIR}/../Vision_Geometry/src )
+if ( NOT TARGET lib_vision_geometry_epipolar )
+    add_subdirectory( ${VISION_GEOMETRY_PATH}/epipolar ${PROJECT_SOURCE_DIR}/build/lib_vision_geometry_epipolar )
+endif()
+if ( NOT TARGET lib_vision_geometry_pnp )
+    add_subdirectory( ${VISION_GEOMETRY_PATH}/perspective_n_point ${PROJECT_SOURCE_DIR}/build/lib_vision_geometry_pnp )
+endif()
+if ( NOT TARGET lib_vision_geometry_triangulation )
+    add_subdirectory( ${VISION_GEOMETRY_PATH}/triangulation ${PROJECT_SOURCE_DIR}/build/lib_vision_geometry_triangulation )
+endif()
+if ( NOT TARGET lib_vision_geometry_relative_rotation )
+    add_subdirectory( ${VISION_GEOMETRY_PATH}/relative_rotation ${PROJECT_SOURCE_DIR}/build/lib_vision_geometry_relative_rotation )
+endif()
+
 # Add slam solver : general_graph_optimizor.
 set( SLAM_SOLVER_PATH ${PROJECT_SOURCE_DIR}/../Slam_Solver/src )
 if ( NOT TARGET lib_general_graph_optimizor )
@@ -51,6 +66,11 @@ target_link_libraries( lib_vio_stereo_basalt_backend
     lib_slam_utility_tick_tock
 
     lib_vio_stereo_basalt_data_manager
+
+    lib_vision_geometry_epipolar
+    lib_vision_geometry_pnp
+    lib_vision_geometry_triangulation
+    lib_vision_geometry_relative_rotation
 
     lib_binary_data_log
     lib_general_graph_optimizor

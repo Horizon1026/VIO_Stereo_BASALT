@@ -48,13 +48,16 @@ bool Vio::RunOnce() {
         data_manager_->new_frames().pop_front();
     }
 
-    // Heart beat.
+    HeartBeat();
+
+    return true;
+}
+
+void Vio::HeartBeat() {
     if (vio_heart_beat_timer_.TockInSecond() > options_.heart_beat_period_time_s) {
         ReportInfo("[Vio] Heart beat for " << vio_heart_beat_timer_.TockTickInSecond() << " s. Vio has running for " <<
             vio_sys_timer_.TockInSecond() << " s.");
     }
-
-    return true;
 }
 
 }
