@@ -29,7 +29,7 @@ struct FeatureParameter {
     float invdep = 1.0f;
     bool is_solved = false;
 };
-using FeatureObserve = std::vector<Vec2>;   // Left norm plane and right norm plane.
+using FeatureObserve = std::vector<ObservePerView>; // Use std::vector to store observations of left and right camera.
 using FeatureType = VisualFeature<FeatureParameter, FeatureObserve>;
 using CovisibleGraphType = CovisibleGraph<FeatureParameter, FeatureObserve>;
 

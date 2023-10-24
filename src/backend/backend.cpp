@@ -34,9 +34,9 @@ bool Backend::TryToInitialize() {
     std::unique_ptr<CovisibleGraphType> covisible_graph = std::make_unique<CovisibleGraphType>();
     for (const auto &frame : data_manager_->new_frames()) {
         RETURN_FALSE_IF(frame.visual_measure == nullptr);
-        // covisible_graph->AddNewFrameWithFeatures(frame.visual_measure->features_id,
-        //                                          frame.visual_measure->observes_per_frame,
-        //                                          frame.time_stamp_s);
+        covisible_graph->AddNewFrameWithFeatures(frame.visual_measure->features_id,
+                                                 frame.visual_measure->observes_per_frame,
+                                                 frame.time_stamp_s);
     }
     if (!covisible_graph->SelfCheck()) {
         ReportError("[Backend] Covisible graph of new frames failed to check itself.");
