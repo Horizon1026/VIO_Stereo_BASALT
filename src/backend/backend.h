@@ -1,6 +1,7 @@
 #ifndef _VIO_STEREO_ORB_SLAM3_BACKEND_H_
 #define _VIO_STEREO_ORB_SLAM3_BACKEND_H_
 
+#include "imu.h"
 #include "data_manager.h"
 #include "binary_data_log.h"
 #include "general_graph_optimizor.h"
@@ -10,6 +11,7 @@ namespace VIO {
 using namespace SLAM_UTILITY;
 using namespace SLAM_DATA_LOG;
 using namespace SLAM_SOLVER;
+using namespace SENSOR_MODEL;
 
 /* Options for Backend. */
 struct BackendOptions {
@@ -44,21 +46,26 @@ public:
 
     // Support for vio initialization.
     bool TryToInitialize();
+    bool ConvertNewFramesToCovisibleGraphForInitialization();
+    bool EstimateGyroBiasForInitialization();
 
     // Reference for member variables.
     BackendOptions &options() { return options_; }
     DataManager *&data_manager() { return data_manager_; }
+    std::unique_ptr<Imu> &imu_model() { return imu_model_; }
 
     // Const reference for member variables.
     const BackendOptions &options() const { return options_; }
+    const std::unique_ptr<Imu> &imu_model() const { return imu_model_; }
 
 private:
     // Options and status of backend.
     BackendOptions options_;
     BackendStatus status_;
 
-    // Regiser data manager.
+    // Register some relative components.
     DataManager *data_manager_ = nullptr;
+    std::unique_ptr<Imu> imu_model_ = nullptr;
 
     // Record log.
     BinaryDataLog logger_;

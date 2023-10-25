@@ -106,6 +106,13 @@ bool Vio::ConfigComponentOfBackend() {
     backend_ = std::make_unique<Backend>();
     backend_->options().kEnableRecordBinaryCurveLog = options_.backend.enable_recording_curve_binlog;
 
+    // Config imu model.
+    backend_->imu_model() = std::make_unique<Imu>();
+    backend_->imu_model()->options().kAccelNoise = options_.imu.noise_accel;
+    backend_->imu_model()->options().kGyroNoise = options_.imu.noise_gyro;
+    backend_->imu_model()->options().kAccelRandomWalk = options_.imu.random_walk_accel;
+    backend_->imu_model()->options().kGyroRandomWalk = options_.imu.random_walk_gyro;
+
     // Register components.
     backend_->data_manager() = data_manager_.get();
 

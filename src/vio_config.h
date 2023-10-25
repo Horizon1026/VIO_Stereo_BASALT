@@ -18,6 +18,13 @@ struct VioOptionsOfCamera {
     float p2 = 1.76187114e-05f;
 };
 
+struct VioOptionsOfImu {
+    float noise_accel = 1e-2f;
+    float noise_gyro = 1e-2f;
+    float random_walk_accel = 1e-4f;
+    float random_walk_gyro = 1e-4f;
+};
+
 struct VioOptionsOfFeatureDetector {
     int32_t min_valid_feature_distance = 30;
     int32_t grid_filter_rows = 10;
@@ -67,6 +74,7 @@ struct VioOptions {
     float max_tolerence_time_s_for_no_data = 2.0f;
     float heart_beat_period_time_s = 1.0f;
     VioOptionsOfCamera camera;
+    VioOptionsOfImu imu;
     VioOptionsOfFrontend frontend;
     VioOptionsOfBackend backend;
     VioOptionsOfDataLoader data_loader;
