@@ -50,6 +50,7 @@ bool Backend::ConvertNewFramesToCovisibleGraphForInitialization() {
     auto local_map_ptr = data_manager_->visual_local_map();
     for (const auto &frame : data_manager_->new_frames()) {
         RETURN_FALSE_IF(frame.visual_measure == nullptr);
+        ReportDebug("[Backend] Frame at " << frame.time_stamp_s << "s has " << frame.visual_measure->features_id.size() << " features.");
         local_map_ptr->AddNewFrameWithFeatures(frame.visual_measure->features_id,
                                                frame.visual_measure->observes_per_frame,
                                                frame.time_stamp_s);
@@ -71,7 +72,7 @@ bool Backend::EstimateGyroBiasForInitialization() {
         for (int32_t i = 1; i < max_idx; ++i) {
             frame.imu_preint_block.Propagate(*frame.packed_measure->imus[i - 1], *frame.packed_measure->imus[i]);
         }
-        frame.imu_preint_block.Information();
+        // frame.imu_preint_block.Information();
     }
 
     // Iterate all frames.
