@@ -1,6 +1,8 @@
 #include "backend.h"
 #include "log_report.h"
 
+#include "geometry_epipolar.h"
+
 namespace VIO {
 
 bool Backend::RunOnce() {
@@ -83,6 +85,30 @@ bool Backend::EstimateGyroBiasForInitialization() {
         // Get covisible features.
         data_manager_->visual_local_map()->GetCovisibleFeatures(i, i + 1, covisible_features);
         ReportDebug("[Backend] Frame " << i << " and " << i + 1 << " have " << covisible_features.size() << " covisible features.");
+
+        // Debug: Estimate rotation and translation by 5pts methods.
+        std::vector<Vec2> ref_norm_xy;
+        std::vector<Vec2> cur_norm_xy;
+        Mat3 essential = Mat3::Zero();
+        Mat3 R_cr = Mat3::Identity();
+        Vec3 t_cr = Vec3::Zero();
+        std::vector<uint8_t> status;
+
+        for (const auto &feature_ptr : covisible_features) {
+            ref_norm_xy.emplace_back(feature_ptr->observe(i)[0].rectified_norm_xy);
+            cur_norm_xy.emplace_back(feature_ptr->observe(i + 1)[0].rectified_norm_xy);
+        }
+        ReportDebug("ref_norm_xy and cur_norm_xy size is " << ref_norm_xy.size() << ", " << cur_norm_xy.size());
+
+        using namespace VISION_GEOMETRY;
+        EpipolarSolver solver;
+        solver.options().kMethod = EpipolarSolver::EpipolarMethod::kRansac;
+        solver.options().kModel = EpipolarSolver::EpipolarModel::kFivePoints;
+        solver.EstimateEssential(ref_norm_xy, cur_norm_xy, essential, status);
+        solver.RecoverPoseFromEssential(ref_norm_xy, cur_norm_xy, essential, R_cr, t_cr);
+        ReportDebug("R_cr is\n" << R_cr);
+        ReportDebug("t_cr is " << t_cr.transpose());
+
         // Precompute summation terms for iteration.
 
         // Estimate gyro bias by iteration.
