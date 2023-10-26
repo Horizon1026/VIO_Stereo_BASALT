@@ -72,16 +72,17 @@ bool Backend::EstimateGyroBiasForInitialization() {
         for (int32_t i = 1; i < max_idx; ++i) {
             frame.imu_preint_block.Propagate(*frame.packed_measure->imus[i - 1], *frame.packed_measure->imus[i]);
         }
-        // frame.imu_preint_block.Information();
+        frame.imu_preint_block.Information();
     }
 
     // Iterate all frames.
-    const uint32_t max_frames_idx = data_manager_->visual_local_map()->frames().size();
+    const uint32_t max_frames_idx = data_manager_->visual_local_map()->frames().back().id();
+    const uint32_t min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
     std::vector<FeatureType *> covisible_features;
-    for (uint32_t i = 1; i < max_frames_idx; ++i) {
+    for (uint32_t i = min_frames_idx; i < max_frames_idx; ++i) {
         // Get covisible features.
-        data_manager_->visual_local_map()->GetCovisibleFeatures(i - 1, i, covisible_features);
-        ReportDebug("[Backend] Frame " << i - 1 << " and " << i << " have " << covisible_features.size() << " covisible features.");
+        data_manager_->visual_local_map()->GetCovisibleFeatures(i, i + 1, covisible_features);
+        ReportDebug("[Backend] Frame " << i << " and " << i + 1 << " have " << covisible_features.size() << " covisible features.");
         // Precompute summation terms for iteration.
 
         // Estimate gyro bias by iteration.
