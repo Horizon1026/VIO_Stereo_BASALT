@@ -15,7 +15,6 @@ double time_stamp_offset = 1403638518.0;
 
 void PublishImuData(const std::string &csv_file_path,
                     const float period_ms) {
-
     std::ifstream file(csv_file_path.c_str());
     if (!file.is_open()) {
         ReportError("Failed to load imu data file " << csv_file_path);
