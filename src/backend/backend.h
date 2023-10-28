@@ -43,6 +43,8 @@ public:
     ~Backend() = default;
 
     bool RunOnce();
+    void Reset();
+    void ResetToReintialize();
 
     // Support for vio initialization.
     bool TryToInitialize();
