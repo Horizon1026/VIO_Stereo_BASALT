@@ -73,7 +73,6 @@ bool Backend::ConvertNewFramesToCovisibleGraphForInitialization() {
     auto local_map_ptr = data_manager_->visual_local_map();
     for (const auto &frame : data_manager_->new_frames()) {
         RETURN_FALSE_IF(frame.visual_measure == nullptr);
-        ReportDebug("[Backend] Frame at " << frame.time_stamp_s << "s has " << frame.visual_measure->features_id.size() << " features.");
         local_map_ptr->AddNewFrameWithFeatures(frame.visual_measure->features_id,
                                                frame.visual_measure->observes_per_frame,
                                                frame.time_stamp_s);
@@ -94,10 +93,7 @@ bool Backend::EstimateGyroBiasForInitialization() {
         const int32_t max_idx = static_cast<int32_t>(frame.packed_measure->imus.size());
         for (int32_t i = 1; i < max_idx; ++i) {
             frame.imu_preint_block.Propagate(*frame.packed_measure->imus[i - 1], *frame.packed_measure->imus[i]);
-            ReportDebug("[Backend] Imu measure at " << frame.packed_measure->imus[i - 1]->time_stamp_s << " : accel " <<
-                LogVec(frame.packed_measure->imus[i - 1]->accel) << ", gyro " << LogVec(frame.packed_measure->imus[i - 1]->gyro));
         }
-        frame.imu_preint_block.Information();
     }
 
     // Iterate all frames.
@@ -118,7 +114,6 @@ bool Backend::EstimateGyroBiasForInitialization() {
             ref_norm_xy.emplace_back(feature_ptr->observe(i)[0].rectified_norm_xy);
             cur_norm_xy.emplace_back(feature_ptr->observe(i + 1)[0].rectified_norm_xy);
         }
-        ReportDebug("[Backend] Frame " << i << " and " << i + 1 << " have " << covisible_features.size() << " covisible features.");
 
         // Precompute summation terms for iteration.
         SummationTerms terms;
@@ -128,7 +123,6 @@ bool Backend::EstimateGyroBiasForInitialization() {
         ImuPreintegrateBlock &imu_preint_block = new_frame_iter->imu_preint_block;
         ++new_frame_iter;
         const Mat3 dr_dbg = imu_preint_block.dr_dbg();
-        ReportDebug("[Backend] Imu preintegrate dr_dbg is\n" << dr_dbg);
 
         // Estimate gyro bias by iteration.
         // Prepare for optimizaiton.
@@ -141,7 +135,7 @@ bool Backend::EstimateGyroBiasForInitialization() {
         Eigen::NumericalDiff<GyroBiasSolveStep> num_diff(functor);
         Eigen::LevenbergMarquardt<Eigen::NumericalDiff<GyroBiasSolveStep>, float> solver(num_diff);
         solver.resetParameters();
-        solver.parameters.ftol = 5e-5f;
+        solver.parameters.ftol = 1e-5f;
         solver.parameters.xtol = Eigen::NumTraits<float>::epsilon();
         solver.parameters.maxfev = 100;
         solver.minimize(x);
@@ -149,8 +143,7 @@ bool Backend::EstimateGyroBiasForInitialization() {
         // Recovery rotation matrix from cayley.
         const Vec3 bias_g = x;
         imu_preint_block.bias_gyro() = bias_g;
-        ReportDebug("[Backend] Estimated bias_g is " << LogVec(bias_g));
-
+        imu_preint_block.SimpleInformation();
     }
 
     return true;
