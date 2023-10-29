@@ -106,6 +106,15 @@ bool Backend::EstimateGyroBiasForInitialization() {
     ref_norm_xy.reserve(200);
     cur_norm_xy.reserve(200);
     for (uint32_t i = min_frames_idx; i < max_frames_idx; ++i) {
+        // Localize the frame with bias in 'new_frames_' between frame i and i + 1.
+        ImuPreintegrateBlock &imu_preint_block = new_frame_iter->imu_preint_block;
+        ++new_frame_iter;
+        const Mat3 dr_dbg = imu_preint_block.dr_dbg();
+        const Quat q_ij = imu_preint_block.q_ij();
+
+        // Localize the left camera extrinsic.
+        const Quat q_ic = data_manager_->camera_extrinsics().front().q_ic;
+
         // Get covisible features.
         data_manager_->visual_local_map()->GetCovisibleFeatures(i, i + 1, covisible_features);
         ref_norm_xy.clear();
@@ -117,12 +126,19 @@ bool Backend::EstimateGyroBiasForInitialization() {
 
         // Precompute summation terms for iteration.
         SummationTerms terms;
-        RelativeRotation::ComputeSummationTerms(ref_norm_xy, cur_norm_xy, terms);
+        for (uint32_t i = 0; i < ref_norm_xy.size(); ++i) {
+            const Vec3 f_i = q_ij.inverse() * q_ic * Vec3(ref_norm_xy[i].x(), ref_norm_xy[i].y(), 1.0f);
+            const Vec3 f_j = q_ic * Vec3(cur_norm_xy[i].x(), cur_norm_xy[i].y(), 1.0f);
+            const Mat3 F = f_i * f_i.transpose();
+            const float weight = 1.0f;
 
-        // Localize the frame with bias in 'new_frames_' between frame i and i + 1.
-        ImuPreintegrateBlock &imu_preint_block = new_frame_iter->imu_preint_block;
-        ++new_frame_iter;
-        const Mat3 dr_dbg = imu_preint_block.dr_dbg();
+            terms.xx += weight * f_j.x() * f_j.x() * F;
+            terms.yy += weight * f_j.y() * f_j.y() * F;
+            terms.zz += weight * f_j.z() * f_j.z() * F;
+            terms.xy += weight * f_j.x() * f_j.y() * F;
+            terms.yz += weight * f_j.y() * f_j.z() * F;
+            terms.zx += weight * f_j.z() * f_j.x() * F;
+        }
 
         // Estimate gyro bias by iteration.
         // Prepare for optimizaiton.

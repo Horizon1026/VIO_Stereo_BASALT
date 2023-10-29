@@ -22,8 +22,8 @@ struct GyroBiasSolveStep : OptimizationFunctor<float> {
         terms_(terms), dr_dbg_(dr_dbg) {}
 
     int operator()(const Vec &x, Vec &fvec) const {
-        const Vec3 delta_bg = x;
-        const Vec3 delta_rot = dr_dbg_ * delta_bg;
+        const Vec3 bias_gyro = x;
+        const Vec3 delta_rot = dr_dbg_ * bias_gyro;
         const Quat q = Utility::Exponent(delta_rot);
         const Vec3 cayley = Utility::ConvertRotationMatrixToCayley(q.matrix());
         Mat1x3 dlambda_dcayley = Mat1x3::Zero();

@@ -38,17 +38,32 @@ bool Vio::ConfigAllComponents() {
         ReportError(RED "[Vio] Failed to configure backend." RESET_COLOR);
         return false;
     } else {
-        ReportInfo(GREEN "[Vio] backend configured." RESET_COLOR);
+        ReportInfo(GREEN "[Vio] Backend configured." RESET_COLOR);
     }
 
     return true;
 }
 
 bool Vio::ConfigComponentOfDataManager() {
+    // Config data manager.
     data_manager_ = std::make_unique<DataManager>();
     data_manager_->options().kMaxStoredKeyframes = options_.data_manager.max_num_of_stored_keyframes;
     data_manager_->options().kMaxStoredNewFrames = options_.data_manager.max_num_of_stored_new_frames;
     data_manager_->options().kEnableRecordBinaryCurveLog = options_.data_manager.enable_recording_curve_binlog;
+
+    // Config all camera extrinsics.
+    if (options_.data_manager.all_R_ic.size() != options_.data_manager.all_t_ic.size()) {
+        ReportError("[Vio] Camera extrinsics are not valid.");
+        return false;
+    }
+    const uint32_t max_camera_num = options_.data_manager.all_R_ic.size();
+    for (uint32_t i = 0; i < max_camera_num; ++i) {
+        data_manager_->camera_extrinsics().emplace_back(CameraExtrinsic{
+            .q_ic = Quat(options_.data_manager.all_R_ic[i]),
+            .t_ic = options_.data_manager.all_t_ic[i],
+        });
+    }
+
     return true;
 }
 

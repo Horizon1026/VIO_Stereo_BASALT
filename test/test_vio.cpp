@@ -132,13 +132,24 @@ int main(int argc, char **argv) {
         dataset_root_dir = argv[1];
     }
 
-    // Config vio.
+    // Fill configuration of vio.
     ReportInfo(YELLOW ">> Test vio on " << dataset_root_dir << "." RESET_COLOR);
     vio.options().frontend.image_rows = 480;
     vio.options().frontend.image_cols = 752;
     vio.options().frontend.enable_recording_curve_binlog = true;
     vio.options().frontend.enable_recording_image_binlog = false;
     vio.options().frontend.enable_drawing_track_result = true;
+
+    // Fill camera extrinsics.
+    Mat3 R_ic;
+    R_ic << 0.0148655429818,  -0.999880929698,  0.00414029679422,
+            0.999557249008,   0.0149672133247,  0.025715529948,
+            -0.0257744366974, 0.00375618835797, 0.999660727178;
+    const Vec3 t_ic = Vec3(-0.0216401454975,-0.064676986768, 0.00981073058949);
+    vio.options().data_manager.all_R_ic.emplace_back(R_ic);
+    vio.options().data_manager.all_t_ic.emplace_back(t_ic);
+
+    // Config vio.
     vio.ConfigAllComponents();
 
     // Start threads for data pipeline and vio node.

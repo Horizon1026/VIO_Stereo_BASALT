@@ -29,9 +29,17 @@ struct FeatureParameter {
     float invdep = 1.0f;
     bool is_solved = false;
 };
+
+/* Definition of Covisible Graph. */
 using FeatureObserve = std::vector<ObservePerView>; // Use std::vector to store observations of left and right camera.
 using FeatureType = VisualFeature<FeatureParameter, FeatureObserve>;
 using CovisibleGraphType = CovisibleGraph<FeatureParameter, FeatureObserve>;
+
+/* Definition of Camera Extrinsic. */
+struct CameraExtrinsic {
+    Quat q_ic = Quat::Identity();
+    Vec3 t_ic = Vec3::Zero();
+};
 
 /* Definition of Frame and FrameWithBias. */
 using FrameType = VisualFrame<FeatureType>;
@@ -63,6 +71,7 @@ public:
     DataManagerOptions &options() { return options_; }
     CovisibleGraphType *visual_local_map() { return visual_local_map_.get(); }
     std::deque<FrameWithBias> &new_frames() { return new_frames_; }
+    std::vector<CameraExtrinsic> &camera_extrinsics() { return camera_extrinsics_; }
 
 private:
     // Options for data manager.
@@ -74,6 +83,8 @@ private:
     // All new frames with bias.
     // Frames with bias : [ p_wc, q_wc, v_wc, bias_a, bias_g ]
     std::deque<FrameWithBias> new_frames_;
+    // Camera extrinsics.
+    std::vector<CameraExtrinsic> camera_extrinsics_;
 
 };
 
