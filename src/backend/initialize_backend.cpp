@@ -169,6 +169,10 @@ bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
         ReportDebug("frame " << i << " q_wc " << LogQuat(data_manager_->visual_local_map()->frame(i)->q_wc()));
     }
 
+    // Localize the left camera extrinsic.
+    const Quat q_ic = data_manager_->camera_extrinsics().front().q_ic;
+    ReportDebug("q_ic is " << LogQuat(q_ic));
+
     // Iterate to estimate bias gyro.
     const uint32_t max_iteration = 5;
     for (uint32_t iter = 0; iter < max_iteration; ++iter) {
@@ -177,9 +181,6 @@ bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
         // Iterate all imu preintegration block to construct incremental function.
         auto new_frame_iter = std::next(data_manager_->new_frames().begin());
         for (uint32_t i = min_frames_idx; i < max_frames_idx; ++i) {
-            // Localize the left camera extrinsic.
-            const Quat q_ic = data_manager_->camera_extrinsics().front().q_ic;
-
             // Localize the frame with bias in 'new_frames_' between frame i and i + 1.
             ImuPreintegrateBlock &imu_preint_block = new_frame_iter->imu_preint_block;
             ++new_frame_iter;
