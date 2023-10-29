@@ -32,17 +32,23 @@ void PublishImuData(const std::string &csv_file_path,
     }
 
     // Publish each line of data file.
-    double time_stamp_s = 0.0;
-    TVec3<double> accel;
-    TVec3<double> gyro;
-
     while (std::getline(file, one_line) && !one_line.empty()) {
         TickTock timer;
 
         std::istringstream imu_data(one_line);
-        imu_data >> time_stamp_s >> gyro.x() >> gyro.y() >> gyro.z() >> accel.x() >> accel.y() >> accel.z();
+        std::string one_item;
+        uint32_t i = 0;
+        double temp[7] = {};
+        while (std::getline(imu_data, one_item, ',') && !one_item.empty()) {
+            std::istringstream item_data(one_item);
+            item_data >> temp[i];
+            ++i;
+        }
 
         // Send data to dataloader of vio.
+        const double time_stamp_s = temp[0];
+        const Vec3 accel = Vec3(temp[4], temp[5], temp[6]);
+        const Vec3 gyro = Vec3(temp[1], temp[2], temp[3]);
         vio.data_loader()->PushImuMeasurement(accel.cast<float>(), gyro.cast<float>(), static_cast<float>(time_stamp_s * 1e-9 - time_stamp_offset));
 
         // Waiting for next timestamp.
