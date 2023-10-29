@@ -48,6 +48,7 @@ void Backend::RecomputeImuPreintegration() {
     // Compute imu preintegration.
     for (auto &frame : data_manager_->new_frames()) {
         frame.imu_preint_block.Reset();
+
         frame.imu_preint_block.SetImuNoiseSigma(imu_model_->options().kAccelNoise,
                                                 imu_model_->options().kGyroNoise,
                                                 imu_model_->options().kAccelRandomWalk,
