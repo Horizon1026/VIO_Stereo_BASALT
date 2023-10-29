@@ -49,7 +49,14 @@ public:
     // Support for vio initialization.
     bool TryToInitialize();
     bool ConvertNewFramesToCovisibleGraphForInitialization();
+
+    // Estimate gyro bias for initialization.
     bool EstimateGyroBiasForInitialization();
+    bool EstimateGyroBiasByMethodOneForInitialization();
+    bool EstimateGyroBiasByMethodTwoForInitialization();
+
+    // Support for backend.
+    void RecomputeImuPreintegration();
 
     // Reference for member variables.
     BackendOptions &options() { return options_; }
