@@ -73,7 +73,7 @@ bool Backend::EstimateGyroBiasByMethodOneForInitialization() {
         // Localize the left camera extrinsic.
         const Quat q_ic = data_manager_->camera_extrinsics().front().q_ic;
 
-        // Get covisible features.
+        // Get covisible features only in left camera.
         data_manager_->visual_local_map()->GetCovisibleFeatures(i, i + 1, covisible_features);
         ref_norm_xy.clear();
         cur_norm_xy.clear();
@@ -146,7 +146,7 @@ bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
     ref_norm_xy.reserve(200);
     cur_norm_xy.reserve(200);
     for (uint32_t i = min_frames_idx; i < max_frames_idx; ++i) {
-        // Get covisible features.
+        // Get covisible features only in left camera.
         data_manager_->visual_local_map()->GetCovisibleFeatures(i, i + 1, covisible_features);
         ref_norm_xy.clear();
         cur_norm_xy.clear();
