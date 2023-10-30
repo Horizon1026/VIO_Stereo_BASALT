@@ -53,6 +53,10 @@ struct VioOptionsOfFrontend {
 
 struct VioOptionsOfBackend {
     bool enable_recording_curve_binlog = true;
+    /* Method index explaination: */
+    // Method 1: Robust vio initialization - Heyijia.
+    // Method 2: Vins-Mono.
+    uint32_t method_index_to_estimate_gyro_bias_for_initialization = 1;
     std::string log_file_name = "backend.binlog";
 };
 
@@ -63,7 +67,7 @@ struct VioOptionsOfDataLoader {
 
 struct VioOptionsOfDataManager {
     uint32_t max_num_of_stored_keyframes = 5;
-    uint32_t max_num_of_stored_new_frames = 5;
+    uint32_t max_num_of_stored_new_frames = 3;
     bool enable_recording_curve_binlog = true;
     std::string log_file_name = "data_manager.binlog";
     std::vector<Mat3> all_R_ic = {};

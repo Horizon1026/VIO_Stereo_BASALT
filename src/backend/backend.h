@@ -16,6 +16,7 @@ using namespace SENSOR_MODEL;
 /* Options for Backend. */
 struct BackendOptions {
     bool kEnableRecordBinaryCurveLog = true;
+    uint32_t kMethodIndexToEstimateGyroBiasForInitialization = 1;
 };
 
 /* Packages of log to be recorded. */

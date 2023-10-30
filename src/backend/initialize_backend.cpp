@@ -42,7 +42,13 @@ bool Backend::ConvertNewFramesToCovisibleGraphForInitialization() {
 }
 
 bool Backend::EstimateGyroBiasForInitialization() {
-    return EstimateGyroBiasByMethodTwoForInitialization();
+    switch (options_.kMethodIndexToEstimateGyroBiasForInitialization) {
+        case 1:
+            return EstimateGyroBiasByMethodOneForInitialization();
+        case 2:
+        default:
+            return EstimateGyroBiasByMethodTwoForInitialization();
+    }
 }
 
 bool Backend::EstimateGyroBiasByMethodOneForInitialization() {
@@ -148,7 +154,6 @@ bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
             ref_norm_xy.emplace_back(feature_ptr->observe(i)[0].rectified_norm_xy);
             cur_norm_xy.emplace_back(feature_ptr->observe(i + 1)[0].rectified_norm_xy);
         }
-        ReportDebug("ref_norm_xy and cur_norm_xy size is " << ref_norm_xy.size() << ", " << cur_norm_xy.size());
 
         // Estimate pure rotation.
         Quat q_cr = Quat::Identity();
@@ -164,14 +169,8 @@ bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
         data_manager_->visual_local_map()->frame(i + 1)->q_wc() = data_manager_->visual_local_map()->frame(i)->q_wc() * q_cr.inverse();
     }
 
-    // Print rotation of each frame for debug.
-    for (uint32_t i = min_frames_idx; i <= max_frames_idx; ++i) {
-        ReportDebug("frame " << i << " q_wc " << LogQuat(data_manager_->visual_local_map()->frame(i)->q_wc()));
-    }
-
     // Localize the left camera extrinsic.
     const Quat q_ic = data_manager_->camera_extrinsics().front().q_ic;
-    ReportDebug("q_ic is " << LogQuat(q_ic));
 
     // Iterate to estimate bias gyro.
     const uint32_t max_iteration = 5;
@@ -197,7 +196,6 @@ bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
 
         const Vec3 delta_bg = hessian.ldlt().solve(bias);
         RETURN_FALSE_IF(Eigen::isnan(delta_bg.array()).any());
-        ReportDebug("delta bg is " << LogVec(delta_bg));
 
         // Recompute imu preintegration block with new bias of gyro.
         for (auto &frame : data_manager_->new_frames()) {
@@ -213,10 +211,9 @@ bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
         BREAK_IF(delta_bg.squaredNorm() < 1e-6f);
     }
 
-    // Print simple information for debug.
-    for (auto &frame : data_manager_->new_frames()) {
-        frame.imu_preint_block.SimpleInformation();
-    }
+    // Report result.
+    const Vec3 bias_gyro = data_manager_->new_frames().back().imu_preint_block.bias_gyro();
+    ReportInfo("[Backend] Estimate bias of gyro is " << LogVec(bias_gyro));
 
     return true;
 }

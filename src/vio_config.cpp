@@ -120,6 +120,7 @@ bool Vio::ConfigComponentOfBackend() {
     // Config backend.
     backend_ = std::make_unique<Backend>();
     backend_->options().kEnableRecordBinaryCurveLog = options_.backend.enable_recording_curve_binlog;
+    backend_->options().kMethodIndexToEstimateGyroBiasForInitialization = options_.backend.method_index_to_estimate_gyro_bias_for_initialization;
 
     // Config imu model.
     backend_->imu_model() = std::make_unique<Imu>();
