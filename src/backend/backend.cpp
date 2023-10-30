@@ -26,7 +26,7 @@ bool Backend::RunOnce() {
 
 void Backend::Reset() {
     // Clear stored states in data_manager.
-    data_manager_->new_frames().clear();
+    data_manager_->frames_with_bias().clear();
     data_manager_->visual_local_map()->Clear();
 
     // Reset status.
@@ -35,8 +35,8 @@ void Backend::Reset() {
 
 void Backend::ResetToReintialize() {
     // Clear stored states in data_manager.
-    while (data_manager_->new_frames().size() >= data_manager_->options().kMaxStoredNewFrames) {
-        data_manager_->new_frames().pop_front();
+    while (data_manager_->frames_with_bias().size() >= data_manager_->options().kMaxStoredNewFrames) {
+        data_manager_->frames_with_bias().pop_front();
     }
     data_manager_->visual_local_map()->Clear();
 
@@ -46,7 +46,7 @@ void Backend::ResetToReintialize() {
 
 void Backend::RecomputeImuPreintegration() {
     // Compute imu preintegration.
-    for (auto &frame : data_manager_->new_frames()) {
+    for (auto &frame : data_manager_->frames_with_bias()) {
         frame.imu_preint_block.Reset();
 
         frame.imu_preint_block.SetImuNoiseSigma(imu_model_->options().kAccelNoise,

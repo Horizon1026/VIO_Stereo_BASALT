@@ -6,7 +6,7 @@
 namespace VIO {
 
 bool Backend::TryToInitialize() {
-    if (data_manager_->new_frames().size() < data_manager_->options().kMaxStoredNewFrames) {
+    if (data_manager_->frames_with_bias().size() < data_manager_->options().kMaxStoredNewFrames) {
         ReportWarn("[Backend] Backend cannot initialize for lack of new frames.");
         return false;
     }
@@ -30,7 +30,7 @@ bool Backend::ConvertNewFramesToCovisibleGraphForInitialization() {
     RETURN_FALSE_IF(data_manager_->visual_local_map() == nullptr);
 
     auto local_map_ptr = data_manager_->visual_local_map();
-    for (const auto &frame : data_manager_->new_frames()) {
+    for (const auto &frame : data_manager_->frames_with_bias()) {
         RETURN_FALSE_IF(frame.visual_measure == nullptr);
         local_map_ptr->AddNewFrameWithFeatures(frame.visual_measure->features_id,
                                                frame.visual_measure->observes_per_frame,
@@ -57,14 +57,14 @@ bool Backend::EstimateGyroBiasByMethodOneForInitialization() {
     // Iterate all frames.
     const uint32_t max_frames_idx = data_manager_->visual_local_map()->frames().back().id();
     const uint32_t min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
-    auto new_frame_iter = std::next(data_manager_->new_frames().begin());
+    auto new_frame_iter = std::next(data_manager_->frames_with_bias().begin());
     std::vector<FeatureType *> covisible_features;
     std::vector<Vec2> ref_norm_xy;
     std::vector<Vec2> cur_norm_xy;
     ref_norm_xy.reserve(200);
     cur_norm_xy.reserve(200);
     for (uint32_t i = min_frames_idx; i < max_frames_idx; ++i) {
-        // Localize the frame with bias in 'new_frames_' between frame i and i + 1.
+        // Localize the frame with bias in 'frames_with_bias_' between frame i and i + 1.
         ImuPreintegrateBlock &imu_preint_block = new_frame_iter->imu_preint_block;
         ++new_frame_iter;
         const Mat3 dr_dbg = imu_preint_block.dr_dbg();
@@ -121,7 +121,7 @@ bool Backend::EstimateGyroBiasByMethodOneForInitialization() {
     }
 
     // Recompute imu preintegration with new bias of gyro.
-    for (auto &frame : data_manager_->new_frames()) {
+    for (auto &frame : data_manager_->frames_with_bias()) {
         const int32_t max_idx = static_cast<int32_t>(frame.packed_measure->imus.size());
         for (int32_t i = 1; i < max_idx; ++i) {
             frame.imu_preint_block.Propagate(*frame.packed_measure->imus[i - 1], *frame.packed_measure->imus[i]);
@@ -178,9 +178,9 @@ bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
         Mat3 hessian = Mat3::Zero();
         Vec3 bias = Vec3::Zero();
         // Iterate all imu preintegration block to construct incremental function.
-        auto new_frame_iter = std::next(data_manager_->new_frames().begin());
+        auto new_frame_iter = std::next(data_manager_->frames_with_bias().begin());
         for (uint32_t i = min_frames_idx; i < max_frames_idx; ++i) {
-            // Localize the frame with bias in 'new_frames_' between frame i and i + 1.
+            // Localize the frame with bias in 'frames_with_bias_' between frame i and i + 1.
             ImuPreintegrateBlock &imu_preint_block = new_frame_iter->imu_preint_block;
             ++new_frame_iter;
             const Mat3 dr_dbg = imu_preint_block.dr_dbg();
@@ -198,7 +198,7 @@ bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
         RETURN_FALSE_IF(Eigen::isnan(delta_bg.array()).any());
 
         // Recompute imu preintegration block with new bias of gyro.
-        for (auto &frame : data_manager_->new_frames()) {
+        for (auto &frame : data_manager_->frames_with_bias()) {
             frame.imu_preint_block.ResetIntegratedStates();
             frame.imu_preint_block.bias_gyro() += delta_bg;
             const int32_t max_idx = static_cast<int32_t>(frame.packed_measure->imus.size());
@@ -212,7 +212,7 @@ bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
     }
 
     // Report result.
-    const Vec3 bias_gyro = data_manager_->new_frames().back().imu_preint_block.bias_gyro();
+    const Vec3 bias_gyro = data_manager_->frames_with_bias().back().imu_preint_block.bias_gyro();
     ReportInfo("[Backend] Estimate bias of gyro is " << LogVec(bias_gyro));
 
     return true;

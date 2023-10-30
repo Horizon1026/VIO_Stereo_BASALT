@@ -10,8 +10,8 @@ bool DataManager::ProcessMeasure(std::unique_ptr<PackedMeasurement> &new_packed_
         return false;
     }
 
-    new_frames_.emplace_back(FrameWithBias{});
-    FrameWithBias &frame_with_bias = new_frames_.back();
+    frames_with_bias_.emplace_back(FrameWithBias{});
+    FrameWithBias &frame_with_bias = frames_with_bias_.back();
     frame_with_bias.time_stamp_s = new_packed_measure->left_image->time_stamp_s;
     frame_with_bias.packed_measure = std::move(new_packed_measure);
     frame_with_bias.visual_measure = std::move(new_visual_measure);

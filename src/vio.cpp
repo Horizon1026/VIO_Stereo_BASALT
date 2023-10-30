@@ -44,8 +44,8 @@ bool Vio::RunOnce() {
     }
 
     // Control the dimension of problem.
-    if (data_manager_->new_frames().size() >= data_manager_->options().kMaxStoredNewFrames) {
-        data_manager_->new_frames().pop_front();
+    if (data_manager_->frames_with_bias().size() >= data_manager_->options().kMaxStoredNewFrames) {
+        data_manager_->frames_with_bias().pop_front();
     }
 
     HeartBeat();

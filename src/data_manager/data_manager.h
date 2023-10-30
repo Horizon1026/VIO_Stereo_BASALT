@@ -44,10 +44,6 @@ struct CameraExtrinsic {
 /* Definition of Frame and FrameWithBias. */
 using FrameType = VisualFrame<FeatureType>;
 struct FrameWithBias {
-    // Camera position, velocity, attitude combined with this frame.
-    Quat q_wc = Quat::Identity();
-    Vec3 p_wc = Vec3::Zero();
-    Vec3 v_wc = Vec3::Zero();
     // Imu bias of accel and gyro is inside imu_preint_block.
     ImuPreintegrateBlock imu_preint_block;
     float time_stamp_s = 0.0f;
@@ -70,7 +66,7 @@ public:
     // Reference for member variables.
     DataManagerOptions &options() { return options_; }
     CovisibleGraphType *visual_local_map() { return visual_local_map_.get(); }
-    std::deque<FrameWithBias> &new_frames() { return new_frames_; }
+    std::deque<FrameWithBias> &frames_with_bias() { return frames_with_bias_; }
     std::vector<CameraExtrinsic> &camera_extrinsics() { return camera_extrinsics_; }
 
 private:
@@ -80,9 +76,8 @@ private:
     // Keyframes : [ p_wc, q_wc ]
     // Feature Points : [ p_w | invdep ]
     std::unique_ptr<CovisibleGraphType> visual_local_map_ = std::make_unique<CovisibleGraphType>();
-    // All new frames with bias.
-    // Frames with bias : [ p_wc, q_wc, v_wc, bias_a, bias_g ]
-    std::deque<FrameWithBias> new_frames_;
+    // All non-keyframes with bias.
+    std::deque<FrameWithBias> frames_with_bias_;
     // Camera extrinsics.
     std::vector<CameraExtrinsic> camera_extrinsics_;
 
