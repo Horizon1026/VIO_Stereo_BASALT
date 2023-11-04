@@ -25,11 +25,19 @@ struct GyroBiasSolveStep : OptimizationFunctor<float> {
         const Vec3 bias_gyro = x;
         const Vec3 delta_rot = dr_dbg_ * bias_gyro;
         const Quat q = Utility::Exponent(delta_rot);
-        const Vec3 cayley = Utility::ConvertRotationMatrixToCayley(q.matrix());
+        const Vec3 cayley = q.vec() / q.w();
+
         Mat1x3 dlambda_dcayley = Mat1x3::Zero();
         RelativeRotation::ComputeSmallestEigenValueAndJacobian(terms_, cayley, dlambda_dcayley);
 
-        Mat1x3 dlambda_dbg = dlambda_dcayley * dr_dbg_;
+        const float norm = delta_rot.norm();
+        const float temp1 = std::tan(0.5f * norm) / norm;
+        const float temp2 = std::cos(0.5f * norm);
+        const float temp3 = 1.0f / (2.0f * norm * temp2 * temp2) - temp1 / norm;
+        const float temp4 = delta_rot.squaredNorm() / norm;
+        const Mat3 dcayley_dbg = (temp1 + temp3 * temp4) * dr_dbg_;
+
+        const Mat1x3 dlambda_dbg = dlambda_dcayley * dcayley_dbg;
         fvec[0] = dlambda_dbg(0, 0);
         fvec[1] = dlambda_dbg(0, 1);
         fvec[2] = dlambda_dbg(0, 2);
