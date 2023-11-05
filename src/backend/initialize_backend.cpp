@@ -173,17 +173,19 @@ bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
         // Precompute summation terms for iteration.
         SummationTerms terms;
         for (uint32_t i = 0; i < ref_norm_xy.size(); ++i) {
-            const Vec3 f_i = q_ij.inverse() * q_ic * Vec3(ref_norm_xy[i].x(), ref_norm_xy[i].y(), 1.0f);
-            const Vec3 f_j = q_ic * Vec3(cur_norm_xy[i].x(), cur_norm_xy[i].y(), 1.0f);
-            const Mat3 F = f_i * f_i.transpose();
+            const Vec3 f_r = Vec3(ref_norm_xy[i].x(), ref_norm_xy[i].y(), 1.0f);
+            const Vec3 f_c = Vec3(cur_norm_xy[i].x(), cur_norm_xy[i].y(), 1.0f);
+            const Vec3 f_i = q_ij.inverse() * q_ic * f_r;
+            const Vec3 f_j = q_ic * f_c;
+            const Mat3 F = f_j * f_j.transpose();
             const float weight = 1.0f;
 
-            terms.xx += weight * f_j.x() * f_j.x() * F;
-            terms.yy += weight * f_j.y() * f_j.y() * F;
-            terms.zz += weight * f_j.z() * f_j.z() * F;
-            terms.xy += weight * f_j.x() * f_j.y() * F;
-            terms.yz += weight * f_j.y() * f_j.z() * F;
-            terms.zx += weight * f_j.z() * f_j.x() * F;
+            terms.xx += weight * f_i.x() * f_i.x() * F;
+            terms.yy += weight * f_i.y() * f_i.y() * F;
+            terms.zz += weight * f_i.z() * f_i.z() * F;
+            terms.xy += weight * f_i.x() * f_i.y() * F;
+            terms.yz += weight * f_i.y() * f_i.z() * F;
+            terms.zx += weight * f_i.z() * f_i.x() * F;
         }
 
         // Estimate gyro bias by iteration.
