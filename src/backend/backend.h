@@ -55,7 +55,6 @@ public:
     bool EstimateGyroBiasForInitialization();
     bool EstimateGyroBiasByMethodOneForInitialization();
     bool EstimateGyroBiasByMethodTwoForInitialization();
-    bool EstimateGyroBiasByMethodThreeForInitialization();
 
     // Support for backend.
     void RecomputeImuPreintegration();
