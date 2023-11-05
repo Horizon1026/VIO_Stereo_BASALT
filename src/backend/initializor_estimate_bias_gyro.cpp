@@ -11,6 +11,8 @@ bool Backend::EstimateGyroBiasForInitialization() {
             return EstimateGyroBiasByMethodOneForInitialization();
         case 2:
             return EstimateGyroBiasByMethodTwoForInitialization();
+        case 3:
+            return EstimateGyroBiasByMethodThreeForInitialization();
     }
 }
 
@@ -18,14 +20,18 @@ bool Backend::EstimateGyroBiasByMethodOneForInitialization() {
     ReportInfo("[Backend] Try to estimate bias of gyro by Method 1.");
     RecomputeImuPreintegration();
 
-    // Iterate all frames, estimate q_wc of all frames.
+    // Determine the scope of all frames.
     const uint32_t max_frames_idx = data_manager_->visual_local_map()->frames().back().id();
     const uint32_t min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
+
+    // Define some temp variables.
     std::vector<FeatureType *> covisible_features;
     std::vector<Vec2> ref_norm_xy;
     std::vector<Vec2> cur_norm_xy;
     ref_norm_xy.reserve(200);
     cur_norm_xy.reserve(200);
+
+    // Iterate all frames, estimate q_wc of all frames.
     for (uint32_t i = min_frames_idx; i < max_frames_idx; ++i) {
         // Get covisible features only in left camera.
         data_manager_->visual_local_map()->GetCovisibleFeatures(i, i + 1, covisible_features);
@@ -200,6 +206,76 @@ bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
     // Report result.
     const Vec3 bias_gyro = data_manager_->frames_with_bias().back().imu_preint_block.bias_gyro();
     ReportInfo("[Backend] Estimate bias of gyro is " << LogVec(bias_gyro));
+
+    return true;
+}
+
+bool Backend::EstimateGyroBiasByMethodThreeForInitialization() {
+    ReportInfo("[Backend] Try to estimate bias of gyro by Method 1.");
+    RecomputeImuPreintegration();
+
+    // Localize the left camera extrinsic.
+    const Quat q_ic = data_manager_->camera_extrinsics().front().q_ic;
+
+    // Determine the scope of all frames.
+    const uint32_t max_frames_idx = data_manager_->visual_local_map()->frames().back().id();
+    const uint32_t min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
+
+    // Define some temp variables.
+    std::vector<FeatureType *> covisible_features;
+    std::vector<Vec2> ref_norm_xy;
+    std::vector<Vec2> cur_norm_xy;
+    ref_norm_xy.reserve(200);
+    cur_norm_xy.reserve(200);
+
+    // Iterate all frames, estimate q_wc of all frames.
+    auto new_frame_iter = std::next(data_manager_->frames_with_bias().begin());
+    for (uint32_t i = min_frames_idx; i < max_frames_idx; ++i) {
+        // Get covisible features only in left camera.
+        data_manager_->visual_local_map()->GetCovisibleFeatures(i, i + 1, covisible_features);
+        ref_norm_xy.clear();
+        cur_norm_xy.clear();
+        for (const auto &feature_ptr : covisible_features) {
+            ref_norm_xy.emplace_back(feature_ptr->observe(i)[0].rectified_norm_xy);
+            cur_norm_xy.emplace_back(feature_ptr->observe(i + 1)[0].rectified_norm_xy);
+        }
+
+        // Estimate pure rotation.
+        Quat q_cr = Quat::Identity();
+        using namespace VISION_GEOMETRY;
+        RelativeRotation solver;
+        RETURN_FALSE_IF(!solver.EstimateRotationByBnb(ref_norm_xy, cur_norm_xy, q_cr));
+
+        // Update rotation of each frames.
+        if (i == min_frames_idx) {
+            data_manager_->visual_local_map()->frame(i)->q_wc().setIdentity();
+        }
+        // q_wc = q_wr * q_cr.inverse().
+        data_manager_->visual_local_map()->frame(i + 1)->q_wc() = data_manager_->visual_local_map()->frame(i)->q_wc() * q_cr.inverse();
+
+        // Localize the frame with bias in 'frames_with_bias_' between frame i and i + 1.
+        ImuPreintegrateBlock &imu_preint_block = new_frame_iter->imu_preint_block;
+        ++new_frame_iter;
+        const Mat3 dr_dbg = imu_preint_block.dr_dbg();
+
+        // Estimate bias of gyro.
+        const Quat q_ij = q_ic * q_cr.inverse() * q_ic.inverse();
+        const Vec3 angle_axis = Utility::ConvertQuaternionToAngleAxis(q_ij);
+        const Vec3 bias_g = dr_dbg.inverse() * angle_axis;
+
+        // Recompute imu preintegration block with new bias of gyro.
+        imu_preint_block.ResetIntegratedStates();
+        imu_preint_block.bias_gyro() = bias_g;
+    }
+
+    // Recompute imu preintegration block with new bias of gyro.
+    for (auto &frame : data_manager_->frames_with_bias()) {
+        const int32_t max_idx = static_cast<int32_t>(frame.packed_measure->imus.size());
+        for (int32_t i = 1; i < max_idx; ++i) {
+            frame.imu_preint_block.Propagate(*frame.packed_measure->imus[i - 1], *frame.packed_measure->imus[i]);
+        }
+        frame.imu_preint_block.SimpleInformation();
+    }
 
     return true;
 }
