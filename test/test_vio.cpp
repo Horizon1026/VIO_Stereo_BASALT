@@ -55,6 +55,8 @@ void PublishImuData(const std::string &csv_file_path,
         while (timer.TockInMillisecond() < period_ms) {
             usleep(100);
         }
+
+        BREAK_IF(vio.backend()->should_quit());
     }
 
     file.close();
@@ -105,6 +107,8 @@ void PublishCameraData(const std::string &csv_file_path,
         while (timer.TockInMillisecond() < period_ms) {
             usleep(100);
         }
+
+        BREAK_IF(vio.backend()->should_quit());
     }
 
     file.close();
@@ -115,6 +119,8 @@ void TestRunVio(const uint32_t max_wait_ticks) {
     uint32_t cnt = max_wait_ticks;
     while (cnt) {
         const bool res = vio.RunOnce();
+
+        BREAK_IF(vio.backend()->should_quit());
 
         if (!res) {
             usleep(1000);

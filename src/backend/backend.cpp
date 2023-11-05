@@ -14,6 +14,9 @@ bool Backend::RunOnce() {
         if (TryToInitialize()) {
             status_.is_initialized = true;
             ReportInfo(GREEN "[Backend] Backend succeed to initialize." RESET_COLOR);
+
+            // Debug.
+            should_quit_ = true;
         } else {
             ResetToReintialize();
             ReportWarn("[Backend] Backend failed to initialize.");

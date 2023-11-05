@@ -64,10 +64,12 @@ public:
     BackendOptions &options() { return options_; }
     DataManager *&data_manager() { return data_manager_; }
     std::unique_ptr<Imu> &imu_model() { return imu_model_; }
+    bool &should_quit() { return should_quit_; }
 
     // Const reference for member variables.
     const BackendOptions &options() const { return options_; }
     const std::unique_ptr<Imu> &imu_model() const { return imu_model_; }
+    const bool &should_quit() const { return should_quit_; }
 
 private:
     // Options and status of backend.
@@ -81,6 +83,9 @@ private:
     // Record log.
     BinaryDataLog logger_;
     BackendLog log_package_data_;
+
+    // Signal flags.
+    bool should_quit_ = false;  // You can kill all relative threads by checking this flag.
 };
 
 }
