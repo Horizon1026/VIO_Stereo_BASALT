@@ -15,6 +15,15 @@ bool Backend::TryToInitialize() {
         return false;
     }
 
+    // Debug. Print imu measurement.
+    auto &frame = data_manager_->frames_with_bias().back();
+    const int32_t max_idx = static_cast<int32_t>(frame.packed_measure->imus.size());
+    for (int32_t i = 0; i < max_idx; ++i) {
+        ReportDebug("[Backend] Imu measurement at " << frame.packed_measure->imus[i]->time_stamp_s <<
+            "s, gyro " << LogVec(frame.packed_measure->imus[i]->gyro) <<
+            ", accel " << LogVec(frame.packed_measure->imus[i]->accel));
+    }
+
     // Estiamte gyro bias.
     // After this step, the following states are estimated:
     // bias_g, which is one-for-all.
