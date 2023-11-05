@@ -146,9 +146,9 @@ bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
         ImuPreintegrateBlock &imu_preint_block = new_frame_iter->imu_preint_block;
         ++new_frame_iter;
         const Mat3 dr_dbg = imu_preint_block.dr_dbg();
-        all_dr_dbgs.emplace_back(dr_dbg);
         const Quat imu_q_ij = imu_preint_block.q_ij();
         const Quat q_jc = imu_q_ij.inverse() * q_ic;
+        all_dr_dbgs.emplace_back(dr_dbg);
 
         // Compute summation terms.
         all_summation_terms.emplace_back(SummationTerms{});
@@ -169,7 +169,7 @@ bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
     RETURN_FALSE_IF(all_dr_dbgs.size() != all_summation_terms.size());
 
     // Try to estimate bias by optimization.
-    const int32_t max_iteration = 5;
+    const int32_t max_iteration = 50;
     Vec3 bias_g = Vec3::Zero();
     for (int32_t iter = 0; iter < max_iteration; ++iter) {
         Mat3 hessian = Mat3::Zero();
