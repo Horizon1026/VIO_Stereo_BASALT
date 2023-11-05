@@ -101,8 +101,107 @@ bool Backend::EstimateGyroBiasByMethodOneForInitialization() {
 
 bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
     ReportInfo("[Backend] Try to estimate bias of gyro by Method 2.");
+    RecomputeImuPreintegration();
 
-    return false;
+    // Localize the left camera extrinsic.
+    const Quat q_ic = data_manager_->camera_extrinsics().front().q_ic;
+
+    // Determine the scope of all frames.
+    const uint32_t max_frames_idx = data_manager_->visual_local_map()->frames().back().id();
+    const uint32_t min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
+
+    // Define some temp variables.
+    std::vector<FeatureType *> covisible_features;
+    std::vector<Vec2> ref_norm_xy;
+    std::vector<Vec2> cur_norm_xy;
+    ref_norm_xy.reserve(200);
+    cur_norm_xy.reserve(200);
+
+    // Something should be recorded.
+    using namespace VISION_GEOMETRY;
+    std::vector<SummationTerms> all_summation_terms;
+    std::vector<Mat3> all_dr_dbgs;
+    all_summation_terms.reserve(max_frames_idx - min_frames_idx + 1);
+    all_dr_dbgs.reserve(max_frames_idx - min_frames_idx + 1);
+
+    // Iterate all frames and imu preintegrations.
+    auto new_frame_iter = std::next(data_manager_->frames_with_bias().begin());
+    for (uint32_t i = min_frames_idx; i < max_frames_idx; ++i) {
+        // Get covisible features only in left camera.
+        data_manager_->visual_local_map()->GetCovisibleFeatures(i, i + 1, covisible_features);
+        ref_norm_xy.clear();
+        cur_norm_xy.clear();
+        for (const auto &feature_ptr : covisible_features) {
+            ref_norm_xy.emplace_back(feature_ptr->observe(i)[0].rectified_norm_xy);
+            cur_norm_xy.emplace_back(feature_ptr->observe(i + 1)[0].rectified_norm_xy);
+        }
+
+        // Localize the frame with bias in 'frames_with_bias_' between frame i and i + 1.
+        ImuPreintegrateBlock &imu_preint_block = new_frame_iter->imu_preint_block;
+        ++new_frame_iter;
+        const Mat3 dr_dbg = imu_preint_block.dr_dbg();
+        all_dr_dbgs.emplace_back(dr_dbg);
+        const Quat imu_q_ij = imu_preint_block.q_ij();
+        const Quat q_jc = imu_q_ij.inverse() * q_ic;
+
+        // Compute summation terms.
+        all_summation_terms.emplace_back(SummationTerms{});
+        auto &terms = all_summation_terms.back();
+        for (uint32_t i = 0; i < ref_norm_xy.size(); ++i) {
+            const Vec3 f1 = q_jc * Vec3(ref_norm_xy[i].x(), ref_norm_xy[i].y(), 1).normalized();
+            const Vec3 f2 = q_ic * Vec3(cur_norm_xy[i].x(), cur_norm_xy[i].y(), 1).normalized();
+            const Mat3 F = f2 * f2.transpose();
+            const float weight = 1.0f;
+            terms.xx += weight * f1.x() * f1.x() * F;
+            terms.yy += weight * f1.y() * f1.y() * F;
+            terms.zz += weight * f1.z() * f1.z() * F;
+            terms.xy += weight * f1.x() * f1.y() * F;
+            terms.yz += weight * f1.y() * f1.z() * F;
+            terms.zx += weight * f1.z() * f1.x() * F;
+        }
+    }
+    RETURN_FALSE_IF(all_dr_dbgs.size() != all_summation_terms.size());
+
+    // Try to estimate bias by optimization.
+    const int32_t max_iteration = 5;
+    Vec3 bias_g = Vec3::Zero();
+    for (int32_t iter = 0; iter < max_iteration; ++iter) {
+        Mat3 hessian = Mat3::Zero();
+        Vec3 bias = Vec3::Zero();
+
+        for (uint32_t j = 0; j < all_summation_terms.size(); ++j) {
+            const Vec3 jac_bg = all_dr_dbgs[j] * bias_g;
+            const Quat q = Utility::ConvertAngleAxisToQuaternion(jac_bg);
+            const Vec3 cayley = Utility::ConvertQuaternionToCayley(q);
+            Mat1x3 dlambda_dcayley;
+            const float smallest_eigen_value = RelativeRotation::ComputeSmallestEigenValueAndJacobian(
+                all_summation_terms[j], cayley, dlambda_dcayley);
+            const Mat1x3 jacobian = dlambda_dcayley * all_dr_dbgs[j];
+
+            hessian += jacobian.transpose() * jacobian;
+            bias -= jacobian.transpose() * smallest_eigen_value;
+        }
+
+        const Vec3 temp_bg = hessian.ldlt().solve(bias);
+        BREAK_IF(Eigen::isnan(temp_bg.array()).any());
+        bias_g = temp_bg;
+    }
+
+    // Recompute imu preintegration block with new bias of gyro.
+    for (auto &frame : data_manager_->frames_with_bias()) {
+        frame.imu_preint_block.ResetIntegratedStates();
+        frame.imu_preint_block.bias_gyro() = bias_g;
+        const int32_t max_idx = static_cast<int32_t>(frame.packed_measure->imus.size());
+        for (int32_t i = 1; i < max_idx; ++i) {
+            frame.imu_preint_block.Propagate(*frame.packed_measure->imus[i - 1], *frame.packed_measure->imus[i]);
+        }
+    }
+
+    // Report result.
+    const Vec3 bias_gyro = data_manager_->frames_with_bias().back().imu_preint_block.bias_gyro();
+    ReportInfo("[Backend] Estimate bias of gyro is " << LogVec(bias_gyro));
+
+    return true;
 }
 
 }
