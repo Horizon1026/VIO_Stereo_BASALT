@@ -54,8 +54,9 @@ struct VioOptionsOfFrontend {
 struct VioOptionsOfBackend {
     bool enable_recording_curve_binlog = true;
     /* Method index explaination: */
-    // Method 1: Robust vio initialization - Heyijia.
-    // Method 2: Vins-Mono.
+    // Method 1: Vins-Mono.
+    // Method 2: Robust vio initialization - Heyijia.
+    // Method 2: Visual rotation directly estimate gyro bias.
     uint32_t method_index_to_estimate_gyro_bias_for_initialization = 1;
     std::string log_file_name = "backend.binlog";
 };
