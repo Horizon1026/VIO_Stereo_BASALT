@@ -185,7 +185,7 @@ bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
             const Mat1x3 jacobian = dlambda_dcayley * all_dr_dbgs[j];
 
             hessian += jacobian.transpose() * jacobian;
-            bias -= jacobian.transpose() * smallest_eigen_value;
+            bias += jacobian.transpose() * smallest_eigen_value;
         }
 
         const Vec3 temp_bg = hessian.ldlt().solve(bias);
