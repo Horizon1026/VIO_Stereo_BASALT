@@ -214,9 +214,6 @@ bool Backend::EstimateGyroBiasByMethodThreeForInitialization() {
     ReportInfo("[Backend] Try to estimate bias of gyro by Method 3.");
     RecomputeImuPreintegration();
 
-    // Localize the left camera extrinsic.
-    const Quat q_ic = data_manager_->camera_extrinsics().front().q_ic;
-
     // Determine the scope of all frames.
     const uint32_t max_frames_idx = data_manager_->visual_local_map()->frames().back().id();
     const uint32_t min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
@@ -228,7 +225,12 @@ bool Backend::EstimateGyroBiasByMethodThreeForInitialization() {
     ref_norm_xy.reserve(200);
     cur_norm_xy.reserve(200);
 
-    // Iterate all frames, estimate q_wc of all frames.
+    // Iterate all frames to construct A and b, which is to estimate bias of gyro.
+    Eigen::Matrix<float, Eigen::Dynamic, 3> A;
+    Vec b;
+    const int32_t size = (max_frames_idx - min_frames_idx) * 3;
+    A.resize(size, 3);
+    b.resize(size);
     auto new_frame_iter = std::next(data_manager_->frames_with_bias().begin());
     for (uint32_t i = min_frames_idx; i < max_frames_idx; ++i) {
         // Get covisible features only in left camera.
@@ -246,7 +248,7 @@ bool Backend::EstimateGyroBiasByMethodThreeForInitialization() {
         RelativeRotation solver;
         RETURN_FALSE_IF(!solver.EstimateRotationByBnb(ref_norm_xy, cur_norm_xy, q_cr));
 
-        // Update rotation of each frames.
+        // Estimate q_wc of all frames.
         if (i == min_frames_idx) {
             data_manager_->visual_local_map()->frame(i)->q_wc().setIdentity();
         }
@@ -259,24 +261,30 @@ bool Backend::EstimateGyroBiasByMethodThreeForInitialization() {
         const Mat3 dr_dbg = imu_preint_block.dr_dbg();
         const Quat imu_q_ij = imu_preint_block.q_ij();
 
-        // Estimate bias of gyro.
+        // Construct Ax = b.
         const Quat q_ij = imu_q_ij.inverse() * q_cr.inverse();
         const Vec3 angle_axis = Utility::ConvertQuaternionToAngleAxis(q_ij);
-        const Vec3 bias_g = dr_dbg.inverse() * angle_axis;
-
-        // Recompute imu preintegration block with new bias of gyro.
-        imu_preint_block.ResetIntegratedStates();
-        imu_preint_block.bias_gyro() = bias_g;
+        A.block((i - min_frames_idx) * 3, 0, 3, 3) = dr_dbg;
+        b.segment((i - min_frames_idx) * 3, 3) = angle_axis;
     }
+
+    // Estimate bias of gyro.
+    const Vec3 bias_g = A.colPivHouseholderQr().solve(b);
+    RETURN_FALSE_IF(Eigen::isnan(bias_g.array()).any());
 
     // Recompute imu preintegration block with new bias of gyro.
     for (auto &frame : data_manager_->frames_with_bias()) {
+        frame.imu_preint_block.ResetIntegratedStates();
+        frame.imu_preint_block.bias_gyro() = bias_g;
         const int32_t max_idx = static_cast<int32_t>(frame.packed_measure->imus.size());
         for (int32_t i = 1; i < max_idx; ++i) {
             frame.imu_preint_block.Propagate(*frame.packed_measure->imus[i - 1], *frame.packed_measure->imus[i]);
         }
         frame.imu_preint_block.SimpleInformation();
     }
+
+    // Report result.
+    ReportInfo("[Backend] Estimate bias of gyro is " << LogVec(bias_g));
 
     return true;
 }
