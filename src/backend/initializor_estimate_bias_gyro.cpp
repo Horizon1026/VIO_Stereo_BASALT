@@ -204,8 +204,7 @@ bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
     }
 
     // Report result.
-    const Vec3 bias_gyro = data_manager_->frames_with_bias().back().imu_preint_block.bias_gyro();
-    ReportInfo("[Backend] Estimate bias of gyro is " << LogVec(bias_gyro));
+    ReportInfo("[Backend] Estimate bias of gyro is " << LogVec(bias_g));
 
     return true;
 }
