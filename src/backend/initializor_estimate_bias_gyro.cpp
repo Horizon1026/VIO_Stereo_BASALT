@@ -211,7 +211,7 @@ bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
 }
 
 bool Backend::EstimateGyroBiasByMethodThreeForInitialization() {
-    ReportInfo("[Backend] Try to estimate bias of gyro by Method 1.");
+    ReportInfo("[Backend] Try to estimate bias of gyro by Method 3.");
     RecomputeImuPreintegration();
 
     // Localize the left camera extrinsic.
@@ -257,9 +257,10 @@ bool Backend::EstimateGyroBiasByMethodThreeForInitialization() {
         ImuPreintegrateBlock &imu_preint_block = new_frame_iter->imu_preint_block;
         ++new_frame_iter;
         const Mat3 dr_dbg = imu_preint_block.dr_dbg();
+        const Quat imu_q_ij = imu_preint_block.q_ij();
 
         // Estimate bias of gyro.
-        const Quat q_ij = q_ic * q_cr.inverse() * q_ic.inverse();
+        const Quat q_ij = imu_q_ij.inverse() * q_cr.inverse();
         const Vec3 angle_axis = Utility::ConvertQuaternionToAngleAxis(q_ij);
         const Vec3 bias_g = dr_dbg.inverse() * angle_axis;
 

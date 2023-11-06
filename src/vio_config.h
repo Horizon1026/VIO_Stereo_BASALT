@@ -57,7 +57,7 @@ struct VioOptionsOfBackend {
     // Method 1: Vins-Mono.
     // Method 2: Robust vio initialization - Heyijia.
     // Method 3: Visual rotation directly estimate gyro bias.
-    uint32_t method_index_to_estimate_gyro_bias_for_initialization = 2;
+    uint32_t method_index_to_estimate_gyro_bias_for_initialization = 3;
     std::string log_file_name = "backend.binlog";
 };
 
