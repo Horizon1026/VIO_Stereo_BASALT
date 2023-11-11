@@ -106,7 +106,7 @@ bool Backend::EstimateGyroBiasByMethodOneForInitialization() {
 }
 
 bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
-    ReportInfo("[Backend] Try to estimate bias of gyro by Method 2.");
+    ReportInfo("[Backend] Try to estimate bias of gyro by Method 2 (Not valid now).");
     RecomputeImuPreintegration();
 
     // Localize the left camera extrinsic.
