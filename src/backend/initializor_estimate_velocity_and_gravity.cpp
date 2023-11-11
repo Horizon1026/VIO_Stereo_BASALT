@@ -54,19 +54,19 @@ bool Backend::EstimateVelocityAndGravityForInitialization() {
     // Compute imu blocks based on the first frame.
     const auto start_iter = std::next(data_manager_->frames_with_bias().begin());
     RETURN_FALSE_IF(start_iter == data_manager_->frames_with_bias().end());
-    auto end_iter = start_iter;
+    auto end_iter = std::next(start_iter);
 
     std::vector<ImuPreintegrateBlock> imu_blocks;
     imu_blocks.emplace_back(start_iter->imu_preint_block);
     for (int32_t i = 1; i < num_of_imu_block; ++i) {
         ++end_iter;
 
-        ImuPreintegrateBlock new_imu_block = imu_blocks.back();
+        ImuPreintegrateBlock new_imu_block(imu_blocks.back());
         new_imu_block.ResetIntegratedStates();
         for (auto iter = start_iter; iter != end_iter; ++iter) {
             const int32_t max_idx = static_cast<int32_t>(iter->packed_measure->imus.size());
-            for (int32_t i = 1; i < max_idx; ++i) {
-                new_imu_block.Propagate(*iter->packed_measure->imus[i - 1], *iter->packed_measure->imus[i]);
+            for (int32_t j = 1; j < max_idx; ++j) {
+                new_imu_block.Propagate(*iter->packed_measure->imus[j - 1], *iter->packed_measure->imus[j]);
             }
         }
         imu_blocks.emplace_back(new_imu_block);
