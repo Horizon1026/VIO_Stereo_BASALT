@@ -57,6 +57,9 @@ public:
     bool EstimateGyroBiasByMethodTwoForInitialization();
     bool EstimateGyroBiasByMethodThreeForInitialization();
 
+    // Estimate velocity and gravity for initialization.
+    bool EstimateVelocityAndGravityForInitialization();
+
     // Support for backend.
     void RecomputeImuPreintegration();
 

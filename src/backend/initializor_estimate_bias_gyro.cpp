@@ -106,7 +106,7 @@ bool Backend::EstimateGyroBiasByMethodOneForInitialization() {
 }
 
 bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
-    ReportInfo("[Backend] Try to estimate bias of gyro by Method 2 (Not valid now).");
+    ReportInfo("[Backend] Try to estimate bias of gyro by Method 2 (not valid now).");
     RecomputeImuPreintegration();
 
     // Localize the left camera extrinsic.
@@ -279,7 +279,6 @@ bool Backend::EstimateGyroBiasByMethodThreeForInitialization() {
         for (int32_t i = 1; i < max_idx; ++i) {
             frame.imu_preint_block.Propagate(*frame.packed_measure->imus[i - 1], *frame.packed_measure->imus[i]);
         }
-        frame.imu_preint_block.SimpleInformation();
     }
 
     // Report result.

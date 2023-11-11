@@ -34,6 +34,12 @@ bool Backend::TryToInitialize() {
         return false;
     }
 
+    // Estimate velocity of each frame, and gravity vector.
+    if (!EstimateVelocityAndGravityForInitialization()) {
+        ReportError("[Backend] Backend failed to estimate velocity or gravity.");
+        return false;
+    }
+
     return true;
 }
 
