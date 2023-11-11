@@ -59,6 +59,10 @@ public:
 
     // Estimate velocity and gravity for initialization.
     bool EstimateVelocityAndGravityForInitialization();
+    bool SelectTwoFramesWithMaxParallax(CovisibleGraphType *local_map,
+                                        const FeatureType &feature,
+                                        int32_t &frame_id_l,
+                                        int32_t &frame_id_r);
 
     // Support for backend.
     void RecomputeImuPreintegration();

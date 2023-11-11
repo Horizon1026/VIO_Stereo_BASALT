@@ -37,6 +37,7 @@ using CovisibleGraphType = CovisibleGraph<FeatureParameter, FeatureObserve>;
 
 /* Definition of Camera Extrinsic. */
 struct CameraExtrinsic {
+    // Rotation and translation between imu and camera frame.
     Quat q_ic = Quat::Identity();
     Vec3 t_ic = Vec3::Zero();
 };
