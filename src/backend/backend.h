@@ -63,7 +63,7 @@ public:
                                         const FeatureType &feature,
                                         int32_t &frame_id_l,
                                         int32_t &frame_id_r);
-    bool ComputeImuIntegrateBlockBasedOnFirstFrameForInitialization(std::vector<ImuPreintegrateBlock> &imu_blocks);
+    bool ComputeImuPreintegrationBasedOnFirstFrameForInitialization(std::vector<ImuPreintegrateBlock> &imu_blocks);
 
     // Support for backend.
     void RecomputeImuPreintegration();

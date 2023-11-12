@@ -46,7 +46,7 @@ bool Backend::SelectTwoFramesWithMaxParallax(CovisibleGraphType *local_map,
     return true;
 }
 
-bool Backend::ComputeImuIntegrateBlockBasedOnFirstFrameForInitialization(std::vector<ImuPreintegrateBlock> &imu_blocks) {
+bool Backend::ComputeImuPreintegrationBasedOnFirstFrameForInitialization(std::vector<ImuPreintegrateBlock> &imu_blocks) {
     const int32_t num_of_imu_block = data_manager_->visual_local_map()->frames().size() - 1;
     RETURN_FALSE_IF(num_of_imu_block < 1);
 
@@ -81,15 +81,21 @@ bool Backend::ComputeImuIntegrateBlockBasedOnFirstFrameForInitialization(std::ve
 bool Backend::EstimateVelocityAndGravityForInitialization() {
     // Compute imu blocks based on the first frame.
     std::vector<ImuPreintegrateBlock> imu_blocks;
-    if (!ComputeImuIntegrateBlockBasedOnFirstFrameForInitialization(imu_blocks)) {
+    if (!ComputeImuPreintegrationBasedOnFirstFrameForInitialization(imu_blocks)) {
         ReportError("[Backend] Backend failed to compute imu preintegration block based on first frame.");
         return false;
     }
 
     // Localize the left camera extrinsic.
     const Quat q_ic = data_manager_->camera_extrinsics().front().q_ic;
+    // Use 'b' to represent frame of imu.
+    const Vec3 t_bc = data_manager_->camera_extrinsics().front().t_ic;
+    const Mat3 R_cb = q_ic.toRotationMatrix().transpose();
 
-    // Iterate all feature in visual_local_map.
+    // Iterate all feature in visual_local_map to create linear function.
+    Mat6 A = Mat6::Zero();
+    Vec6 b = Vec6::Zero();
+    float Q = 0.0f;
     for (const auto &pair : data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
 
@@ -151,16 +157,48 @@ bool Backend::EstimateVelocityAndGravityForInitialization() {
             const Mat1x3 a_lr_t = a_lr_tmp_t.transpose() * skew_norm_xyz_r;
             const Vec3 theta_lr_vector = skew_norm_xyz_r * R_crcl * norm_xyz_l;
             const float theta_lr = theta_lr_vector.squaredNorm();
-            const Mat3 R_ci = q_ic.toRotationMatrix().transpose();
 
             const Mat3 B = skew_norm_xyz_i * R_cicl * norm_xyz_l * a_lr_t * R_wcr.transpose();
             const Mat3 C = theta_lr * skew_norm_xyz_i * R_wci.transpose();
             const Mat3 D = - B - C;
-            const Mat3 B_prime = B * R_ci;
-            const Mat3 C_prime = C * R_ci;
-            const Mat3 D_prime = D * R_ci;
+            const Mat3 B_prime = B * R_cb;
+            const Mat3 C_prime = C * R_cb;
+            const Mat3 D_prime = D * R_cb;
 
-            // TODO: Need to recompute imu preint block.
+            // Compute matrice S and time t.
+            Vec3 S_1i = Vec3::Zero();
+            Vec3 S_1r = Vec3::Zero();
+            Vec3 S_1l = Vec3::Zero();
+            float t_1i = 0.0f;
+            float t_1r = 0.0f;
+            float t_1l = 0.0f;
+
+            if (frame_id_i != feature.first_frame_id()) {
+                const int32_t idx_of_imu = frame_id_i - feature.first_frame_id() - 1;
+                S_1i = imu_blocks[idx_of_imu].p_ij() + R_wci * t_bc - t_bc;
+                t_1i = imu_blocks[idx_of_imu].integrate_time_s();
+            }
+            if (frame_id_r != feature.first_frame_id()) {
+                const int32_t idx_of_imu = frame_id_r - feature.first_frame_id() - 1;
+                S_1r = imu_blocks[idx_of_imu].p_ij() + R_wci * t_bc - t_bc;
+                t_1r = imu_blocks[idx_of_imu].integrate_time_s();
+            }
+            if (frame_id_l != feature.first_frame_id()) {
+                const int32_t idx_of_imu = frame_id_l - feature.first_frame_id() - 1;
+                S_1l = imu_blocks[idx_of_imu].p_ij() + R_wci * t_bc - t_bc;
+                t_1l = imu_blocks[idx_of_imu].integrate_time_s();
+            }
+
+            Mat3x6 A_tmp;
+            A_tmp.block(0, 0, 3, 3) = (B_prime * t_1r + C_prime * t_1i + D_prime * t_1l);
+            A_tmp.block(0, 3, 3, 3) =
+                    -(B_prime * t_1r * t_1r / 2.0f + C_prime * t_1i * t_1i / 2.0f + D_prime * t_1l * t_1l / 2.0f) *
+                    9.8f;
+            Eigen::Vector3d b_tmp = (-B_prime * S_1r - C_prime * S_1i - D_prime * S_1l);
+
+            A += A_tmp.transpose() * A_tmp;
+            b += A_tmp.transpose() * b_tmp;
+            Q += b_tmp.transpose() * b_tmp;
         }
     }
 
