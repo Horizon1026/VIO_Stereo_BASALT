@@ -194,13 +194,15 @@ bool Backend::EstimateVelocityAndGravityForInitialization() {
             A_tmp.block(0, 3, 3, 3) =
                     -(B_prime * t_1r * t_1r / 2.0f + C_prime * t_1i * t_1i / 2.0f + D_prime * t_1l * t_1l / 2.0f) *
                     9.8f;
-            Eigen::Vector3d b_tmp = (-B_prime * S_1r - C_prime * S_1i - D_prime * S_1l);
+            Vec3 b_tmp = - B_prime * S_1r - C_prime * S_1i - D_prime * S_1l;
 
             A += A_tmp.transpose() * A_tmp;
             b += A_tmp.transpose() * b_tmp;
             Q += b_tmp.transpose() * b_tmp;
         }
     }
+
+    ReportDebug("[Backend] Solve Ax=b get " << A.ldlt().solve(b).transpose());
 
     return true;
 }
