@@ -46,17 +46,15 @@ bool Backend::SelectTwoFramesWithMaxParallax(CovisibleGraphType *local_map,
     return true;
 }
 
-bool Backend::EstimateVelocityAndGravityForInitialization() {
-    const int32_t num_of_frames = data_manager_->visual_local_map()->frames().size();
-    const int32_t num_of_imu_block = num_of_frames - 1;
+bool Backend::ComputeImuIntegrateBlockBasedOnFirstFrameForInitialization(std::vector<ImuPreintegrateBlock> &imu_blocks) {
+    const int32_t num_of_imu_block = data_manager_->visual_local_map()->frames().size() - 1;
     RETURN_FALSE_IF(num_of_imu_block < 1);
 
-    // Compute imu blocks based on the first frame.
     const auto start_iter = std::next(data_manager_->frames_with_bias().begin());
     RETURN_FALSE_IF(start_iter == data_manager_->frames_with_bias().end());
     auto end_iter = std::next(start_iter);
 
-    std::vector<ImuPreintegrateBlock> imu_blocks;
+    imu_blocks.clear();
     imu_blocks.emplace_back(start_iter->imu_preint_block);
     for (int32_t i = 1; i < num_of_imu_block; ++i) {
         ++end_iter;
@@ -71,8 +69,21 @@ bool Backend::EstimateVelocityAndGravityForInitialization() {
         }
         imu_blocks.emplace_back(new_imu_block);
     }
+
+    // Debug.
     for (const auto &imu_preint_block : imu_blocks) {
         imu_preint_block.SimpleInformation();
+    }
+
+    return true;
+}
+
+bool Backend::EstimateVelocityAndGravityForInitialization() {
+    // Compute imu blocks based on the first frame.
+    std::vector<ImuPreintegrateBlock> imu_blocks;
+    if (!ComputeImuIntegrateBlockBasedOnFirstFrameForInitialization(imu_blocks)) {
+        ReportError("[Backend] Backend failed to compute imu preintegration block based on first frame.");
+        return false;
     }
 
     // Localize the left camera extrinsic.
