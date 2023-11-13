@@ -40,24 +40,27 @@ struct VioOptionsOfFeatureTracker {
 struct VioOptionsOfFrontend {
     uint32_t image_rows = 0;
     uint32_t image_cols = 0;
-    bool enable_recording_curve_binlog = true;
-    bool enable_recording_image_binlog = false;
     bool enable_drawing_track_result = true;
     bool select_keyframe = true;
     uint32_t max_feature_number = 100;
     uint32_t min_feature_number = 30;
     VioOptionsOfFeatureDetector feature_detector;
     VioOptionsOfFeatureTracker feature_tracker;
+    bool enable_recording_curve_binlog = true;
+    bool enable_recording_image_binlog = false;
     std::string log_file_name = "frontend.binlog";
 };
 
 struct VioOptionsOfBackend {
-    bool enable_recording_curve_binlog = true;
     /* Method index explaination: */
     // Method 1: Vins-Mono.
     // Method 2: Robust vio initialization - Heyijia.
     // Method 3: Visual rotation directly estimate gyro bias.
     uint32_t method_index_to_estimate_gyro_bias_for_initialization = 3;
+
+    Vec3 gravity_w = Vec3(0.0f, 0.0f, 9.8f);
+
+    bool enable_recording_curve_binlog = true;
     std::string log_file_name = "backend.binlog";
 };
 

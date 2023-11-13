@@ -1,6 +1,7 @@
 #ifndef _VIO_STEREO_ORB_SLAM3_BACKEND_H_
 #define _VIO_STEREO_ORB_SLAM3_BACKEND_H_
 
+#include "datatype_basic.h"
 #include "imu.h"
 #include "data_manager.h"
 #include "binary_data_log.h"
@@ -17,6 +18,7 @@ using namespace SENSOR_MODEL;
 struct BackendOptions {
     bool kEnableRecordBinaryCurveLog = true;
     uint32_t kMethodIndexToEstimateGyroBiasForInitialization = 1;
+    Vec3 kGravityInWordFrame = Vec3(0.0f, 0.0f, 9.8f);
 };
 
 /* Packages of log to be recorded. */

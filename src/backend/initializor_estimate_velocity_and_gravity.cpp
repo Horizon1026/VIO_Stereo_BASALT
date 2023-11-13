@@ -86,6 +86,9 @@ bool Backend::EstimateVelocityAndGravityForInitialization() {
         return false;
     }
 
+    // Compute the norm of gravity vector.
+    const float gravity_norm = options_.kGravityInWordFrame.norm();
+
     // Localize the left camera extrinsic.
     const Quat q_ic = data_manager_->camera_extrinsics().front().q_ic;
     // Use 'b' to represent frame of imu.
@@ -173,28 +176,26 @@ bool Backend::EstimateVelocityAndGravityForInitialization() {
             float t_1r = 0.0f;
             float t_1l = 0.0f;
 
-            if (frame_id_i != feature.first_frame_id()) {
+            if (frame_id_i != static_cast<int32_t>(feature.first_frame_id())) {
                 const int32_t idx_of_imu = frame_id_i - feature.first_frame_id() - 1;
                 S_1i = imu_blocks[idx_of_imu].p_ij() + R_wci * t_bc - t_bc;
                 t_1i = imu_blocks[idx_of_imu].integrate_time_s();
             }
-            if (frame_id_r != feature.first_frame_id()) {
+            if (frame_id_r != static_cast<int32_t>(feature.first_frame_id())) {
                 const int32_t idx_of_imu = frame_id_r - feature.first_frame_id() - 1;
                 S_1r = imu_blocks[idx_of_imu].p_ij() + R_wci * t_bc - t_bc;
                 t_1r = imu_blocks[idx_of_imu].integrate_time_s();
             }
-            if (frame_id_l != feature.first_frame_id()) {
+            if (frame_id_l != static_cast<int32_t>(feature.first_frame_id())) {
                 const int32_t idx_of_imu = frame_id_l - feature.first_frame_id() - 1;
                 S_1l = imu_blocks[idx_of_imu].p_ij() + R_wci * t_bc - t_bc;
                 t_1l = imu_blocks[idx_of_imu].integrate_time_s();
             }
 
             Mat3x6 A_tmp;
-            A_tmp.block(0, 0, 3, 3) = (B_prime * t_1r + C_prime * t_1i + D_prime * t_1l);
-            A_tmp.block(0, 3, 3, 3) =
-                    -(B_prime * t_1r * t_1r / 2.0f + C_prime * t_1i * t_1i / 2.0f + D_prime * t_1l * t_1l / 2.0f) *
-                    9.8f;
-            Vec3 b_tmp = - B_prime * S_1r - C_prime * S_1i - D_prime * S_1l;
+            A_tmp.block<3, 3>(0, 0) = B_prime * t_1r + C_prime * t_1i + D_prime * t_1l;
+            A_tmp.block<3, 3>(0, 3) = - (B_prime * t_1r * t_1r + C_prime * t_1i * t_1i + D_prime * t_1l * t_1l) * 0.5f * gravity_norm;
+            const Vec3 b_tmp = - B_prime * S_1r - C_prime * S_1i - D_prime * S_1l;
 
             A += A_tmp.transpose() * A_tmp;
             b += A_tmp.transpose() * b_tmp;
