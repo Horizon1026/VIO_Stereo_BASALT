@@ -66,6 +66,8 @@ public:
                                         int32_t &frame_id_l,
                                         int32_t &frame_id_r);
     bool ComputeImuPreintegrationBasedOnFirstFrameForInitialization(std::vector<ImuPreintegrateBlock> &imu_blocks);
+    bool ConstructLigtFunction(const std::vector<ImuPreintegrateBlock> &imu_blocks,
+                               Mat6 &A, Vec6 &b, float &Q);
 
     // Support for backend.
     void RecomputeImuPreintegration();

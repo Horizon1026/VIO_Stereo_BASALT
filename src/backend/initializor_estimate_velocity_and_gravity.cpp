@@ -71,21 +71,14 @@ bool Backend::ComputeImuPreintegrationBasedOnFirstFrameForInitialization(std::ve
     }
 
     // Debug.
-    for (const auto &imu_preint_block : imu_blocks) {
-        imu_preint_block.SimpleInformation();
-    }
+    // for (const auto &imu_preint_block : imu_blocks) {
+    //     imu_preint_block.SimpleInformation();
+    // }
 
     return true;
 }
 
-bool Backend::EstimateVelocityAndGravityForInitialization() {
-    // Compute imu blocks based on the first frame.
-    std::vector<ImuPreintegrateBlock> imu_blocks;
-    if (!ComputeImuPreintegrationBasedOnFirstFrameForInitialization(imu_blocks)) {
-        ReportError("[Backend] Backend failed to compute imu preintegration block based on first frame.");
-        return false;
-    }
-
+bool Backend::ConstructLigtFunction(const std::vector<ImuPreintegrateBlock> &imu_blocks, Mat6 &A, Vec6 &b, float &Q) {
     // Compute the norm of gravity vector.
     const float gravity_norm = options_.kGravityInWordFrame.norm();
 
@@ -96,9 +89,9 @@ bool Backend::EstimateVelocityAndGravityForInitialization() {
     const Mat3 R_cb = q_ic.toRotationMatrix().transpose();
 
     // Iterate all feature in visual_local_map to create linear function.
-    Mat6 A = Mat6::Zero();
-    Vec6 b = Vec6::Zero();
-    float Q = 0.0f;
+    A.setZero();
+    b.setZero();
+    Q = 0.0f;
     for (const auto &pair : data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
 
@@ -203,7 +196,36 @@ bool Backend::EstimateVelocityAndGravityForInitialization() {
         }
     }
 
-    ReportDebug("[Backend] Solve Ax=b get " << A.ldlt().solve(b).transpose());
+    // Scale the LIGT function.
+    const Mat3 A2tA2 = A.block<3, 3>(3, 3);
+    const float mean = (A2tA2(0, 0) + A2tA2(1, 1) + A2tA2(2, 2)) / 3.0f;
+    const float scale = 1.0f / mean;
+    if (!std::isnan(scale)) {
+        A *= scale;
+        b *= scale;
+        Q *= scale;
+    }
+
+    return true;
+}
+
+bool Backend::EstimateVelocityAndGravityForInitialization() {
+    // Compute imu blocks based on the first frame.
+    std::vector<ImuPreintegrateBlock> imu_blocks;
+    if (!ComputeImuPreintegrationBasedOnFirstFrameForInitialization(imu_blocks)) {
+        ReportError("[Backend] Backend failed to compute imu preintegration block based on first frame.");
+        return false;
+    }
+
+    // Construct LIGT function.
+    Mat6 A = Mat6::Zero();
+    Vec6 b = Vec6::Zero();
+    float Q = 0.0f;
+    if (!ConstructLigtFunction(imu_blocks, A, b, Q)) {
+        ReportError("[Backend] Backend failde to construct LIGT function.");
+        return false;
+    }
+    ReportDebug("[Backend] Solve Ax=b get [" << A.ldlt().solve(b).transpose() << "].");
 
     return true;
 }
