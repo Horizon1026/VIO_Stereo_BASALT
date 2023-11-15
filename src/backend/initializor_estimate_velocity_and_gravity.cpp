@@ -1,5 +1,6 @@
 #include "backend.h"
 #include "log_report.h"
+#include "polynomial.h"
 
 namespace VIO {
 
@@ -209,6 +210,132 @@ bool Backend::ConstructLigtFunction(const std::vector<ImuPreintegrateBlock> &imu
     return true;
 }
 
+bool Backend::RefineGravityForInitialization(const Mat &M,
+                                             const Vec &m,
+                                             const float Q,
+                                             const float gravity_mag,
+                                             Vec &rhs) {
+
+    const int32_t q = M.rows() - 3;
+    Mat A = 2.0f * M.block(0, 0, q, q);
+
+    Mat Bt = 2. * M.block(q, 0, 3, q);
+    Mat BtAi = Bt * A.inverse();
+
+    Mat3 D = 2. * M.block(q, q, 3, 3);
+    Mat3 S = D - BtAi * Bt.transpose();
+
+    Mat3 Sa = S.determinant() * S.inverse();
+    Mat3 U = S.trace() * Mat3::Identity() - S;
+
+    Vec3 v1 = BtAi * m.head(q);
+    Vec3 m2 = m.tail<3>();
+
+    Mat3 X;
+    Vec3 Xm2;
+
+    // X = I
+    const float c4 = 16.0f * (v1.dot(v1) - 2.0f * v1.dot(m2) + m2.dot(m2));
+
+    X = U;
+    Xm2 = X * m2;
+    const float c3 = 16.0f * (v1.dot(X * v1) - 2.0f * v1.dot(Xm2) + m2.dot(Xm2));
+
+    X = 2.0f * Sa + U * U;
+    Xm2 = X * m2;
+    const float c2 = 4.0f * (v1.dot(X * v1) - 2.0f * v1.dot(Xm2) + m2.dot(Xm2));
+
+    X = Sa * U + U * Sa;
+    Xm2 = X * m2;
+    const float c1 = 2.0f * (v1.dot(X * v1) - 2.0f * v1.dot(Xm2) + m2.dot(Xm2));
+
+    X = Sa * Sa;
+    Xm2 = X * m2;
+    const float c0 = (v1.dot(X * v1) - 2.0f * v1.dot(Xm2) + m2.dot(Xm2));
+
+    const float s00 = S(0, 0), s01 = S(0, 1), s02 = S(0, 2);
+    const float s11 = S(1, 1), s12 = S(1, 2), s22 = S(2, 2);
+
+    const float t1 = s00 + s11 + s22;
+    const float t2 = s00 * s11 + s00 * s22 + s11 * s22
+                        - std::pow(s01, 2) - std::pow(s02, 2) - std::pow(s12, 2);
+    const float t3 = s00 * s11 * s22 + 2.0f * s01 * s02 * s12
+                        - s00 * std::pow(s12, 2) - s11 * std::pow(s02, 2) - s22 * std::pow(s01, 2);
+
+    Vec coeffs(7);
+    coeffs << 64.0f,
+              64.0f * t1,
+              16.0f * (std::pow(t1, 2) + 2.0f * t2),
+              16.0f * (t1 * t2 + t3),
+              4.0f * (std::pow(t2, 2) + 2.0f * t1 * t3),
+              4.0f * t3 * t2,
+              std::pow(t3, 2);
+
+    const float G2i = 1.0f / std::pow(gravity_mag, 2);
+
+    coeffs(2) -= c4 * G2i;
+    coeffs(3) -= c3 * G2i;
+    coeffs(4) -= c2 * G2i;
+    coeffs(5) -= c1 * G2i;
+    coeffs(6) -= c0 * G2i;
+
+    // Eigen::PolynomialSolver<float, Eigen::Dynamic> polynomial_solver;
+    // polynomial_solver.compute(coeffs);
+    // const Eigen::PolynomialSolver<float, Eigen::Dynamic>::RootsType &roots = polynomial_solver.roots();
+
+    Eigen::VectorXd real, imag;
+    if (!FindPolynomialRootsCompanionMatrix(coeffs.cast<double>(), &real, &imag)) {
+        ReportError("[Backend] Backend failed to solve polynomial problem.");
+        return false;
+    }
+
+    // Extract real roots.
+    Vec real_roots(real.size());
+    uint32_t j = 0;
+    for (uint32_t i = 0; i < real.size(); ++i) {
+        if (!imag[i]) {
+            real_roots[j] = static_cast<float>(real[i]);
+            ++j;
+        }
+    }
+    real_roots.conservativeResize(j);
+    if (real_roots.size() == 0) {
+        ReportError("[Backend] Backend failed to find real roots.");
+        return false;
+    }
+
+    Mat W(M.rows(), M.rows());
+    W.setZero();
+    W.block<3, 3>(q, q) = Mat3::Identity();
+
+    Vec solution;
+    float min_cost = std::numeric_limits<float>::max();
+    for (Vec::Index i = 0; i < real_roots.size(); ++i) {
+        const float lambda = real_roots(i);
+
+        Eigen::FullPivLU<Mat> lu(2.0f * M + 2.0f * lambda * W);
+        const Vec x_ = -lu.inverse() * m;
+
+        float cost = x_.transpose() * M * x_;
+        cost += m.transpose() * x_;
+        cost += Q;
+        if (cost < min_cost) {
+            solution = x_;
+            min_cost = cost;
+        }
+    }
+
+    const float constraint = solution.transpose() * W * solution;
+
+    if (constraint < 0.0f || std::abs(std::sqrt(constraint) - gravity_mag) / gravity_mag > 1e-3f) {
+        ReportWarn("[Backend] Constraint is " << constraint << ". Constraint error is " <<
+            100.0f * std::abs(std::sqrt(constraint) - gravity_mag) / gravity_mag);
+    }
+
+    rhs = solution;
+    return true;
+}
+
 bool Backend::PropagateStatesOfAllFramesForInitializaion(const std::vector<ImuPreintegrateBlock> &imu_blocks,
                                                          const Vec3 &v_i0i0,
                                                          const Vec3 &gravity_i0) {
@@ -261,11 +388,15 @@ bool Backend::EstimateVelocityAndGravityForInitialization() {
         return false;
     }
 
-    const Vec6 rhs = A.ldlt().solve(b);
+    // Solve rhs(velocity and bias).
+    Vec rhs = Vec6::Zero();
+    if (!RefineGravityForInitialization(A, -2.0f * b, Q, 1.0f, rhs)) {
+        ReportError("[Backend] Backend failed to solve LIGT function.");
+        return false;
+    }
     const Vec3 v_i0i0 = rhs.head<3>();
-    const Vec3 gravity_i0 = rhs.tail<3>();
+    const Vec3 gravity_i0 = rhs.tail<3>().normalized() * options_.kGravityInWordFrame.norm();;
     ReportDebug("[Backend] Solve Ax=b get [" << rhs.transpose() << "].");
-
 
     // Propagate states of all frames.
     if (!PropagateStatesOfAllFramesForInitializaion(imu_blocks, v_i0i0, gravity_i0)) {

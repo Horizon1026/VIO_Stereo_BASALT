@@ -68,6 +68,11 @@ public:
     bool ComputeImuPreintegrationBasedOnFirstFrameForInitialization(std::vector<ImuPreintegrateBlock> &imu_blocks);
     bool ConstructLigtFunction(const std::vector<ImuPreintegrateBlock> &imu_blocks,
                                Mat6 &A, Vec6 &b, float &Q);
+    bool RefineGravityForInitialization(const Mat &M,
+                                        const Vec &m,
+                                        const float Q,
+                                        const float gravity_mag,
+                                        Vec &rhs);
     bool PropagateStatesOfAllFramesForInitializaion(const std::vector<ImuPreintegrateBlock> &imu_blocks,
                                                     const Vec3 &v_i0i0,
                                                     const Vec3 &gravity_i0);
