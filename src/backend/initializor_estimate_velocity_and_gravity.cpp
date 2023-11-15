@@ -71,9 +71,9 @@ bool Backend::ComputeImuPreintegrationBasedOnFirstFrameForInitialization(std::ve
     }
 
     // Debug.
-    // for (const auto &imu_preint_block : imu_blocks) {
-    //     imu_preint_block.SimpleInformation();
-    // }
+    for (const auto &imu_preint_block : imu_blocks) {
+        imu_preint_block.SimpleInformation();
+    }
 
     return true;
 }
@@ -209,6 +209,41 @@ bool Backend::ConstructLigtFunction(const std::vector<ImuPreintegrateBlock> &imu
     return true;
 }
 
+bool Backend::PropagateStatesOfAllFramesForInitializaion(const std::vector<ImuPreintegrateBlock> &imu_blocks,
+                                                         const Vec3 &v_i0i0,
+                                                         const Vec3 &gravity_i0) {
+    // Determine the scope of all frames.
+    const uint32_t max_frames_idx = data_manager_->visual_local_map()->frames().back().id();
+    const uint32_t min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
+
+    // Set states of first frame.
+    auto first_frame = data_manager_->visual_local_map()->frame(min_frames_idx);
+    first_frame->p_wc().setZero();
+    first_frame->v_wc() = v_i0i0;
+
+    // Iterate all frames to propagate states.
+    uint32_t idx_of_imu_block = 0;
+    for (uint32_t i = min_frames_idx + 1; i <= max_frames_idx; ++i) {
+        const auto &imu_preint_block = imu_blocks[idx_of_imu_block];
+        ++idx_of_imu_block;
+
+        const float &dt = imu_preint_block.integrate_time_s();
+        const Vec3 &imu_p_ij = imu_preint_block.p_ij();
+        const Vec3 &imu_v_ij = imu_preint_block.v_ij();
+
+        auto frame = data_manager_->visual_local_map()->frame(i);
+        frame->v_wc() = first_frame->v_wc() - gravity_i0 * dt + imu_v_ij;
+        frame->p_wc() = first_frame->v_wc() * dt - 0.5f * gravity_i0 * dt * dt + imu_p_ij;
+    }
+
+    // Debug.
+    for (const auto &frame : data_manager_->visual_local_map()->frames()) {
+        frame.SimpleInformation();
+    }
+
+    return true;
+}
+
 bool Backend::EstimateVelocityAndGravityForInitialization() {
     // Compute imu blocks based on the first frame.
     std::vector<ImuPreintegrateBlock> imu_blocks;
@@ -222,10 +257,21 @@ bool Backend::EstimateVelocityAndGravityForInitialization() {
     Vec6 b = Vec6::Zero();
     float Q = 0.0f;
     if (!ConstructLigtFunction(imu_blocks, A, b, Q)) {
-        ReportError("[Backend] Backend failde to construct LIGT function.");
+        ReportError("[Backend] Backend failed to construct LIGT function.");
         return false;
     }
-    ReportDebug("[Backend] Solve Ax=b get [" << A.ldlt().solve(b).transpose() << "].");
+
+    const Vec6 rhs = A.ldlt().solve(b);
+    const Vec3 v_i0i0 = rhs.head<3>();
+    const Vec3 gravity_i0 = rhs.tail<3>();
+    ReportDebug("[Backend] Solve Ax=b get [" << rhs.transpose() << "].");
+
+
+    // Propagate states of all frames.
+    if (!PropagateStatesOfAllFramesForInitializaion(imu_blocks, v_i0i0, gravity_i0)) {
+        ReportError("[Backend] Backend failed to propagate states of all frames.");
+        return false;
+    }
 
     return true;
 }
