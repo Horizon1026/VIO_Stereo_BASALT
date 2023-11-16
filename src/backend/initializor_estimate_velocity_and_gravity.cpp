@@ -290,15 +290,7 @@ bool Backend::RefineGravityForInitialization(const Mat &M,
     }
 
     // Extract real roots.
-    Vec real_roots(real.size());
-    uint32_t j = 0;
-    for (uint32_t i = 0; i < real.size(); ++i) {
-        if (!imag[i]) {
-            real_roots[j] = static_cast<float>(real[i]);
-            ++j;
-        }
-    }
-    real_roots.conservativeResize(j);
+    Vec real_roots = GetRealRoots(real, imag).cast<float>();
     if (real_roots.size() == 0) {
         ReportError("[Backend] Backend failed to find real roots.");
         return false;
@@ -391,12 +383,13 @@ bool Backend::EstimateVelocityAndGravityForInitialization() {
     // Solve rhs(velocity and bias).
     Vec rhs = Vec6::Zero();
     if (!RefineGravityForInitialization(A, -2.0f * b, Q, 1.0f, rhs)) {
-        ReportError("[Backend] Backend failed to solve LIGT function.");
-        return false;
+        ReportError("[Backend] Backend failed to refine gravity. Try to solve LGIT function.");
+        rhs = A.ldlt().solve(b);
     }
     const Vec3 v_i0i0 = rhs.head<3>();
-    const Vec3 gravity_i0 = rhs.tail<3>().normalized() * options_.kGravityInWordFrame.norm();;
-    ReportDebug("[Backend] Solve Ax=b get [" << rhs.transpose() << "].");
+    const Vec3 gravity_i0 = rhs.tail<3>().normalized() * options_.kGravityInWordFrame.norm();
+    ReportInfo("[Backend] Backend solved v_i0i0 is " << LogVec(v_i0i0) << ", gravity_i0 is " << LogVec(gravity_i0) <<
+        ", gravity norm is " << gravity_i0.norm());
 
     // Propagate states of all frames.
     if (!PropagateStatesOfAllFramesForInitializaion(imu_blocks, v_i0i0, gravity_i0)) {

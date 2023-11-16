@@ -94,6 +94,6 @@ T EvaluatePolynomial(const Eigen::VectorXd& coeffs, const T& x) {
   return value;
 }
 
-Eigen::VectorXd real_roots(const Eigen::VectorXd &real, const Eigen::VectorXd &imag);
+Eigen::VectorXd GetRealRoots(const Eigen::VectorXd &real, const Eigen::VectorXd &imag);
 
 #endif  // POLYNOMIAL_H_

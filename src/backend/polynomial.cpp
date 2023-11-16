@@ -210,10 +210,6 @@ bool FindPolynomialRootsDurandKerner(const Eigen::VectorXd& coeffs_all,
 bool FindPolynomialRootsCompanionMatrix(const Eigen::VectorXd& coeffs_all,
                                         Eigen::VectorXd* real,
                                         Eigen::VectorXd* imag) {
-  if (coeffs_all.size() != 2) {
-    return false;
-  }
-
   Eigen::VectorXd coeffs = RemoveLeadingZeros(coeffs_all);
 
   const int degree = coeffs.size() - 1;
@@ -279,7 +275,7 @@ bool FindPolynomialRootsCompanionMatrix(const Eigen::VectorXd& coeffs_all,
 }
 
 
-Eigen::VectorXd real_roots(const Eigen::VectorXd &real, const Eigen::VectorXd &imag) {
+Eigen::VectorXd GetRealRoots(const Eigen::VectorXd &real, const Eigen::VectorXd &imag) {
     if (real.size() != imag.size()) {
       return Eigen::VectorXd();
     }
