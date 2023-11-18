@@ -15,26 +15,13 @@ bool Backend::TryToInitialize() {
         return false;
     }
 
-    // Debug. Print imu measurement.
-    LogFixPercision(5);
-    auto &frame = data_manager_->frames_with_bias().back();
-    const int32_t max_idx = static_cast<int32_t>(frame.packed_measure->imus.size());
-    for (int32_t i = 0; i < max_idx; ++i) {
-        ReportDebug("[Backend] Imu measurement at " << frame.packed_measure->imus[i]->time_stamp_s <<
-            "s, gyro " << LogVec(frame.packed_measure->imus[i]->gyro) <<
-            ", accel " << LogVec(frame.packed_measure->imus[i]->accel));
-    }
-
-    // Estiamte gyro bias.
-    // After this step, the following states are estimated:
-    // bias_g, which is one-for-all.
-    // q_wc (based on the first camera frame) of each frame.
-    if (!EstimateGyroBiasForInitialization()) {
+    // Estiamte bias_g (one-for-all), q_wc (define i0 frame as w frame) of each frame.
+    if (!EstimateGyroBiasAndRotationForInitialization()) {
         ReportError("[Backend] Backend failed to estimate gyro bias.");
         return false;
     }
 
-    // Estimate velocity of each frame, and gravity vector, based on frame i0(imu).
+    // Estimate velocity of each frame, and gravity vector based on frame i0(imu).
     Vec3 gravity_i0 = Vec3::Zero();
     if (!EstimateVelocityAndGravityForInitialization(gravity_i0)) {
         ReportError("[Backend] Backend failed to estimate velocity or gravity.");
@@ -42,7 +29,7 @@ bool Backend::TryToInitialize() {
     }
 
     // Transform all states from frame i0(imu) to frame world.
-    if (!TransformAllStatesFromImuFrameToWorldFrameForInitialization(gravity_i0)) {
+    if (!TransformAllStatesToWorldFrameForInitialization(gravity_i0)) {
         ReportError("[Backend] Backend failed to transform from i0 to w frame.");
         return false;
     }
@@ -65,7 +52,7 @@ bool Backend::ConvertNewFramesToCovisibleGraphForInitialization() {
     return true;
 }
 
-bool Backend::TransformAllStatesFromImuFrameToWorldFrameForInitialization(const Vec3 &gravity_i0) {
+bool Backend::TransformAllStatesToWorldFrameForInitialization(const Vec3 &gravity_i0) {
     // Compute the rotation from i0 to w.
     const Vec3 gravity_w = options_.kGravityInWordFrame;
     const Vec3 cross_vec = gravity_i0.cross(gravity_w);

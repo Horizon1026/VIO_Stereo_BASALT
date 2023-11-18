@@ -54,7 +54,7 @@ public:
     bool ConvertNewFramesToCovisibleGraphForInitialization();
 
     // Estimate gyro bias for initialization.
-    bool EstimateGyroBiasForInitialization();
+    bool EstimateGyroBiasAndRotationForInitialization();
     bool EstimateGyroBiasByMethodOneForInitialization();
     bool EstimateGyroBiasByMethodTwoForInitialization();
     bool EstimateGyroBiasByMethodThreeForInitialization();
@@ -76,7 +76,7 @@ public:
     bool PropagateAllBasedOnFirstImuFrameForInitializaion(const std::vector<ImuPreintegrateBlock> &imu_blocks,
                                                           const Vec3 &v_i0i0,
                                                           const Vec3 &gravity_i0);
-    bool TransformAllStatesFromImuFrameToWorldFrameForInitialization(const Vec3 &gravity_i0);
+    bool TransformAllStatesToWorldFrameForInitialization(const Vec3 &gravity_i0);
 
     // Support for backend.
     void RecomputeImuPreintegration();

@@ -4,14 +4,14 @@
 
 namespace VIO {
 
-bool Backend::EstimateGyroBiasForInitialization() {
+bool Backend::EstimateGyroBiasAndRotationForInitialization() {
     switch (options_.kMethodIndexToEstimateGyroBiasForInitialization) {
         case 1:
-        default:
             return EstimateGyroBiasByMethodOneForInitialization();
         case 2:
             return EstimateGyroBiasByMethodTwoForInitialization();
         case 3:
+        default:
             return EstimateGyroBiasByMethodThreeForInitialization();
     }
 }
