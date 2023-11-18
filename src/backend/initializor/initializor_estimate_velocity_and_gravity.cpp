@@ -346,6 +346,28 @@ bool Backend::PropagateAllBasedOnFirstImuFrameForInitializaion(const std::vector
         frame->p_wc() = first_frame->v_wc() * dt - 0.5f * gravity_i0 * dt * dt + imu_p_ij;
     }
 
+    /*
+    newest->q_wb = subnew->q_wb * delta_r;
+    newest->t_wb = subnew->q_wb.toRotationMatrix() * delta_p + subnew->t_wb + subnew->v_wb * dt - 0.5f * this->targetGravity * dt * dt;
+    newest->v_wb = subnew->q_wb.toRotationMatrix() * delta_v + subnew->v_wb - this->targetGravity * dt;
+    newest->q_wc = newest->q_wb * this->q_bc;
+    newest->t_wc = newest->q_wb * this->t_bc + newest->t_wb;
+    newest->v_wc = this->q_bc.inverse() * newest->q_wb.inverse() * newest->v_wb;
+
+    // T_wb = T_wc * T_bc.inverse();
+    // [R_wb   t_wb] = [R_wc   t_wc] * [R_bc'   - R_bc' * t_bc]
+    // [ 0      1  ]   [ 0       1 ]   [ 0              1     ]
+    //               = [R_wc * R_bc'   R_wc * (- R_bc' * t_bc) + t_wc]
+    //                 [     0                       1               ]
+    //               = [R_wc * R_bc'   - R_wb * t_bc + t_wc]
+    //                 [     0                   1         ]
+    // T_wc = T_wb * T_bc
+    // [R_wc   t_wc] = [R_wb   t_wb] * [R_bc  t_bc]
+    // [ 0      1  ]   [ 0       1 ]   [ 0      1 ]
+    //               = [R_wb * R_bc  R_wb * t_bc + t_wb]
+    //                 [     0               1         ]
+    */
+
     return true;
 }
 
