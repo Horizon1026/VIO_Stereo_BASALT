@@ -320,9 +320,9 @@ bool Backend::RefineGravityForInitialization(const Mat &M,
     return true;
 }
 
-bool Backend::PropagateStatesOfAllFramesForInitializaion(const std::vector<ImuPreintegrateBlock> &imu_blocks,
-                                                         const Vec3 &v_i0i0,
-                                                         const Vec3 &gravity_i0) {
+bool Backend::PropagateAllBasedOnFirstImuFrameForInitializaion(const std::vector<ImuPreintegrateBlock> &imu_blocks,
+                                                               const Vec3 &v_i0i0,
+                                                               const Vec3 &gravity_i0) {
     // Determine the scope of all frames.
     const uint32_t max_frames_idx = data_manager_->visual_local_map()->frames().back().id();
     const uint32_t min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
@@ -347,15 +347,10 @@ bool Backend::PropagateStatesOfAllFramesForInitializaion(const std::vector<ImuPr
         frame->p_wc() = first_frame->v_wc() * dt - 0.5f * gravity_i0 * dt * dt + imu_p_ij;
     }
 
-    // Debug.
-    for (const auto &frame : data_manager_->visual_local_map()->frames()) {
-        frame.SimpleInformation();
-    }
-
     return true;
 }
 
-bool Backend::EstimateVelocityAndGravityForInitialization() {
+bool Backend::EstimateVelocityAndGravityForInitialization(Vec3 &gravity_i0) {
     // Compute imu blocks based on the first frame.
     std::vector<ImuPreintegrateBlock> imu_blocks;
     if (!ComputeImuPreintegrationBasedOnFirstFrameForInitialization(imu_blocks)) {
@@ -379,13 +374,13 @@ bool Backend::EstimateVelocityAndGravityForInitialization() {
         rhs = A.ldlt().solve(b);
     }
     const Vec3 v_i0i0 = rhs.head<3>();
-    const Vec3 gravity_i0 = rhs.tail<3>().normalized() * options_.kGravityInWordFrame.norm();
+    gravity_i0 = rhs.tail<3>().normalized() * options_.kGravityInWordFrame.norm();
     ReportInfo(GREEN "[Backend] Estimated v_i0i0 is " << LogVec(v_i0i0) << ", gravity_i0 is " << LogVec(gravity_i0) <<
         ", gravity norm is " << gravity_i0.norm() << RESET_COLOR);
 
-    // Propagate states of all frames.
-    if (!PropagateStatesOfAllFramesForInitializaion(imu_blocks, v_i0i0, gravity_i0)) {
-        ReportError("[Backend] Backend failed to propagate states of all frames.");
+    // Propagate states of all frames based on frame i0(imu).
+    if (!PropagateAllBasedOnFirstImuFrameForInitializaion(imu_blocks, v_i0i0, gravity_i0)) {
+        ReportError("[Backend] Backend failed to propagate states of all frames based on frame i0.");
         return false;
     }
 

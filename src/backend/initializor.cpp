@@ -34,9 +34,16 @@ bool Backend::TryToInitialize() {
         return false;
     }
 
-    // Estimate velocity of each frame, and gravity vector.
-    if (!EstimateVelocityAndGravityForInitialization()) {
+    // Estimate velocity of each frame, and gravity vector, based on frame i0(imu).
+    Vec3 gravity_i0 = Vec3::Zero();
+    if (!EstimateVelocityAndGravityForInitialization(gravity_i0)) {
         ReportError("[Backend] Backend failed to estimate velocity or gravity.");
+        return false;
+    }
+
+    // Transform all states from frame i0(imu) to frame world.
+    if (!TransformAllStatesFromImuFrameToWorldFrameForInitialization(gravity_i0)) {
+        ReportError("[Backend] Backend failed to transform from i0 to w frame.");
         return false;
     }
 
@@ -58,5 +65,46 @@ bool Backend::ConvertNewFramesToCovisibleGraphForInitialization() {
     return true;
 }
 
+bool Backend::TransformAllStatesFromImuFrameToWorldFrameForInitialization(const Vec3 &gravity_i0) {
+    // Localize the left camera extrinsic.
+    const Quat q_ic = data_manager_->camera_extrinsics().front().q_ic;
+    const Vec3 t_ic = data_manager_->camera_extrinsics().front().t_ic;
+
+    // Compute the rotation from i0 to w.
+    const Vec3 gravity_w = options_.kGravityInWordFrame;
+    const Vec3 cross_vec = gravity_i0.cross(gravity_w);
+    const float norm = cross_vec.norm();
+    const Vec3 u = cross_vec / norm;
+    const float theta = std::atan2(norm, gravity_i0.dot(gravity_w));
+    const Vec3 angle_axis = u * theta;
+    const Quat q_wi0 = Utility::ConvertAngleAxisToQuaternion(angle_axis);
+    const Vec euler_wi0 = Utility::QuaternionToEuler(q_wi0);
+    ReportInfo("[Backend] Estimated q_wi0 (rotation from i0 to w) is " << LogQuat(q_wi0) <<
+        ", eular angle is " << LogVec(euler_wi0) << ".");
+
+    // Iterate all frames, transform all states of them from i0 to w.
+    // Determine the scope of all frames.
+    const uint32_t max_frames_idx = data_manager_->visual_local_map()->frames().back().id();
+    const uint32_t min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
+
+    // Iterate all frames to propagate states.
+    for (uint32_t i = min_frames_idx; i <= max_frames_idx; ++i) {
+        auto frame = data_manager_->visual_local_map()->frame(i);
+        const Quat q_i0c = frame->q_wc();
+        const Vec3 p_i0c = frame->p_wc();
+        const Vec3 v_i0c = frame->v_wc();
+
+        frame->q_wc() = q_wi0 * q_i0c;
+        frame->p_wc() = q_wi0 * p_i0c;
+        frame->v_wc() = q_wi0 * v_i0c;
+    }
+
+    // Debug.
+    for (const auto &frame : data_manager_->visual_local_map()->frames()) {
+        frame.SimpleInformation();
+    }
+
+    return true;
+}
 
 }

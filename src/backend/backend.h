@@ -60,7 +60,7 @@ public:
     bool EstimateGyroBiasByMethodThreeForInitialization();
 
     // Estimate velocity and gravity for initialization.
-    bool EstimateVelocityAndGravityForInitialization();
+    bool EstimateVelocityAndGravityForInitialization(Vec3 &gravity_i0);
     bool SelectTwoFramesWithMaxParallax(CovisibleGraphType *local_map,
                                         const FeatureType &feature,
                                         int32_t &frame_id_l,
@@ -73,9 +73,10 @@ public:
                                         const float Q,
                                         const float gravity_mag,
                                         Vec &rhs);
-    bool PropagateStatesOfAllFramesForInitializaion(const std::vector<ImuPreintegrateBlock> &imu_blocks,
-                                                    const Vec3 &v_i0i0,
-                                                    const Vec3 &gravity_i0);
+    bool PropagateAllBasedOnFirstImuFrameForInitializaion(const std::vector<ImuPreintegrateBlock> &imu_blocks,
+                                                          const Vec3 &v_i0i0,
+                                                          const Vec3 &gravity_i0);
+    bool TransformAllStatesFromImuFrameToWorldFrameForInitialization(const Vec3 &gravity_i0);
 
     // Support for backend.
     void RecomputeImuPreintegration();
