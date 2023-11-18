@@ -73,10 +73,11 @@ bool Backend::TransformAllStatesFromImuFrameToWorldFrameForInitialization(const 
     const Vec3 u = cross_vec / norm;
     const float theta = std::atan2(norm, gravity_i0.dot(gravity_w));
     const Vec3 angle_axis = u * theta;
-    const Quat q_wi0 = Utility::ConvertAngleAxisToQuaternion(angle_axis);
-    const Vec euler_wi0 = Utility::QuaternionToEuler(q_wi0);
-    ReportInfo(GREEN "[Backend] Estimated q_wi0 (rotation from i0 to w) is " << LogQuat(q_wi0) <<
-        ", eular angle is " << LogVec(euler_wi0) << "." << RESET_COLOR);
+    Vec3 euler_wi0 = Utility::QuaternionToEuler(Utility::ConvertAngleAxisToQuaternion(angle_axis));
+    euler_wi0(2) = 0.0f;
+    const Quat q_wi0 = Utility::EulerToQuaternion(euler_wi0);
+    ReportInfo(GREEN "[Backend] Estimated q_wi0 is " << LogQuat(q_wi0) << ", eular angle is " <<
+        LogVec(euler_wi0) << "." << RESET_COLOR);
 
     // Iterate all frames, transform all states of them from i0 to w.
     // Determine the scope of all frames.
