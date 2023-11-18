@@ -1,4 +1,5 @@
 aux_source_directory( . AUX_SRC_VIO_STEREO_BASALT_BACKEND )
+aux_source_directory( initializor AUX_SRC_VIO_STEREO_BASALT_BACKEND_INITIALIZOR )
 
 # Add all components of slam utility.
 set( SLAM_UTILITY_PATH ${PROJECT_SOURCE_DIR}/../Slam_Utility/src )
@@ -58,7 +59,10 @@ if ( NOT TARGET lib_polynomial_solver )
 endif()
 
 # Create library.
-add_library( lib_vio_stereo_basalt_backend ${AUX_SRC_VIO_STEREO_BASALT_BACKEND} )
+add_library( lib_vio_stereo_basalt_backend
+    ${AUX_SRC_VIO_STEREO_BASALT_BACKEND}
+    ${AUX_SRC_VIO_STEREO_BASALT_BACKEND_INITIALIZOR}
+)
 target_include_directories( lib_vio_stereo_basalt_backend PUBLIC . )
 target_link_libraries( lib_vio_stereo_basalt_backend
     lib_slam_utility_datatype
