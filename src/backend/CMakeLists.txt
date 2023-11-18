@@ -48,10 +48,13 @@ if ( NOT TARGET lib_vision_geometry_relative_rotation )
     add_subdirectory( ${VISION_GEOMETRY_PATH}/relative_rotation ${PROJECT_SOURCE_DIR}/build/lib_vision_geometry_relative_rotation )
 endif()
 
-# Add slam solver : general_graph_optimizor.
+# Add components of slam solver.
 set( SLAM_SOLVER_PATH ${PROJECT_SOURCE_DIR}/../Slam_Solver/src )
 if ( NOT TARGET lib_general_graph_optimizor )
     add_subdirectory( ${SLAM_SOLVER_PATH}/general_graph_optimizor ${PROJECT_SOURCE_DIR}/build/lib_general_graph_optimizor )
+endif()
+if ( NOT TARGET lib_polynomial_solver )
+    add_subdirectory( ${SLAM_SOLVER_PATH}/polynomial_solver ${PROJECT_SOURCE_DIR}/build/lib_polynomial_solver )
 endif()
 
 # Create library.
@@ -73,5 +76,7 @@ target_link_libraries( lib_vio_stereo_basalt_backend
     lib_vision_geometry_relative_rotation
 
     lib_binary_data_log
+
     lib_general_graph_optimizor
+    lib_polynomial_solver
 )

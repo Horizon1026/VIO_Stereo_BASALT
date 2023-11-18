@@ -1,6 +1,6 @@
 #include "backend.h"
 #include "log_report.h"
-#include "polynomial.h"
+#include "polynomial_solver.h"
 
 namespace VIO {
 
@@ -41,9 +41,6 @@ bool Backend::SelectTwoFramesWithMaxParallax(CovisibleGraphType *local_map,
         }
     }
 
-    // ReportDebug("[Backend] frame " << frame_id_l << ", " << frame_id_r <<
-    //     " have max parallex angle " << max_parallex_angle << " rad.");
-
     return true;
 }
 
@@ -69,11 +66,6 @@ bool Backend::ComputeImuPreintegrationBasedOnFirstFrameForInitialization(std::ve
             }
         }
         imu_blocks.emplace_back(new_imu_block);
-    }
-
-    // Debug.
-    for (const auto &imu_preint_block : imu_blocks) {
-        imu_preint_block.SimpleInformation();
     }
 
     return true;
@@ -388,8 +380,8 @@ bool Backend::EstimateVelocityAndGravityForInitialization() {
     }
     const Vec3 v_i0i0 = rhs.head<3>();
     const Vec3 gravity_i0 = rhs.tail<3>().normalized() * options_.kGravityInWordFrame.norm();
-    ReportInfo("[Backend] Backend solved v_i0i0 is " << LogVec(v_i0i0) << ", gravity_i0 is " << LogVec(gravity_i0) <<
-        ", gravity norm is " << gravity_i0.norm());
+    ReportInfo(GREEN "[Backend] Estimated v_i0i0 is " << LogVec(v_i0i0) << ", gravity_i0 is " << LogVec(gravity_i0) <<
+        ", gravity norm is " << gravity_i0.norm() << RESET_COLOR);
 
     // Propagate states of all frames.
     if (!PropagateStatesOfAllFramesForInitializaion(imu_blocks, v_i0i0, gravity_i0)) {

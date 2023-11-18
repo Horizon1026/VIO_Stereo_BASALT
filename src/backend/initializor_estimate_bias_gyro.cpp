@@ -282,7 +282,7 @@ bool Backend::EstimateGyroBiasByMethodThreeForInitialization() {
     }
 
     // Report result.
-    ReportInfo("[Backend] Estimate bias of gyro is " << LogVec(bias_g));
+    ReportInfo(GREEN "[Backend] Estimated bias_gyro is " << LogVec(bias_g) << RESET_COLOR);
 
     return true;
 }
