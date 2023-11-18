@@ -23,7 +23,7 @@ bool Backend::SelectTwoFramesWithMaxParallax(CovisibleGraphType *local_map,
             const Vec3 norm_xyz_i = Vec3(observe_i[0].rectified_norm_xy.x(), observe_i[0].rectified_norm_xy.y(), 1.0f);
             const Vec3 norm_xyz_j = Vec3(observe_j[0].rectified_norm_xy.x(), observe_j[0].rectified_norm_xy.y(), 1.0f);
 
-            // Extract rotation of frame i/j.
+            // Extract rotation of frame i/j. The frame w is i0.
             const Quat &q_wc_i = local_map->frame(i + feature.first_frame_id())->q_wc();
             const Quat &q_wc_j = local_map->frame(j + feature.first_frame_id())->q_wc();
 
@@ -75,9 +75,8 @@ bool Backend::ConstructLigtFunction(const std::vector<ImuPreintegrateBlock> &imu
     // Compute the norm of gravity vector.
     const float gravity_norm = options_.kGravityInWordFrame.norm();
 
-    // Localize the left camera extrinsic.
+    // Localize the left camera extrinsic. Use 'b' to represent frame of imu.
     const Quat q_ic = data_manager_->camera_extrinsics().front().q_ic;
-    // Use 'b' to represent frame of imu.
     const Vec3 t_bc = data_manager_->camera_extrinsics().front().t_ic;
     const Mat3 R_cb = q_ic.toRotationMatrix().transpose();
 
@@ -164,17 +163,17 @@ bool Backend::ConstructLigtFunction(const std::vector<ImuPreintegrateBlock> &imu
 
             if (frame_id_i != static_cast<int32_t>(feature.first_frame_id())) {
                 const int32_t idx_of_imu = frame_id_i - feature.first_frame_id() - 1;
-                S_1i = imu_blocks[idx_of_imu].p_ij() + R_wci * t_bc - t_bc;
+                S_1i = imu_blocks[idx_of_imu].p_ij() + R_cb * R_wci * t_bc - t_bc;
                 t_1i = imu_blocks[idx_of_imu].integrate_time_s();
             }
             if (frame_id_r != static_cast<int32_t>(feature.first_frame_id())) {
                 const int32_t idx_of_imu = frame_id_r - feature.first_frame_id() - 1;
-                S_1r = imu_blocks[idx_of_imu].p_ij() + R_wci * t_bc - t_bc;
+                S_1r = imu_blocks[idx_of_imu].p_ij() + R_cb * R_wci * t_bc - t_bc;
                 t_1r = imu_blocks[idx_of_imu].integrate_time_s();
             }
             if (frame_id_l != static_cast<int32_t>(feature.first_frame_id())) {
                 const int32_t idx_of_imu = frame_id_l - feature.first_frame_id() - 1;
-                S_1l = imu_blocks[idx_of_imu].p_ij() + R_wci * t_bc - t_bc;
+                S_1l = imu_blocks[idx_of_imu].p_ij() + R_cb * R_wci * t_bc - t_bc;
                 t_1l = imu_blocks[idx_of_imu].integrate_time_s();
             }
 

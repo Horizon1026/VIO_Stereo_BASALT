@@ -66,10 +66,6 @@ bool Backend::ConvertNewFramesToCovisibleGraphForInitialization() {
 }
 
 bool Backend::TransformAllStatesFromImuFrameToWorldFrameForInitialization(const Vec3 &gravity_i0) {
-    // Localize the left camera extrinsic.
-    const Quat q_ic = data_manager_->camera_extrinsics().front().q_ic;
-    const Vec3 t_ic = data_manager_->camera_extrinsics().front().t_ic;
-
     // Compute the rotation from i0 to w.
     const Vec3 gravity_w = options_.kGravityInWordFrame;
     const Vec3 cross_vec = gravity_i0.cross(gravity_w);
@@ -79,8 +75,8 @@ bool Backend::TransformAllStatesFromImuFrameToWorldFrameForInitialization(const 
     const Vec3 angle_axis = u * theta;
     const Quat q_wi0 = Utility::ConvertAngleAxisToQuaternion(angle_axis);
     const Vec euler_wi0 = Utility::QuaternionToEuler(q_wi0);
-    ReportInfo("[Backend] Estimated q_wi0 (rotation from i0 to w) is " << LogQuat(q_wi0) <<
-        ", eular angle is " << LogVec(euler_wi0) << ".");
+    ReportInfo(GREEN "[Backend] Estimated q_wi0 (rotation from i0 to w) is " << LogQuat(q_wi0) <<
+        ", eular angle is " << LogVec(euler_wi0) << "." << RESET_COLOR);
 
     // Iterate all frames, transform all states of them from i0 to w.
     // Determine the scope of all frames.
