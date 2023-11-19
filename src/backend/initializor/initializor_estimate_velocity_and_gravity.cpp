@@ -322,14 +322,26 @@ bool Backend::RefineGravityForInitialization(const Mat &M,
 bool Backend::PropagateAllBasedOnFirstImuFrameForInitializaion(const std::vector<ImuPreintegrateBlock> &imu_blocks,
                                                                const Vec3 &v_i0i0,
                                                                const Vec3 &gravity_i0) {
+    // Localize the left camera extrinsic.
+    const Quat q_ic = data_manager_->camera_extrinsics().front().q_ic;
+    const Vec3 t_ic = data_manager_->camera_extrinsics().front().t_ic;
+    const Quat q_ci = q_ic.inverse();
+
     // Determine the scope of all frames.
     const uint32_t max_frames_idx = data_manager_->visual_local_map()->frames().back().id();
     const uint32_t min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
 
     // Set states of first frame.
     auto first_frame = data_manager_->visual_local_map()->frame(min_frames_idx);
-    first_frame->p_wc().setZero();
-    first_frame->v_wc() = v_i0i0;
+    first_frame->p_wc() = t_ic;
+    first_frame->v_wc() = q_ci * v_i0i0;
+    const Quat first_q_i0c = first_frame->q_wc();
+    ReportDebug("first_q_i0c is " << LogQuat(first_q_i0c) << ", q_ic is " << LogQuat(q_ic) << ", they should be the same.");
+
+    const Quat q_i0i0 = first_frame->q_wc() * q_ci;
+    const Vec3 p_i0i0 = first_frame->p_wc() - q_i0i0 * t_ic;
+    const Vec3 temp_v_i0i0 = q_ic * first_frame->v_wc();
+    ReportDebug("q_i0i0 " << LogQuat(q_i0i0) << ", p_i0i0 " << LogVec(p_i0i0) << ", v_i0i0 " << LogVec(temp_v_i0i0));
 
     // Iterate all frames to propagate states.
     uint32_t idx_of_imu_block = 0;
@@ -338,21 +350,26 @@ bool Backend::PropagateAllBasedOnFirstImuFrameForInitializaion(const std::vector
         ++idx_of_imu_block;
 
         const float &dt = imu_preint_block.integrate_time_s();
+        const Quat &imu_q_ij = imu_preint_block.q_ij();
         const Vec3 &imu_p_ij = imu_preint_block.p_ij();
         const Vec3 &imu_v_ij = imu_preint_block.v_ij();
 
         auto frame = data_manager_->visual_local_map()->frame(i);
-        frame->v_wc() = first_frame->v_wc() - gravity_i0 * dt + imu_v_ij;
-        frame->p_wc() = first_frame->v_wc() * dt - 0.5f * gravity_i0 * dt * dt + imu_p_ij;
+        const Quat q_i0i = q_i0i0 * imu_q_ij;
+        const Vec3 p_i0i = q_i0i0 * imu_p_ij + p_i0i0 + v_i0i0 * dt - 0.5f * gravity_i0 * dt * dt;
+        const Vec3 v_i0i = q_i0i0 * imu_v_ij + v_i0i0 - gravity_i0 * dt;
+        frame->q_wc() = q_i0i * q_ic;
+        frame->p_wc() = q_i0i * t_ic + p_i0i;
+        frame->v_wc() = q_ci * q_i0i.inverse() * v_i0i;
     }
 
     /*
-    newest->q_wb = subnew->q_wb * delta_r;
-    newest->t_wb = subnew->q_wb.toRotationMatrix() * delta_p + subnew->t_wb + subnew->v_wb * dt - 0.5f * this->targetGravity * dt * dt;
-    newest->v_wb = subnew->q_wb.toRotationMatrix() * delta_v + subnew->v_wb - this->targetGravity * dt;
-    newest->q_wc = newest->q_wb * this->q_bc;
-    newest->t_wc = newest->q_wb * this->t_bc + newest->t_wb;
-    newest->v_wc = this->q_bc.inverse() * newest->q_wb.inverse() * newest->v_wb;
+    newest->q_wi = subnew->q_wi * delta_r;
+    newest->t_wi = subnew->q_wi.toRotationMatrix() * delta_p + subnew->t_wi + subnew->v_wi * dt - 0.5f * this->targetGravity * dt * dt;
+    newest->v_wi = subnew->q_wi.toRotationMatrix() * delta_v + subnew->v_wi - this->targetGravity * dt;
+    newest->q_wc = newest->q_wi * this->q_ic;
+    newest->t_wc = newest->q_wi * this->t_ic + newest->t_wi;
+    newest->v_wc = this->q_ic.inverse() * newest->q_wi.inverse() * newest->v_wi;
 
     // T_wb = T_wc * T_bc.inverse();
     // [R_wb   t_wb] = [R_wc   t_wc] * [R_bc'   - R_bc' * t_bc]
@@ -367,6 +384,11 @@ bool Backend::PropagateAllBasedOnFirstImuFrameForInitializaion(const std::vector
     //               = [R_wb * R_bc  R_wb * t_bc + t_wb]
     //                 [     0               1         ]
     */
+
+    // Debug.
+    for (const auto &frame : data_manager_->visual_local_map()->frames()) {
+        frame.SimpleInformation();
+    }
 
     return true;
 }

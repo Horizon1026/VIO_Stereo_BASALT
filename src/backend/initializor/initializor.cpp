@@ -83,10 +83,10 @@ bool Backend::TransformAllStatesToWorldFrameForInitialization(const Vec3 &gravit
         frame->v_wc() = q_wi0 * v_i0c;
     }
 
-    // Debug.
-    for (const auto &frame : data_manager_->visual_local_map()->frames()) {
-        frame.SimpleInformation();
-    }
+    // // Debug.
+    // for (const auto &frame : data_manager_->visual_local_map()->frames()) {
+    //     frame.SimpleInformation();
+    // }
 
     return true;
 }
