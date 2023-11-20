@@ -73,7 +73,7 @@ public:
                                         const float Q,
                                         const float gravity_mag,
                                         Vec &rhs);
-    bool PropagateAllBasedOnFirstImuFrameForInitializaion(const std::vector<ImuPreintegrateBlock> &imu_blocks,
+    bool PropagateAllBasedOnFirstCameraFrameForInitializaion(const std::vector<ImuPreintegrateBlock> &imu_blocks,
                                                           const Vec3 &v_i0i0,
                                                           const Vec3 &gravity_i0);
     bool TransformAllStatesToWorldFrameForInitialization(const Vec3 &gravity_i0);

@@ -20,10 +20,6 @@ bool Backend::EstimateGyroBiasByMethodOneForInitialization() {
     ReportInfo("[Backend] Try to estimate bias of gyro by Method 1.");
     RecomputeImuPreintegration();
 
-    // Localize the left camera extrinsic.
-    const Quat q_ic = data_manager_->camera_extrinsics().front().q_ic;
-    const Quat q_ci = q_ic.inverse();
-
     // Determine the scope of all frames.
     const uint32_t max_frames_idx = data_manager_->visual_local_map()->frames().back().id();
     const uint32_t min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
@@ -54,8 +50,7 @@ bool Backend::EstimateGyroBiasByMethodOneForInitialization() {
 
         // Update rotation of each frames. The frame w is defined as i0.
         if (i == min_frames_idx) {
-            const Quat q_i0i0 = Quat::Identity();
-            data_manager_->visual_local_map()->frame(i)->q_wc() = q_i0i0 * q_ic;
+            data_manager_->visual_local_map()->frame(i)->q_wc() = Quat::Identity();
         }
         // q_wc = q_wr * q_cr.inverse().
         data_manager_->visual_local_map()->frame(i + 1)->q_wc() = data_manager_->visual_local_map()->frame(i)->q_wc() * q_cr.inverse();
@@ -75,8 +70,8 @@ bool Backend::EstimateGyroBiasByMethodOneForInitialization() {
             const Mat3 dr_dbg = imu_preint_block.dr_dbg();
             const Quat q_bibj = imu_preint_block.q_ij();
 
-            const Quat q_wi_i = data_manager_->visual_local_map()->frame(i)->q_wc() * q_ci;
-            const Quat q_wi_j = data_manager_->visual_local_map()->frame(i + 1)->q_wc() * q_ci;
+            const Quat q_wi_i = data_manager_->visual_local_map()->frame(i)->q_wc();
+            const Quat q_wi_j = data_manager_->visual_local_map()->frame(i + 1)->q_wc();
 
             const Vec3 residual = 2.0f * (q_bibj.inverse() * q_wi_i.inverse() * q_wi_j).vec();
             hessian += dr_dbg.transpose() * dr_dbg;
@@ -215,9 +210,6 @@ bool Backend::EstimateGyroBiasByMethodThreeForInitialization() {
     ReportInfo("[Backend] Try to estimate bias of gyro by Method 3.");
     RecomputeImuPreintegration();
 
-    // Localize the left camera extrinsic.
-    const Quat q_ic = data_manager_->camera_extrinsics().front().q_ic;
-
     // Determine the scope of all frames.
     const uint32_t max_frames_idx = data_manager_->visual_local_map()->frames().back().id();
     const uint32_t min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
@@ -254,8 +246,7 @@ bool Backend::EstimateGyroBiasByMethodThreeForInitialization() {
 
         // Estimate q_wc of all frames.
         if (i == min_frames_idx) {
-            const Quat q_i0i0 = Quat::Identity();
-            data_manager_->visual_local_map()->frame(i)->q_wc() = q_i0i0 * q_ic;
+            data_manager_->visual_local_map()->frame(i)->q_wc() = Quat::Identity();
         }
         // q_wc = q_wr * q_cr.inverse().
         data_manager_->visual_local_map()->frame(i + 1)->q_wc() = data_manager_->visual_local_map()->frame(i)->q_wc() * q_cr.inverse();

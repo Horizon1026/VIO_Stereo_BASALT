@@ -319,7 +319,7 @@ bool Backend::RefineGravityForInitialization(const Mat &M,
     return true;
 }
 
-bool Backend::PropagateAllBasedOnFirstImuFrameForInitializaion(const std::vector<ImuPreintegrateBlock> &imu_blocks,
+bool Backend::PropagateAllBasedOnFirstCameraFrameForInitializaion(const std::vector<ImuPreintegrateBlock> &imu_blocks,
                                                                const Vec3 &v_i0i0,
                                                                const Vec3 &gravity_i0) {
     // Localize the left camera extrinsic.
@@ -333,15 +333,16 @@ bool Backend::PropagateAllBasedOnFirstImuFrameForInitializaion(const std::vector
 
     // Set states of first frame.
     auto first_frame = data_manager_->visual_local_map()->frame(min_frames_idx);
-    first_frame->p_wc() = t_ic;
     first_frame->v_wc() = q_ci * v_i0i0;
-    const Quat first_q_i0c = first_frame->q_wc();
-    ReportDebug("first_q_i0c is " << LogQuat(first_q_i0c) << ", q_ic is " << LogQuat(q_ic) << ", they should be the same.");
 
-    const Quat q_i0i0 = first_frame->q_wc() * q_ci;
-    const Vec3 p_i0i0 = first_frame->p_wc() - q_i0i0 * t_ic;
-    const Vec3 temp_v_i0i0 = q_ic * first_frame->v_wc();
-    ReportDebug("q_i0i0 " << LogQuat(q_i0i0) << ", p_i0i0 " << LogVec(p_i0i0) << ", v_i0i0 " << LogVec(temp_v_i0i0));
+    // Debug.
+    const Vec p_c0c0 = first_frame->p_wc();
+    const Quat q_c0c0 = first_frame->q_wc();
+    const Vec v_c0c0 = first_frame->v_wc();
+    const Vec gracity_c0 = q_ci * gravity_i0;
+    ReportDebug("p_c0c0 is " << LogVec(p_c0c0));
+    ReportDebug("q_c0c0 is " << LogQuat(q_c0c0));
+    ReportDebug("v_c0c0 is " << LogVec(v_c0c0));
 
     // Iterate all frames to propagate states.
     uint32_t idx_of_imu_block = 0;
@@ -355,12 +356,12 @@ bool Backend::PropagateAllBasedOnFirstImuFrameForInitializaion(const std::vector
         const Vec3 &imu_v_ij = imu_preint_block.v_ij();
 
         auto frame = data_manager_->visual_local_map()->frame(i);
-        const Quat q_i0i = q_i0i0 * imu_q_ij;
-        const Vec3 p_i0i = q_i0i0 * imu_p_ij + p_i0i0 + v_i0i0 * dt - 0.5f * gravity_i0 * dt * dt;
-        const Vec3 v_i0i = q_i0i0 * imu_v_ij + v_i0i0 - gravity_i0 * dt;
-        frame->q_wc() = q_i0i * q_ic;
-        frame->p_wc() = q_i0i * t_ic + p_i0i;
-        frame->v_wc() = q_ci * q_i0i.inverse() * v_i0i;
+        const Quat q_c0i = q_ci * imu_q_ij;
+        const Vec3 p_c0i = q_ci * imu_p_ij + p_c0c0 + v_c0c0 * dt - 0.5f * gracity_c0 * dt * dt;
+        const Vec3 v_c0i = q_ci * imu_v_ij + v_c0c0 - gracity_c0 * dt;
+        frame->q_wc() = q_c0i * q_ic;
+        frame->p_wc() = q_c0i * t_ic + p_c0i;
+        frame->v_wc() = v_c0i;
     }
 
     /*
@@ -422,7 +423,7 @@ bool Backend::EstimateVelocityAndGravityForInitialization(Vec3 &gravity_i0) {
         ", gravity norm is " << gravity_i0.norm() << RESET_COLOR);
 
     // Propagate states of all frames based on frame i0(imu).
-    if (!PropagateAllBasedOnFirstImuFrameForInitializaion(imu_blocks, v_i0i0, gravity_i0)) {
+    if (!PropagateAllBasedOnFirstCameraFrameForInitializaion(imu_blocks, v_i0i0, gravity_i0)) {
         ReportError("[Backend] Backend failed to propagate states of all frames based on frame i0.");
         return false;
     }

@@ -15,7 +15,7 @@ bool Backend::TryToInitialize() {
         return false;
     }
 
-    // Estiamte bias_g (one-for-all), q_wc (define i0 frame as w frame) of each frame.
+    // Estiamte bias_g (one-for-all), q_wc (define c0 frame as w frame) of each frame.
     if (!EstimateGyroBiasAndRotationForInitialization()) {
         ReportError("[Backend] Backend failed to estimate gyro bias.");
         return false;
