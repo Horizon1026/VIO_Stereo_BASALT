@@ -6,6 +6,7 @@
 #include "data_manager.h"
 #include "binary_data_log.h"
 #include "general_graph_optimizor.h"
+#include "visual_frontend.h"
 
 namespace VIO {
 
@@ -83,6 +84,7 @@ public:
 
     // Reference for member variables.
     BackendOptions &options() { return options_; }
+    VisualFrontend *&visual_frontend() { return visual_frontend_; }
     DataManager *&data_manager() { return data_manager_; }
     std::unique_ptr<Imu> &imu_model() { return imu_model_; }
     bool &should_quit() { return should_quit_; }
@@ -98,6 +100,7 @@ private:
     BackendStatus status_;
 
     // Register some relative components.
+    VisualFrontend *visual_frontend_ = nullptr;
     DataManager *data_manager_ = nullptr;
     std::unique_ptr<Imu> imu_model_ = nullptr;
 

@@ -29,9 +29,9 @@ if ( NOT TARGET lib_binary_data_log )
 endif()
 
 # Add data manager.
-set( DATA_MANAGER_PATH ${PROJECT_SOURCE_DIR}/../VIO_Stereo_BASALT/src )
+set( DATA_MANAGER_PATH ${PROJECT_SOURCE_DIR}/../VIO_Stereo_BASALT/src/data_manager )
 if ( NOT TARGET lib_vio_stereo_basalt_data_manager )
-    add_subdirectory( ${DATA_MANAGER_PATH}/data_manager ${PROJECT_SOURCE_DIR}/build/lib_vio_stereo_basalt_data_manager )
+    add_subdirectory( ${DATA_MANAGER_PATH} ${PROJECT_SOURCE_DIR}/build/lib_vio_stereo_basalt_data_manager )
 endif()
 
 # Add all components of vision geometry.
@@ -64,6 +64,12 @@ if ( NOT TARGET lib_image_visualizor )
     add_subdirectory( ${VISUALIZOR_PATH}/src ${PROJECT_SOURCE_DIR}/build/lib_image_visualizor )
 endif()
 
+# Add visual frontend.
+set( VISUAL_FRONTEND_PATH ${PROJECT_SOURCE_DIR}/../VIO_Stereo_BASALT/src/frontend )
+if ( NOT TARGET lib_vio_stereo_basalt_frontend )
+    add_subdirectory( ${VISUAL_FRONTEND_PATH} ${PROJECT_SOURCE_DIR}/build/lib_vio_stereo_basalt_frontend )
+endif()
+
 # Create library.
 add_library( lib_vio_stereo_basalt_backend
     ${AUX_SRC_VIO_STEREO_BASALT_BACKEND}
@@ -78,6 +84,7 @@ target_link_libraries( lib_vio_stereo_basalt_backend
     lib_slam_utility_memory
     lib_slam_utility_tick_tock
 
+    lib_vio_stereo_basalt_frontend
     lib_vio_stereo_basalt_data_manager
 
     lib_vision_geometry_epipolar

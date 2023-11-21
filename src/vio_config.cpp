@@ -132,6 +132,7 @@ bool Vio::ConfigComponentOfBackend() {
 
     // Register components.
     backend_->data_manager() = data_manager_.get();
+    backend_->visual_frontend() = frontend_.get();
 
     return true;
 }
