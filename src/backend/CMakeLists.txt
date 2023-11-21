@@ -58,6 +58,12 @@ if ( NOT TARGET lib_polynomial_solver )
     add_subdirectory( ${SLAM_SOLVER_PATH}/polynomial_solver ${PROJECT_SOURCE_DIR}/build/lib_polynomial_solver )
 endif()
 
+# Add image visualizor.
+set( VISUALIZOR_PATH ${PROJECT_SOURCE_DIR}/../Visualizor2D )
+if ( NOT TARGET lib_image_visualizor )
+    add_subdirectory( ${VISUALIZOR_PATH}/src ${PROJECT_SOURCE_DIR}/build/lib_image_visualizor )
+endif()
+
 # Create library.
 add_library( lib_vio_stereo_basalt_backend
     ${AUX_SRC_VIO_STEREO_BASALT_BACKEND}
@@ -80,6 +86,7 @@ target_link_libraries( lib_vio_stereo_basalt_backend
     lib_vision_geometry_relative_rotation
 
     lib_binary_data_log
+    lib_image_visualizor
 
     lib_general_graph_optimizor
     lib_polynomial_solver

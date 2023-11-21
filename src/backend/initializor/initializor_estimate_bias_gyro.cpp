@@ -1,6 +1,7 @@
 #include "backend.h"
 #include "log_report.h"
 #include "relative_rotation.h"
+#include "visualizor.h"
 
 namespace VIO {
 
@@ -32,6 +33,7 @@ bool Backend::EstimateGyroBiasByMethodOneForInitialization() {
     cur_norm_xy.reserve(200);
 
     // Iterate all frames, estimate q_wc of all frames.
+    auto new_frame_iter = data_manager_->frames_with_bias().begin();
     for (uint32_t i = min_frames_idx; i < max_frames_idx; ++i) {
         // Get covisible features only in left camera.
         data_manager_->visual_local_map()->GetCovisibleFeatures(i, i + 1, covisible_features);
@@ -41,6 +43,28 @@ bool Backend::EstimateGyroBiasByMethodOneForInitialization() {
             ref_norm_xy.emplace_back(feature_ptr->observe(i)[0].rectified_norm_xy);
             cur_norm_xy.emplace_back(feature_ptr->observe(i + 1)[0].rectified_norm_xy);
         }
+
+        // Debug: Show feature pairs between ref and cur image.
+        // std::vector<Vec2> ref_pixel_uv;
+        // std::vector<Vec2> cur_pixel_uv;
+        // for (const auto &feature_ptr : covisible_features) {
+        //     ref_pixel_uv.emplace_back(feature_ptr->observe(i)[0].raw_pixel_uv);
+        //     cur_pixel_uv.emplace_back(feature_ptr->observe(i + 1)[0].raw_pixel_uv);
+        // }
+
+        // const std::vector<uint8_t> tracked_status(ref_pixel_uv.size(), 1);
+        // const GrayImage ref_image(new_frame_iter->packed_measure->left_image->image.data(),
+        //                           new_frame_iter->packed_measure->left_image->image.rows(),
+        //                           new_frame_iter->packed_measure->left_image->image.cols());
+        // auto cur_image_iter = std::next(new_frame_iter);
+        // const GrayImage cur_image(cur_image_iter->packed_measure->left_image->image.data(),
+        //                           cur_image_iter->packed_measure->left_image->image.rows(),
+        //                           cur_image_iter->packed_measure->left_image->image.cols());
+        // ReportDebug(ref_image.rows() << ", " << ref_image.cols() << ", " << cur_image.rows() << ", " << cur_image.cols());
+        // Visualizor::ShowImageWithTrackedFeatures("ref and cur image", ref_image, cur_image,
+        //     ref_pixel_uv, cur_pixel_uv, tracked_status);
+        // Visualizor::WaitKey(0);
+        ++new_frame_iter;
 
         // Estimate pure rotation.
         Quat q_cr = Quat::Identity();

@@ -41,7 +41,7 @@ struct VioOptionsOfFrontend {
     uint32_t image_rows = 0;
     uint32_t image_cols = 0;
     bool enable_drawing_track_result = true;
-    bool select_keyframe = true;
+    bool select_keyframe = false;
     uint32_t max_feature_number = 100;
     uint32_t min_feature_number = 30;
     VioOptionsOfFeatureDetector feature_detector;
@@ -56,7 +56,7 @@ struct VioOptionsOfBackend {
     // Method 1: Vins-Mono.
     // Method 2: Robust vio initialization - Heyijia.
     // Method 3: Visual rotation directly estimate gyro bias.
-    uint32_t method_index_to_estimate_gyro_bias_for_initialization = 3;
+    uint32_t method_index_to_estimate_gyro_bias_for_initialization = 1;
 
     Vec3 gravity_w = Vec3(0.0f, 0.0f, 9.8f);
 
@@ -71,7 +71,7 @@ struct VioOptionsOfDataLoader {
 
 struct VioOptionsOfDataManager {
     uint32_t max_num_of_stored_keyframes = 5;
-    uint32_t max_num_of_stored_new_frames = 20;
+    uint32_t max_num_of_stored_new_frames = 10;
     bool enable_recording_curve_binlog = true;
     std::string log_file_name = "data_manager.binlog";
     std::vector<Mat3> all_R_ic = {};
