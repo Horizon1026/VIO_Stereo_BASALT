@@ -1,7 +1,6 @@
 #include "backend.h"
 #include "log_report.h"
 #include "relative_rotation.h"
-#include "visualizor.h"
 
 namespace VIO {
 

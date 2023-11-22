@@ -87,6 +87,8 @@ public:
 
     // Support for backend.
     void RecomputeImuPreintegration();
+    void ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id,
+                                          const uint32_t cur_frame_id);
 
     // Reference for member variables.
     BackendOptions &options() { return options_; }
