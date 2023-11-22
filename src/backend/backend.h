@@ -53,6 +53,12 @@ public:
     // Support for vio initialization.
     bool TryToInitialize();
     bool ConvertNewFramesToCovisibleGraphForInitialization();
+    bool EstimatePureRotationOfCameraFrame(const uint32_t ref_frame_id,
+                                           const uint32_t cur_frame_id,
+                                           const uint32_t min_frame_id,
+                                           std::vector<Vec2> &ref_norm_xy,
+                                           std::vector<Vec2> &cur_norm_xy,
+                                           Quat &q_cr);
 
     // Estimate gyro bias for initialization.
     bool EstimateGyroBiasAndRotationForInitialization();

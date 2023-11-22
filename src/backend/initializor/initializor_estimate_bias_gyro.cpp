@@ -17,6 +17,40 @@ bool Backend::EstimateGyroBiasAndRotationForInitialization() {
     }
 }
 
+bool Backend::EstimatePureRotationOfCameraFrame(const uint32_t ref_frame_id,
+                                                const uint32_t cur_frame_id,
+                                                const uint32_t min_frame_id,
+                                                std::vector<Vec2> &ref_norm_xy,
+                                                std::vector<Vec2> &cur_norm_xy,
+                                                Quat &q_cr) {
+    ref_norm_xy.clear();
+    cur_norm_xy.clear();
+
+    // Get covisible features only in left camera.
+    std::vector<FeatureType *> covisible_features;
+    if (!data_manager_->visual_local_map()->GetCovisibleFeatures(ref_frame_id, cur_frame_id, covisible_features)) {
+        ReportError("[Backend] Failed to get covisible features between frame " << ref_frame_id << " and " << cur_frame_id << ".");
+        return false;
+    }
+    for (const auto &feature_ptr : covisible_features) {
+        ref_norm_xy.emplace_back(feature_ptr->observe(ref_frame_id)[0].rectified_norm_xy);
+        cur_norm_xy.emplace_back(feature_ptr->observe(cur_frame_id)[0].rectified_norm_xy);
+    }
+
+    // Estimate pure rotation.
+    using namespace VISION_GEOMETRY;
+    RelativeRotation solver;
+    RETURN_FALSE_IF(!solver.EstimateRotationByBnb(ref_norm_xy, cur_norm_xy, q_cr));
+
+    // Update rotation of each frames. The frame w is defined as c0.
+    if (ref_frame_id == min_frame_id) {
+        data_manager_->visual_local_map()->frame(ref_frame_id)->q_wc() = Quat::Identity();
+    }
+    data_manager_->visual_local_map()->frame(cur_frame_id)->q_wc() = data_manager_->visual_local_map()->frame(ref_frame_id)->q_wc() * q_cr.inverse();
+
+    return true;
+}
+
 bool Backend::EstimateGyroBiasByMethodOneForInitialization() {
     ReportInfo("[Backend] Try to estimate bias of gyro by Method 1.");
     RecomputeImuPreintegration();
@@ -26,7 +60,6 @@ bool Backend::EstimateGyroBiasByMethodOneForInitialization() {
     const uint32_t min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
 
     // Define some temp variables.
-    std::vector<FeatureType *> covisible_features;
     std::vector<Vec2> ref_norm_xy;
     std::vector<Vec2> cur_norm_xy;
     ref_norm_xy.reserve(200);
@@ -34,26 +67,8 @@ bool Backend::EstimateGyroBiasByMethodOneForInitialization() {
 
     // Iterate all frames, estimate q_wc of all frames.
     for (uint32_t i = min_frames_idx; i < max_frames_idx; ++i) {
-        // Get covisible features only in left camera.
-        data_manager_->visual_local_map()->GetCovisibleFeatures(i, i + 1, covisible_features);
-        ref_norm_xy.clear();
-        cur_norm_xy.clear();
-        for (const auto &feature_ptr : covisible_features) {
-            ref_norm_xy.emplace_back(feature_ptr->observe(i)[0].rectified_norm_xy);
-            cur_norm_xy.emplace_back(feature_ptr->observe(i + 1)[0].rectified_norm_xy);
-        }
-
-        // Estimate pure rotation.
         Quat q_cr = Quat::Identity();
-        using namespace VISION_GEOMETRY;
-        RelativeRotation solver;
-        RETURN_FALSE_IF(!solver.EstimateRotationByBnb(ref_norm_xy, cur_norm_xy, q_cr));
-
-        // Update rotation of each frames. The frame w is defined as c0.
-        if (i == min_frames_idx) {
-            data_manager_->visual_local_map()->frame(i)->q_wc() = Quat::Identity();
-        }
-        data_manager_->visual_local_map()->frame(i + 1)->q_wc() = data_manager_->visual_local_map()->frame(i)->q_wc() * q_cr.inverse();
+        RETURN_FALSE_IF(!EstimatePureRotationOfCameraFrame(i, i + 1, min_frames_idx, ref_norm_xy, cur_norm_xy, q_cr));
     }
 
     // Iterate to estimate bias gyro.
@@ -215,40 +230,21 @@ bool Backend::EstimateGyroBiasByMethodThreeForInitialization() {
     const uint32_t min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
 
     // Define some temp variables.
-    std::vector<FeatureType *> covisible_features;
     std::vector<Vec2> ref_norm_xy;
     std::vector<Vec2> cur_norm_xy;
     ref_norm_xy.reserve(200);
     cur_norm_xy.reserve(200);
 
     // Iterate all frames to construct A and b, which is to estimate bias of gyro.
+    const int32_t size = (max_frames_idx - min_frames_idx) * 3;
     Eigen::Matrix<float, Eigen::Dynamic, 3> A;
     Vec b;
-    const int32_t size = (max_frames_idx - min_frames_idx) * 3;
     A.resize(size, 3);
     b.resize(size);
     auto new_frame_iter = std::next(data_manager_->frames_with_bias().begin());
     for (uint32_t i = min_frames_idx; i < max_frames_idx; ++i) {
-        // Get covisible features only in left camera.
-        data_manager_->visual_local_map()->GetCovisibleFeatures(i, i + 1, covisible_features);
-        ref_norm_xy.clear();
-        cur_norm_xy.clear();
-        for (const auto &feature_ptr : covisible_features) {
-            ref_norm_xy.emplace_back(feature_ptr->observe(i)[0].rectified_norm_xy);
-            cur_norm_xy.emplace_back(feature_ptr->observe(i + 1)[0].rectified_norm_xy);
-        }
-
-        // Estimate pure rotation.
         Quat q_cr = Quat::Identity();
-        using namespace VISION_GEOMETRY;
-        RelativeRotation solver;
-        RETURN_FALSE_IF(!solver.EstimateRotationByBnb(ref_norm_xy, cur_norm_xy, q_cr));
-
-        // Update rotation of each frames. The frame w is defined as c0.
-        if (i == min_frames_idx) {
-            data_manager_->visual_local_map()->frame(i)->q_wc() = Quat::Identity();
-        }
-        data_manager_->visual_local_map()->frame(i + 1)->q_wc() = data_manager_->visual_local_map()->frame(i)->q_wc() * q_cr.inverse();
+        RETURN_FALSE_IF(!EstimatePureRotationOfCameraFrame(i, i + 1, min_frames_idx, ref_norm_xy, cur_norm_xy, q_cr));
 
         // Localize the frame with bias in 'frames_with_bias_' between frame i and i + 1.
         ImuPreintegrateBlock &imu_preint_block = new_frame_iter->imu_preint_block;
