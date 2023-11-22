@@ -4,6 +4,70 @@
 
 namespace VIO {
 
+bool Backend::EstimateVelocityAndGravityForInitialization(Vec3 &gravity_i0) {
+    // Compute imu blocks based on the first frame.
+    std::vector<ImuPreintegrateBlock> imu_blocks;
+    if (!ComputeImuPreintegrationBasedOnFirstFrameForInitialization(imu_blocks)) {
+        ReportError("[Backend] Backend failed to compute imu preintegration block based on first frame.");
+        return false;
+    }
+
+    // Construct LIGT function.
+    Mat6 A = Mat6::Zero();
+    Vec6 b = Vec6::Zero();
+    float Q = 0.0f;
+    if (!ConstructLigtFunction(imu_blocks, A, b, Q)) {
+        ReportError("[Backend] Backend failed to construct LIGT function.");
+        return false;
+    }
+
+    // Solve rhs(velocity and bias).
+    Vec rhs = Vec6::Zero();
+    if (!RefineGravityForInitialization(A, -2.0f * b, Q, 1.0f, rhs)) {
+        ReportError("[Backend] Backend failed to refine gravity. Try to solve LIGT function with ldlt.");
+        rhs = A.ldlt().solve(b);
+    }
+    const Vec3 v_i0i0 = rhs.head<3>();
+    gravity_i0 = rhs.tail<3>().normalized() * options_.kGravityInWordFrame.norm();
+    ReportInfo(GREEN "[Backend] Estimated v_i0i0 is " << LogVec(v_i0i0) << ", gravity_i0 is " << LogVec(gravity_i0) <<
+        ", gravity norm is " << gravity_i0.norm() << RESET_COLOR);
+
+    // Propagate states of all frames based on frame i0(imu).
+    if (!PropagateAllBasedOnFirstCameraFrameForInitializaion(imu_blocks, v_i0i0, gravity_i0)) {
+        ReportError("[Backend] Backend failed to propagate states of all frames based on frame i0.");
+        return false;
+    }
+
+    return true;
+}
+
+bool Backend::ComputeImuPreintegrationBasedOnFirstFrameForInitialization(std::vector<ImuPreintegrateBlock> &imu_blocks) {
+    const int32_t num_of_imu_block = data_manager_->visual_local_map()->frames().size() - 1;
+    RETURN_FALSE_IF(num_of_imu_block < 1);
+
+    const auto start_iter = std::next(data_manager_->frames_with_bias().begin());
+    RETURN_FALSE_IF(start_iter == data_manager_->frames_with_bias().end());
+    auto end_iter = std::next(start_iter);
+
+    imu_blocks.clear();
+    imu_blocks.emplace_back(start_iter->imu_preint_block);
+    for (int32_t i = 1; i < num_of_imu_block; ++i) {
+        ++end_iter;
+
+        ImuPreintegrateBlock new_imu_block(imu_blocks.back());
+        new_imu_block.ResetIntegratedStates();
+        for (auto iter = start_iter; iter != end_iter; ++iter) {
+            const int32_t max_idx = static_cast<int32_t>(iter->packed_measure->imus.size());
+            for (int32_t j = 1; j < max_idx; ++j) {
+                new_imu_block.Propagate(*iter->packed_measure->imus[j - 1], *iter->packed_measure->imus[j]);
+            }
+        }
+        imu_blocks.emplace_back(new_imu_block);
+    }
+
+    return true;
+}
+
 bool Backend::SelectTwoFramesWithMaxParallax(CovisibleGraphType *local_map,
                                              const FeatureType &feature,
                                              int32_t &frame_id_l,
@@ -39,33 +103,6 @@ bool Backend::SelectTwoFramesWithMaxParallax(CovisibleGraphType *local_map,
                 frame_id_r = j + feature.first_frame_id();
             }
         }
-    }
-
-    return true;
-}
-
-bool Backend::ComputeImuPreintegrationBasedOnFirstFrameForInitialization(std::vector<ImuPreintegrateBlock> &imu_blocks) {
-    const int32_t num_of_imu_block = data_manager_->visual_local_map()->frames().size() - 1;
-    RETURN_FALSE_IF(num_of_imu_block < 1);
-
-    const auto start_iter = std::next(data_manager_->frames_with_bias().begin());
-    RETURN_FALSE_IF(start_iter == data_manager_->frames_with_bias().end());
-    auto end_iter = std::next(start_iter);
-
-    imu_blocks.clear();
-    imu_blocks.emplace_back(start_iter->imu_preint_block);
-    for (int32_t i = 1; i < num_of_imu_block; ++i) {
-        ++end_iter;
-
-        ImuPreintegrateBlock new_imu_block(imu_blocks.back());
-        new_imu_block.ResetIntegratedStates();
-        for (auto iter = start_iter; iter != end_iter; ++iter) {
-            const int32_t max_idx = static_cast<int32_t>(iter->packed_measure->imus.size());
-            for (int32_t j = 1; j < max_idx; ++j) {
-                new_imu_block.Propagate(*iter->packed_measure->imus[j - 1], *iter->packed_measure->imus[j]);
-            }
-        }
-        imu_blocks.emplace_back(new_imu_block);
     }
 
     return true;
@@ -353,43 +390,6 @@ bool Backend::PropagateAllBasedOnFirstCameraFrameForInitializaion(const std::vec
         frame->q_wc() = q_c0c0 * imu_q_ij;
         frame->p_wc() = q_ci * imu_p_ij + p_c0c0 + v_c0c0 * dt - 0.5f * gracity_c0 * dt * dt;
         frame->v_wc() = q_ci * imu_v_ij + v_c0c0 - gracity_c0 * dt;
-    }
-
-    return true;
-}
-
-bool Backend::EstimateVelocityAndGravityForInitialization(Vec3 &gravity_i0) {
-    // Compute imu blocks based on the first frame.
-    std::vector<ImuPreintegrateBlock> imu_blocks;
-    if (!ComputeImuPreintegrationBasedOnFirstFrameForInitialization(imu_blocks)) {
-        ReportError("[Backend] Backend failed to compute imu preintegration block based on first frame.");
-        return false;
-    }
-
-    // Construct LIGT function.
-    Mat6 A = Mat6::Zero();
-    Vec6 b = Vec6::Zero();
-    float Q = 0.0f;
-    if (!ConstructLigtFunction(imu_blocks, A, b, Q)) {
-        ReportError("[Backend] Backend failed to construct LIGT function.");
-        return false;
-    }
-
-    // Solve rhs(velocity and bias).
-    Vec rhs = Vec6::Zero();
-    if (!RefineGravityForInitialization(A, -2.0f * b, Q, 1.0f, rhs)) {
-        ReportError("[Backend] Backend failed to refine gravity. Try to solve LIGT function with ldlt.");
-        rhs = A.ldlt().solve(b);
-    }
-    const Vec3 v_i0i0 = rhs.head<3>();
-    gravity_i0 = rhs.tail<3>().normalized() * options_.kGravityInWordFrame.norm();
-    ReportInfo(GREEN "[Backend] Estimated v_i0i0 is " << LogVec(v_i0i0) << ", gravity_i0 is " << LogVec(gravity_i0) <<
-        ", gravity norm is " << gravity_i0.norm() << RESET_COLOR);
-
-    // Propagate states of all frames based on frame i0(imu).
-    if (!PropagateAllBasedOnFirstCameraFrameForInitializaion(imu_blocks, v_i0i0, gravity_i0)) {
-        ReportError("[Backend] Backend failed to propagate states of all frames based on frame i0.");
-        return false;
     }
 
     return true;

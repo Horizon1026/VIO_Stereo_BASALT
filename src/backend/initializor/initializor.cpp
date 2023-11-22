@@ -21,14 +21,14 @@ bool Backend::TryToInitialize() {
         return false;
     }
 
-    // Estimate velocity of each frame, and gravity vector based on frame i0(imu).
+    // Estimate velocity of each frame, and gravity vector based on frame c0(camera).
     Vec3 gravity_i0 = Vec3::Zero();
     if (!EstimateVelocityAndGravityForInitialization(gravity_i0)) {
         ReportError("[Backend] Backend failed to estimate velocity or gravity.");
         return false;
     }
 
-    // Transform all states from frame i0(imu) to frame world.
+    // Transform all states from frame c0(camera) to frame w(world). The z-axis of frame w must be upward.
     if (!TransformAllStatesToWorldFrameForInitialization(gravity_i0)) {
         ReportError("[Backend] Backend failed to transform from i0 to w frame.");
         return false;
