@@ -9,7 +9,7 @@ bool Backend::SelectTwoFramesWithMaxParallax(CovisibleGraphType *local_map,
                                              int32_t &frame_id_l,
                                              int32_t &frame_id_r) {
     const int32_t num_of_observes = feature.observes().size();
-    RETURN_FALSE_IF(feature.observes().size() < 2);
+    RETURN_FALSE_IF(feature.observes().size() < 3);
 
     // Iterate all pairs of frames, select the pair with max parallex angle.
     float max_parallex_angle = -1.0f;
@@ -90,7 +90,7 @@ bool Backend::ConstructLigtFunction(const std::vector<ImuPreintegrateBlock> &imu
         // Select two frames with max parallex angle.
         int32_t frame_id_l = 0;
         int32_t frame_id_r = 0;
-        RETURN_FALSE_IF(!SelectTwoFramesWithMaxParallax(data_manager_->visual_local_map(),
+        CONTINUE_IF(!SelectTwoFramesWithMaxParallax(data_manager_->visual_local_map(),
             feature, frame_id_l, frame_id_r));
 
         // Extract frame l/r.
@@ -163,17 +163,17 @@ bool Backend::ConstructLigtFunction(const std::vector<ImuPreintegrateBlock> &imu
 
             if (frame_id_i != static_cast<int32_t>(feature.first_frame_id())) {
                 const int32_t idx_of_imu = frame_id_i - feature.first_frame_id() - 1;
-                S_1i = imu_blocks[idx_of_imu].p_ij() + R_cb * R_wci * t_bc - t_bc;
+                S_1i = imu_blocks[idx_of_imu].p_ij() + R_wci * t_bc - t_bc;
                 t_1i = imu_blocks[idx_of_imu].integrate_time_s();
             }
             if (frame_id_r != static_cast<int32_t>(feature.first_frame_id())) {
                 const int32_t idx_of_imu = frame_id_r - feature.first_frame_id() - 1;
-                S_1r = imu_blocks[idx_of_imu].p_ij() + R_cb * R_wci * t_bc - t_bc;
+                S_1r = imu_blocks[idx_of_imu].p_ij() + R_wci * t_bc - t_bc;
                 t_1r = imu_blocks[idx_of_imu].integrate_time_s();
             }
             if (frame_id_l != static_cast<int32_t>(feature.first_frame_id())) {
                 const int32_t idx_of_imu = frame_id_l - feature.first_frame_id() - 1;
-                S_1l = imu_blocks[idx_of_imu].p_ij() + R_cb * R_wci * t_bc - t_bc;
+                S_1l = imu_blocks[idx_of_imu].p_ij() + R_wci * t_bc - t_bc;
                 t_1l = imu_blocks[idx_of_imu].integrate_time_s();
             }
 
@@ -320,11 +320,10 @@ bool Backend::RefineGravityForInitialization(const Mat &M,
 }
 
 bool Backend::PropagateAllBasedOnFirstCameraFrameForInitializaion(const std::vector<ImuPreintegrateBlock> &imu_blocks,
-                                                               const Vec3 &v_i0i0,
-                                                               const Vec3 &gravity_i0) {
+                                                                  const Vec3 &v_i0i0,
+                                                                  const Vec3 &gravity_i0) {
     // Localize the left camera extrinsic.
     const Quat q_ic = data_manager_->camera_extrinsics().front().q_ic;
-    const Vec3 t_ic = data_manager_->camera_extrinsics().front().t_ic;
     const Quat q_ci = q_ic.inverse();
 
     // Determine the scope of all frames.
@@ -334,17 +333,12 @@ bool Backend::PropagateAllBasedOnFirstCameraFrameForInitializaion(const std::vec
     // Set states of first frame.
     auto first_frame = data_manager_->visual_local_map()->frame(min_frames_idx);
     first_frame->v_wc() = q_ci * v_i0i0;
-
-    // Debug.
-    const Vec p_c0c0 = first_frame->p_wc();
+    const Vec3 p_c0c0 = first_frame->p_wc();
     const Quat q_c0c0 = first_frame->q_wc();
-    const Vec v_c0c0 = first_frame->v_wc();
-    const Vec gracity_c0 = q_ci * gravity_i0;
-    ReportDebug("p_c0c0 is " << LogVec(p_c0c0));
-    ReportDebug("q_c0c0 is " << LogQuat(q_c0c0));
-    ReportDebug("v_c0c0 is " << LogVec(v_c0c0));
+    const Vec3 v_c0c0 = first_frame->v_wc();
+    const Vec3 gracity_c0 = q_ci * gravity_i0;
 
-    // Iterate all frames to propagate states.
+    // Iterate all frames to propagate states based on frame c0.
     uint32_t idx_of_imu_block = 0;
     for (uint32_t i = min_frames_idx + 1; i <= max_frames_idx; ++i) {
         const auto &imu_preint_block = imu_blocks[idx_of_imu_block];
@@ -356,39 +350,9 @@ bool Backend::PropagateAllBasedOnFirstCameraFrameForInitializaion(const std::vec
         const Vec3 &imu_v_ij = imu_preint_block.v_ij();
 
         auto frame = data_manager_->visual_local_map()->frame(i);
-        const Quat q_c0i = q_ci * imu_q_ij;
-        const Vec3 p_c0i = q_ci * imu_p_ij + p_c0c0 + v_c0c0 * dt - 0.5f * gracity_c0 * dt * dt;
-        const Vec3 v_c0i = q_ci * imu_v_ij + v_c0c0 - gracity_c0 * dt;
-        frame->q_wc() = q_c0i * q_ic;
-        frame->p_wc() = q_c0i * t_ic + p_c0i;
-        frame->v_wc() = v_c0i;
-    }
-
-    /*
-    newest->q_wi = subnew->q_wi * delta_r;
-    newest->t_wi = subnew->q_wi.toRotationMatrix() * delta_p + subnew->t_wi + subnew->v_wi * dt - 0.5f * this->targetGravity * dt * dt;
-    newest->v_wi = subnew->q_wi.toRotationMatrix() * delta_v + subnew->v_wi - this->targetGravity * dt;
-    newest->q_wc = newest->q_wi * this->q_ic;
-    newest->t_wc = newest->q_wi * this->t_ic + newest->t_wi;
-    newest->v_wc = this->q_ic.inverse() * newest->q_wi.inverse() * newest->v_wi;
-
-    // T_wb = T_wc * T_bc.inverse();
-    // [R_wb   t_wb] = [R_wc   t_wc] * [R_bc'   - R_bc' * t_bc]
-    // [ 0      1  ]   [ 0       1 ]   [ 0              1     ]
-    //               = [R_wc * R_bc'   R_wc * (- R_bc' * t_bc) + t_wc]
-    //                 [     0                       1               ]
-    //               = [R_wc * R_bc'   - R_wb * t_bc + t_wc]
-    //                 [     0                   1         ]
-    // T_wc = T_wb * T_bc
-    // [R_wc   t_wc] = [R_wb   t_wb] * [R_bc  t_bc]
-    // [ 0      1  ]   [ 0       1 ]   [ 0      1 ]
-    //               = [R_wb * R_bc  R_wb * t_bc + t_wb]
-    //                 [     0               1         ]
-    */
-
-    // Debug.
-    for (const auto &frame : data_manager_->visual_local_map()->frames()) {
-        frame.SimpleInformation();
+        frame->q_wc() = q_c0c0 * imu_q_ij;
+        frame->p_wc() = q_ci * imu_p_ij + p_c0c0 + v_c0c0 * dt - 0.5f * gracity_c0 * dt * dt;
+        frame->v_wc() = q_ci * imu_v_ij + v_c0c0 - gracity_c0 * dt;
     }
 
     return true;
@@ -414,7 +378,7 @@ bool Backend::EstimateVelocityAndGravityForInitialization(Vec3 &gravity_i0) {
     // Solve rhs(velocity and bias).
     Vec rhs = Vec6::Zero();
     if (!RefineGravityForInitialization(A, -2.0f * b, Q, 1.0f, rhs)) {
-        ReportError("[Backend] Backend failed to refine gravity. Try to solve LGIT function.");
+        ReportError("[Backend] Backend failed to refine gravity. Try to solve LIGT function with ldlt.");
         rhs = A.ldlt().solve(b);
     }
     const Vec3 v_i0i0 = rhs.head<3>();

@@ -33,7 +33,6 @@ bool Backend::EstimateGyroBiasByMethodOneForInitialization() {
     cur_norm_xy.reserve(200);
 
     // Iterate all frames, estimate q_wc of all frames.
-    auto new_frame_iter = data_manager_->frames_with_bias().begin();
     for (uint32_t i = min_frames_idx; i < max_frames_idx; ++i) {
         // Get covisible features only in left camera.
         data_manager_->visual_local_map()->GetCovisibleFeatures(i, i + 1, covisible_features);
@@ -44,51 +43,21 @@ bool Backend::EstimateGyroBiasByMethodOneForInitialization() {
             cur_norm_xy.emplace_back(feature_ptr->observe(i + 1)[0].rectified_norm_xy);
         }
 
-        // Debug: Show feature pairs between ref and cur image.
-        // std::vector<Vec2> ref_pixel_uv;
-        // std::vector<Vec2> cur_pixel_uv;
-        // Vec2 rectify_pixel_uv;
-        // for (const auto &feature_ptr : covisible_features) {
-        //     visual_frontend_->camera_model()->LiftFromNormalizedPlaneToImagePlane(feature_ptr->observe(i)[0].rectified_norm_xy, rectify_pixel_uv);
-        //     ref_pixel_uv.emplace_back(rectify_pixel_uv);
-        //     visual_frontend_->camera_model()->LiftFromNormalizedPlaneToImagePlane(feature_ptr->observe(i + 1)[0].rectified_norm_xy, rectify_pixel_uv);
-        //     cur_pixel_uv.emplace_back(rectify_pixel_uv);
-        // }
-
-        // const std::vector<uint8_t> tracked_status(ref_pixel_uv.size(), 1);
-        // const GrayImage ref_image(new_frame_iter->packed_measure->left_image->image);
-        // auto cur_image_iter = std::next(new_frame_iter);
-        // const GrayImage cur_image(cur_image_iter->packed_measure->left_image->image);
-
-        // MatImg ref_mat_image, cur_mat_image;
-        // ref_mat_image.resize(ref_image.rows(), ref_image.cols());
-        // cur_mat_image.resize(ref_image.rows(), ref_image.cols());
-        // GrayImage ref_rectify_image(ref_mat_image);
-        // GrayImage cur_rectify_image(cur_mat_image);
-        // visual_frontend_->camera_model()->CorrectDistortedImage(ref_image, ref_rectify_image);
-        // visual_frontend_->camera_model()->CorrectDistortedImage(cur_image, cur_rectify_image);
-
-        // Visualizor::ShowImageWithTrackedFeatures("ref and cur rectify image", ref_rectify_image, cur_rectify_image,
-        //     ref_pixel_uv, cur_pixel_uv, tracked_status);
-        // Visualizor::WaitKey(0);
-        // ++new_frame_iter;
-
         // Estimate pure rotation.
         Quat q_cr = Quat::Identity();
         using namespace VISION_GEOMETRY;
         RelativeRotation solver;
         RETURN_FALSE_IF(!solver.EstimateRotationByBnb(ref_norm_xy, cur_norm_xy, q_cr));
 
-        // Update rotation of each frames. The frame w is defined as i0.
+        // Update rotation of each frames. The frame w is defined as c0.
         if (i == min_frames_idx) {
             data_manager_->visual_local_map()->frame(i)->q_wc() = Quat::Identity();
         }
-        // q_wc = q_wr * q_cr.inverse().
         data_manager_->visual_local_map()->frame(i + 1)->q_wc() = data_manager_->visual_local_map()->frame(i)->q_wc() * q_cr.inverse();
     }
 
     // Iterate to estimate bias gyro.
-    const uint32_t max_iteration = 5;
+    const uint32_t max_iteration = 2;
     for (uint32_t iter = 0; iter < max_iteration; ++iter) {
         Mat3 hessian = Mat3::Zero();
         Vec3 bias = Vec3::Zero();
@@ -275,11 +244,10 @@ bool Backend::EstimateGyroBiasByMethodThreeForInitialization() {
         RelativeRotation solver;
         RETURN_FALSE_IF(!solver.EstimateRotationByBnb(ref_norm_xy, cur_norm_xy, q_cr));
 
-        // Estimate q_wc of all frames.
+        // Update rotation of each frames. The frame w is defined as c0.
         if (i == min_frames_idx) {
             data_manager_->visual_local_map()->frame(i)->q_wc() = Quat::Identity();
         }
-        // q_wc = q_wr * q_cr.inverse().
         data_manager_->visual_local_map()->frame(i + 1)->q_wc() = data_manager_->visual_local_map()->frame(i)->q_wc() * q_cr.inverse();
 
         // Localize the frame with bias in 'frames_with_bias_' between frame i and i + 1.
