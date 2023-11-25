@@ -101,8 +101,9 @@ void Backend::ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id,
     const GrayImage ref_image(ref_frame_iter->packed_measure->left_image->image);
 
     // Create gray image of cur image.
+    min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
     auto cur_frame_iter = data_manager_->frames_with_bias().begin();
-    while (min_frames_idx < ref_frame_id) {
+    while (min_frames_idx < cur_frame_id) {
         ++cur_frame_iter;
         ++min_frames_idx;
     }
