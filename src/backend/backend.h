@@ -1,12 +1,12 @@
-#ifndef _VIO_STEREO_ORB_SLAM3_BACKEND_H_
-#define _VIO_STEREO_ORB_SLAM3_BACKEND_H_
+#ifndef _VIO_STEREO_BASALT_BACKEND_H_
+#define _VIO_STEREO_BASALT_BACKEND_H_
 
 #include "datatype_basic.h"
-#include "imu.h"
 #include "data_manager.h"
 #include "binary_data_log.h"
-#include "general_graph_optimizor.h"
+#include "imu.h"
 #include "visual_frontend.h"
+#include "general_graph_optimizor.h"
 
 namespace VIO {
 
@@ -123,4 +123,4 @@ private:
 
 }
 
-#endif // end of _VIO_STEREO_ORB_SLAM3_BACKEND_H_
+#endif // end of _VIO_STEREO_BASALT_BACKEND_H_
