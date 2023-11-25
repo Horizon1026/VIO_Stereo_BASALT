@@ -16,6 +16,10 @@ bool DataManager::ProcessMeasure(std::unique_ptr<PackedMeasurement> &new_packed_
     frame_with_bias.packed_measure = std::move(new_packed_measure);
     frame_with_bias.visual_measure = std::move(new_visual_measure);
 
+    if (frames_with_bias_.size() > options_.kMaxStoredNewFrames) {
+        frames_with_bias_.pop_front();
+    }
+
     return true;
 }
 

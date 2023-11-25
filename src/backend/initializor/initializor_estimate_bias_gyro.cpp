@@ -245,8 +245,6 @@ bool Backend::EstimateGyroBiasByMethodThreeForInitialization() {
         Quat q_cr = Quat::Identity();
         RETURN_FALSE_IF(!EstimatePureRotationOfCameraFrame(i, i + 1, min_frames_idx, ref_norm_xy, cur_norm_xy, q_cr));
 
-        ShowFeaturePairsBetweenTwoFrames(i, i + 1, false);
-
         // Localize the frame with bias in 'frames_with_bias_' between frame i and i + 1.
         ImuPreintegrateBlock &imu_preint_block = new_frame_iter->imu_preint_block;
         ++new_frame_iter;

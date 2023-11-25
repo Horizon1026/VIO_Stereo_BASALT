@@ -109,6 +109,7 @@ void Backend::ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id,
     }
     const GrayImage cur_image(cur_frame_iter->packed_measure->left_image->image);
 
+    const std::vector<uint8_t> tracked_status(ref_pixel_uv.size(), 1);
     if (use_rectify) {
         // Correct distorted image.
         MatImg ref_mat_image, cur_mat_image;
@@ -120,12 +121,10 @@ void Backend::ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id,
         visual_frontend_->camera_model()->CorrectDistortedImage(cur_image, cur_rectify_image);
 
         // Draw tracking results.
-        const std::vector<uint8_t> tracked_status(ref_pixel_uv.size(), 1);
         Visualizor::ShowImageWithTrackedFeatures("ref and cur rectify image", ref_rectify_image, cur_rectify_image,
             ref_pixel_uv, cur_pixel_uv, tracked_status);
     } else {
         // Draw tracking results.
-        const std::vector<uint8_t> tracked_status(ref_pixel_uv.size(), 1);
         Visualizor::ShowImageWithTrackedFeatures("ref and cur raw image", ref_image, cur_image,
             ref_pixel_uv, cur_pixel_uv, tracked_status);
     }

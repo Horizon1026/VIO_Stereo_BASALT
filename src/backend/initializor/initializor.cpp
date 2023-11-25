@@ -41,11 +41,14 @@ bool Backend::ConvertNewFramesToCovisibleGraphForInitialization() {
     RETURN_FALSE_IF(data_manager_->visual_local_map() == nullptr);
 
     auto local_map_ptr = data_manager_->visual_local_map();
+    int32_t frame_id = 1;
     for (const auto &frame : data_manager_->frames_with_bias()) {
         RETURN_FALSE_IF(frame.visual_measure == nullptr);
         local_map_ptr->AddNewFrameWithFeatures(frame.visual_measure->features_id,
                                                frame.visual_measure->observes_per_frame,
-                                               frame.time_stamp_s);
+                                               frame.time_stamp_s,
+                                               frame_id);
+        ++frame_id;
     }
     RETURN_FALSE_IF(!local_map_ptr->SelfCheck());
 
