@@ -1,5 +1,6 @@
 #include "backend.h"
 #include "log_report.h"
+#include "geometry_triangulation.h"
 
 namespace VIO {
 
@@ -17,6 +18,63 @@ void Backend::RecomputeImuPreintegration() {
             frame.imu_preint_block.Propagate(*frame.packed_measure->imus[i - 1], *frame.packed_measure->imus[i]);
         }
     }
+}
+
+void Backend::TriangulizeAllVisualFeatures() {
+    using namespace VISION_GEOMETRY;
+    Triangulator solver;
+    solver.options().kMethod = Triangulator::TriangulationMethod::kIterative;
+
+    // Preallcate memory for temp variables.
+    const int32_t max_capacity = data_manager_->options().kMaxStoredKeyframes * data_manager_->camera_extrinsics().size();
+    std::vector<Quat> q_wc_vec;
+    std::vector<Vec3> p_wc_vec;
+    std::vector<Vec2> norm_xy_vec;
+    q_wc_vec.reserve(max_capacity);
+    p_wc_vec.reserve(max_capacity);
+    norm_xy_vec.reserve(max_capacity);
+
+    // Iterate all feature in visual_local_map to triangulize.
+    int32_t triangulize_num = 0;
+    for (auto &pair : data_manager_->visual_local_map()->features()) {
+        auto &feature = pair.second;
+        q_wc_vec.clear();
+        p_wc_vec.clear();
+        norm_xy_vec.clear();
+
+        // Extract all observations.
+        const uint32_t max_observe_num = feature.observes().size();
+        const uint32_t first_frame_id = feature.first_frame_id();
+        const uint32_t final_frame_id = feature.final_frame_id();
+        for (uint32_t frame_id = first_frame_id; frame_id <= final_frame_id; ++frame_id) {
+            // Extract states of selected frame.
+            const auto frame_ptr = data_manager_->visual_local_map()->frame(frame_id);
+            const Quat q_wc = frame_ptr->q_wc();
+            const Vec3 p_wc = frame_ptr->p_wc();
+
+            const auto &obv = feature.observe(frame_id);
+            const Vec2 norm_xy = obv[0].rectified_norm_xy;
+
+            // TODO: Add multi-view observations.
+            q_wc_vec.emplace_back(q_wc);
+            p_wc_vec.emplace_back(p_wc);
+            norm_xy_vec.emplace_back(norm_xy);
+        }
+
+        // Triangulize feature.
+        Vec3 p_w = Vec3::Zero();
+        if (solver.Triangulate(q_wc_vec, p_wc_vec, norm_xy_vec, p_w)) {
+            feature.param().p_w = p_w;
+            feature.param().is_solved = true;
+            // TODO: Compute invdep.
+
+            ++triangulize_num;
+        }
+    }
+
+    // Report triangulization result.
+    ReportInfo("[Backend] Backend triangulized " << triangulize_num << " / " <<
+        data_manager_->visual_local_map()->features().size() << ".");
 }
 
 }

@@ -14,14 +14,23 @@ bool Backend::RunOnce() {
         if (TryToInitialize()) {
             status_.is_initialized = true;
             ReportInfo(GREEN "[Backend] Backend succeed to initialize." RESET_COLOR);
-
-            // Debug.
-            should_quit_ = true;
         } else {
             ResetToReintialize();
-            ReportWarn("[Backend] Backend failed to initialize.");
+            ReportWarn("[Backend] Backend failed to initialize. All states will be reset for reinitialization.");
             return true;
         }
+    }
+
+    // If backend is initialized, try to estimate states.
+    if (status_.is_initialized) {
+        if (!TryToEstimate()) {
+            ResetToReintialize();
+            ReportWarn("[Backend] Backend failed to estimate.");
+            return true;
+        }
+
+        // Debug.
+        should_quit_ = true;
     }
 
     return true;

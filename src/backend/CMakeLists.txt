@@ -1,5 +1,6 @@
 aux_source_directory( . AUX_SRC_VIO_STEREO_BASALT_BACKEND )
 aux_source_directory( initializor AUX_SRC_VIO_STEREO_BASALT_BACKEND_INITIALIZOR )
+aux_source_directory( estimator AUX_SRC_VIO_STEREO_BASALT_BACKEND_ESTIMATOR )
 
 # Add all components of slam utility.
 set( SLAM_UTILITY_PATH ${PROJECT_SOURCE_DIR}/../Slam_Utility/src )
@@ -74,6 +75,7 @@ endif()
 add_library( lib_vio_stereo_basalt_backend
     ${AUX_SRC_VIO_STEREO_BASALT_BACKEND}
     ${AUX_SRC_VIO_STEREO_BASALT_BACKEND_INITIALIZOR}
+    ${AUX_SRC_VIO_STEREO_BASALT_BACKEND_ESTIMATOR}
 )
 target_include_directories( lib_vio_stereo_basalt_backend PUBLIC . )
 target_link_libraries( lib_vio_stereo_basalt_backend

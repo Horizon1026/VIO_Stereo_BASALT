@@ -33,7 +33,9 @@ struct BackendLog {
 union BackendStatus {
     struct {
         uint32_t is_initialized : 1;
-        uint32_t reserved : 31;
+        uint32_t is_imu_static : 1;
+        uint32_t is_camera_static : 1;
+        uint32_t reserved : 29;
     };
     uint32_t all_bits = 0;
 };
@@ -46,11 +48,12 @@ public:
     Backend() = default;
     ~Backend() = default;
 
+    // Backend operations.
     bool RunOnce();
     void Reset();
     void ResetToReintialize();
 
-    // Support for vio initialization.
+    // Backend initializor.
     bool TryToInitialize();
     bool ConvertNewFramesToCovisibleGraphForInitialization();
     bool EstimatePureRotationOfCameraFrame(const uint32_t ref_frame_id,
@@ -59,37 +62,29 @@ public:
                                            std::vector<Vec2> &ref_norm_xy,
                                            std::vector<Vec2> &cur_norm_xy,
                                            Quat &q_cr);
-
     // Estimate gyro bias for initialization.
     bool EstimateGyroBiasAndRotationForInitialization();
     bool EstimateGyroBiasByMethodOneForInitialization();
     bool EstimateGyroBiasByMethodTwoForInitialization();
     bool EstimateGyroBiasByMethodThreeForInitialization();
-
     // Estimate velocity and gravity for initialization.
     bool EstimateVelocityAndGravityForInitialization(Vec3 &gravity_i0);
-    bool SelectTwoFramesWithMaxParallax(CovisibleGraphType *local_map,
-                                        const FeatureType &feature,
-                                        int32_t &frame_id_l,
-                                        int32_t &frame_id_r);
+    bool SelectTwoFramesWithMaxParallax(CovisibleGraphType *local_map, const FeatureType &feature, int32_t &frame_id_l, int32_t &frame_id_r);
     bool ComputeImuPreintegrationBasedOnFirstFrameForInitialization(std::vector<ImuPreintegrateBlock> &imu_blocks);
-    bool ConstructLigtFunction(const std::vector<ImuPreintegrateBlock> &imu_blocks,
-                               Mat6 &A, Vec6 &b, float &Q);
-    bool RefineGravityForInitialization(const Mat &M,
-                                        const Vec &m,
-                                        const float Q,
-                                        const float gravity_mag,
-                                        Vec &rhs);
-    bool PropagateAllBasedOnFirstCameraFrameForInitializaion(const std::vector<ImuPreintegrateBlock> &imu_blocks,
-                                                             const Vec3 &v_i0i0,
-                                                             const Vec3 &gravity_i0);
+    bool ConstructLigtFunction(const std::vector<ImuPreintegrateBlock> &imu_blocks, Mat6 &A, Vec6 &b, float &Q);
+    bool RefineGravityForInitialization(const Mat &M, const Vec &m, const float Q, const float gravity_mag, Vec &rhs);
+    bool PropagateAllBasedOnFirstCameraFrameForInitializaion(const std::vector<ImuPreintegrateBlock> &imu_blocks, const Vec3 &v_i0i0, const Vec3 &gravity_i0);
     bool TransformAllStatesToWorldFrameForInitialization(const Vec3 &gravity_i0);
 
-    // Support for backend.
+    // Backend estimator.
+    bool TryToEstimate();
+
+    // Backend data processor.
     void RecomputeImuPreintegration();
-    void ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id,
-                                          const uint32_t cur_frame_id,
-                                          const bool use_rectify = false);
+    void TriangulizeAllVisualFeatures();
+
+    // Backend visualizor.
+    void ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id, const uint32_t cur_frame_id, const bool use_rectify = false);
 
     // Reference for member variables.
     BackendOptions &options() { return options_; }

@@ -34,6 +34,9 @@ bool Backend::TryToInitialize() {
         return false;
     }
 
+    // Try to triangulize all features of vision.
+    TriangulizeAllVisualFeatures();
+
     return true;
 }
 
