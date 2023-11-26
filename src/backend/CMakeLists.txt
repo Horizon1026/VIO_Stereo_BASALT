@@ -77,7 +77,9 @@ add_library( lib_vio_stereo_basalt_backend
     ${AUX_SRC_VIO_STEREO_BASALT_BACKEND_INITIALIZOR}
     ${AUX_SRC_VIO_STEREO_BASALT_BACKEND_ESTIMATOR}
 )
-target_include_directories( lib_vio_stereo_basalt_backend PUBLIC . )
+target_include_directories( lib_vio_stereo_basalt_backend
+    PUBLIC . estimator
+)
 target_link_libraries( lib_vio_stereo_basalt_backend
     lib_slam_utility_datatype
     lib_slam_utility_math
