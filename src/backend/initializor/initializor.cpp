@@ -35,7 +35,10 @@ bool Backend::TryToInitialize() {
     }
 
     // Try to triangulize all features of vision.
-    TriangulizeAllVisualFeatures();
+    if (!TriangulizeAllVisualFeatures()) {
+        ReportError("[Backend] Backend failed to triangulize features.");
+        return false;
+    }
 
     return true;
 }

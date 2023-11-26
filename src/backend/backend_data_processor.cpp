@@ -20,10 +20,10 @@ void Backend::RecomputeImuPreintegration() {
     }
 }
 
-void Backend::TriangulizeAllVisualFeatures() {
+bool Backend::TriangulizeAllVisualFeatures() {
     using namespace VISION_GEOMETRY;
     Triangulator solver;
-    solver.options().kMethod = Triangulator::TriangulationMethod::kIterative;
+    solver.options().kMethod = Triangulator::TriangulationMethod::kAnalytic;
 
     // Preallcate memory for temp variables.
     const int32_t max_capacity = data_manager_->options().kMaxStoredKeyframes * data_manager_->camera_extrinsics().size();
@@ -46,9 +46,13 @@ void Backend::TriangulizeAllVisualFeatures() {
         const uint32_t max_observe_num = feature.observes().size();
         const uint32_t first_frame_id = feature.first_frame_id();
         const uint32_t final_frame_id = feature.final_frame_id();
-        for (uint32_t frame_id = first_frame_id; frame_id <= final_frame_id; ++frame_id) {
+        for (uint32_t id = 0; id < max_observe_num; ++id) {
             // Extract states of selected frame.
+            const uint32_t frame_id = first_frame_id + id;
+            RETURN_FALSE_IF(frame_id > final_frame_id);
             const auto frame_ptr = data_manager_->visual_local_map()->frame(frame_id);
+            RETURN_FALSE_IF(frame_ptr == nullptr);
+
             const Quat q_wc = frame_ptr->q_wc();
             const Vec3 p_wc = frame_ptr->p_wc();
 
@@ -66,8 +70,7 @@ void Backend::TriangulizeAllVisualFeatures() {
         if (solver.Triangulate(q_wc_vec, p_wc_vec, norm_xy_vec, p_w)) {
             feature.param().p_w = p_w;
             feature.param().is_solved = true;
-            // TODO: Compute invdep.
-
+            feature.param().invdep = 1.0f / (q_wc_vec.front().inverse() * (p_w - p_wc_vec.front())).z();
             ++triangulize_num;
         }
     }
@@ -75,6 +78,7 @@ void Backend::TriangulizeAllVisualFeatures() {
     // Report triangulization result.
     ReportInfo("[Backend] Backend triangulized " << triangulize_num << " / " <<
         data_manager_->visual_local_map()->features().size() << ".");
+    return true;
 }
 
 }
