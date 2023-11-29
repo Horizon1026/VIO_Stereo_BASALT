@@ -16,6 +16,8 @@
 #include "datatype_basic.h"
 #include "datatype_image.h"
 
+using namespace SLAM_VISUALIZOR;
+
 VIO::DataLoader dataloader;
 double time_stamp_offset = 1403638518.0;
 

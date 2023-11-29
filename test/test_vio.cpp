@@ -10,6 +10,8 @@
 
 #include "enable_stack_backward.h"
 
+using namespace SLAM_VISUALIZOR;
+
 VIO::Vio vio;
 double time_stamp_offset = 1403638518.0;
 
