@@ -2,6 +2,8 @@
 #include "log_report.h"
 #include "visualizor.h"
 
+using namespace SLAM_VISUALIZOR;
+
 namespace VIO {
 
 void Backend::ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id,
