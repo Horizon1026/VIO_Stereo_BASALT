@@ -60,7 +60,7 @@ bool Vio::ConfigComponentOfDataManager() {
     for (uint32_t i = 0; i < max_camera_num; ++i) {
         data_manager_->camera_extrinsics().emplace_back(CameraExtrinsic{
             .q_ic = Quat(options_.data_manager.all_R_ic[i]),
-            .t_ic = options_.data_manager.all_t_ic[i],
+            .p_ic = options_.data_manager.all_t_ic[i],
         });
     }
 

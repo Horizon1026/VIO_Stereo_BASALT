@@ -114,7 +114,7 @@ bool Backend::ConstructLigtFunction(const std::vector<ImuPreintegrateBlock> &imu
 
     // Localize the left camera extrinsic. Use 'b' to represent frame of imu.
     const Quat q_ic = data_manager_->camera_extrinsics().front().q_ic;
-    const Vec3 t_bc = data_manager_->camera_extrinsics().front().t_ic;
+    const Vec3 t_bc = data_manager_->camera_extrinsics().front().p_ic;
     const Mat3 R_cb = q_ic.toRotationMatrix().transpose();
 
     // Iterate all feature in visual_local_map to create linear function.
