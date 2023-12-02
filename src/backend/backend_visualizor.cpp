@@ -1,6 +1,7 @@
 #include "backend.h"
 #include "log_report.h"
 #include "visualizor.h"
+#include "visualizor_3d.h"
 
 using namespace SLAM_VISUALIZOR;
 
@@ -72,6 +73,41 @@ void Backend::ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id,
     }
 
     Visualizor::WaitKey(0);
+}
+
+void Backend::ShowLocalMapWithFrames() {
+    Visualizor3D::Clear();
+
+    // Add word frame.
+    Visualizor3D::poses().emplace_back(PoseType{
+        .p_wb = Vec3::Zero(),
+        .q_wb = Quat::Identity(),
+        .scale = 3.0f,
+    });
+
+    // Add all features in locap map.
+    for (const auto &pair : data_manager_->visual_local_map()->features()) {
+        const auto &feature = pair.second;
+        CONTINUE_IF(!feature.param().is_solved);
+        Visualizor3D::points().emplace_back(PointType{
+            .p_w = feature.param().p_w,
+            .color = RgbPixel{.r = 0, .g = 255, .b = 255},
+            .radius = 2,
+        });
+    }
+
+    // Add all frames in locap map.
+    for (const auto &frame : data_manager_->visual_local_map()->frames()) {
+        Visualizor3D::poses().emplace_back(PoseType{
+            .p_wb = frame.p_wc(),
+            .q_wb = frame.q_wc(),
+            .scale = 0.5f,
+        });
+    }
+
+    while (!Visualizor3D::ShouldQuit()) {
+        Visualizor3D::Refresh("Visualizor 3D", 10);
+    }
 }
 
 }

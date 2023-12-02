@@ -85,6 +85,7 @@ public:
 
     // Backend visualizor.
     void ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id, const uint32_t cur_frame_id, const bool use_rectify = false);
+    void ShowLocalMapWithFrames();
 
     // Reference for member variables.
     BackendOptions &options() { return options_; }
