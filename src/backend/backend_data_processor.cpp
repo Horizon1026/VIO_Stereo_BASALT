@@ -52,17 +52,26 @@ bool Backend::TriangulizeAllVisualFeatures() {
             RETURN_FALSE_IF(frame_id > final_frame_id);
             const auto frame_ptr = data_manager_->visual_local_map()->frame(frame_id);
             RETURN_FALSE_IF(frame_ptr == nullptr);
-
             const Quat q_wc = frame_ptr->q_wc();
             const Vec3 p_wc = frame_ptr->p_wc();
 
+            // Add mono-view observations.
             const auto &obv = feature.observe(frame_id);
+            RETURN_FALSE_IF(obv.empty());
             const Vec2 norm_xy = obv[0].rectified_norm_xy;
-
-            // TODO: Add multi-view observations.
             q_wc_vec.emplace_back(q_wc);
             p_wc_vec.emplace_back(p_wc);
             norm_xy_vec.emplace_back(norm_xy);
+
+            // Add multi-view observations.
+            CONTINUE_IF(data_manager_->camera_extrinsics().size() < obv.size());
+            for (uint32_t i = 1; i < obv.size(); ++i) {
+                const Vec3 p_ic0 = data_manager_->camera_extrinsics()[0].p_ic;
+                const Quat q_ic0 = data_manager_->camera_extrinsics()[0].q_ic;
+                const Vec3 p_ici = data_manager_->camera_extrinsics()[i].p_ic;
+                const Quat q_ici = data_manager_->camera_extrinsics()[i].q_ic;
+                // T_wci = T_wc0 * T_ic0.inv * T_ici.
+            }
         }
 
         // Triangulize feature.
