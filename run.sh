@@ -1,10 +1,18 @@
 cd build/
-# ./test_dataloader /home/horizon/Desktop/date_sets/euroc/MH_01_easy/
-# ./test_dataloader /d/My_Github/Datasets/MH_05_difficult/
-# ./test_vio /d/My_Github/Datasets/MH_01_easy/
-# ./test_vio /d/My_Github/Datasets/MH_03_medium/
-# ./test_vio /d/My_Github/Datasets/MH_05_difficult/
-./test_vio /media/horizon/Documents/My_Github/Datasets/MH_01_easy/
-# ./test_vio /media/horizon/Documents/My_Github/Datasets/MH_03_medium/
-# ./test_vio /media/horizon/Documents/My_Github/Datasets/MH_05_difficult/
+
+dataset_subdir="MH_01_easy"
+# MH_01_easy
+# MH_03_medium
+# MH_05_difficult
+
+dataset_root_dir="/media/horizon/Documents/My_Github/Datasets/${dataset_subdir}"
+if [ -d "${dataset_root_dir}" ]; then
+    ./test_vio "${dataset_root_dir}/"
+fi
+
+dataset_root_dir="/d/My_Github/Datasets/${dataset_subdir}"
+if [ -d "${dataset_root_dir}" ]; then
+    ./test_vio "${dataset_root_dir}/"
+fi
+
 cd ..
