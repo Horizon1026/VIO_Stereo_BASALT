@@ -64,13 +64,27 @@ bool Backend::TriangulizeAllVisualFeatures() {
             norm_xy_vec.emplace_back(norm_xy);
 
             // Add multi-view observations.
-            CONTINUE_IF(data_manager_->camera_extrinsics().size() < obv.size());
+            RETURN_FALSE_IF(data_manager_->camera_extrinsics().size() < obv.size());
+            const Vec3 p_ic0 = data_manager_->camera_extrinsics()[0].p_ic;
+            const Quat q_ic0 = data_manager_->camera_extrinsics()[0].q_ic;
+            const Quat q_wi = q_wc * q_ic0.inverse();
             for (uint32_t i = 1; i < obv.size(); ++i) {
-                const Vec3 p_ic0 = data_manager_->camera_extrinsics()[0].p_ic;
-                const Quat q_ic0 = data_manager_->camera_extrinsics()[0].q_ic;
                 const Vec3 p_ici = data_manager_->camera_extrinsics()[i].p_ic;
                 const Quat q_ici = data_manager_->camera_extrinsics()[i].q_ic;
                 // T_wci = T_wc0 * T_ic0.inv * T_ici.
+                /*  [R_wci  t_wci] = [R_wc0  t_wc0] * [R_ic0.t  -R_ic0.t * t_ic0] * [R_ici  t_ici]
+                    [  0      1  ]   [  0      1  ]   [   0              1      ]   [  0      1  ]
+                                   = [R_wc0 * R_ic0.t  -R_wc0 * R_ic0.t * t_ic0 + t_wc0] * [R_ici  t_ici]
+                                     [       0                        1                ]   [  0      1  ]
+                                   = [R_wc0 * R_ic0.t * R_ici  R_wc0 * R_ic0.t * t_ici - R_wc0 * R_ic0.t * t_ic0 + t_wc0]
+                                     [           0                                          1                           ] */
+                const Quat q_wi = q_wc * q_ic0.inverse();
+                const Quat q_wci = q_wi * q_ici;
+                const Vec3 p_wci = q_wi * p_ici - q_wi * p_ic0 + p_wc;
+                const Vec2 norm_xy_i = obv[i].rectified_norm_xy;
+                q_wc_vec.emplace_back(q_wci);
+                p_wc_vec.emplace_back(p_wci);
+                norm_xy_vec.emplace_back(norm_xy_i);
             }
         }
 

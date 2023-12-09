@@ -148,14 +148,23 @@ int main(int argc, char **argv) {
     vio.options().frontend.enable_recording_image_binlog = false;
     vio.options().frontend.enable_drawing_track_result = true;
 
-    // Fill camera extrinsics.
-    Mat3 R_ic;
-    R_ic << 0.0148655429818,  -0.999880929698,  0.00414029679422,
-            0.999557249008,   0.0149672133247,  0.025715529948,
-            -0.0257744366974, 0.00375618835797, 0.999660727178;
-    const Vec3 p_ic = Vec3(-0.0216401454975,-0.064676986768, 0.00981073058949);
-    vio.options().data_manager.all_R_ic.emplace_back(R_ic);
-    vio.options().data_manager.all_t_ic.emplace_back(p_ic);
+    // Fill left camera extrinsics.
+    Mat3 R_i_cl;
+    R_i_cl << 0.0148655429818,  -0.999880929698,  0.00414029679422,
+              0.999557249008,   0.0149672133247,  0.025715529948,
+              -0.0257744366974, 0.00375618835797, 0.999660727178;
+    const Vec3 p_i_cl = Vec3(-0.0216401454975,-0.064676986768, 0.00981073058949);
+    vio.options().data_manager.all_R_ic.emplace_back(R_i_cl);
+    vio.options().data_manager.all_t_ic.emplace_back(p_i_cl);
+
+    // Fill right camera extrinsics.
+    Mat3 R_i_cr;
+    R_i_cr << 0.0125552670891,  -0.999755099723, 0.0182237714554,
+              0.999598781151,   0.0130119051815, 0.0251588363115,
+              -0.0253898008918, 0.0179005838253, 0.999517347078;
+    const Vec3 p_i_cr = Vec3(-0.0198435579556, 0.0453689425024, 0.00786212447038);
+    vio.options().data_manager.all_R_ic.emplace_back(R_i_cr);
+    vio.options().data_manager.all_t_ic.emplace_back(p_i_cr);
 
     // Config vio.
     vio.ConfigAllComponents();
