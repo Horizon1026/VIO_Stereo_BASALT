@@ -101,7 +101,7 @@ void Backend::ShowLocalMapWithFrames() {
         Visualizor3D::poses().emplace_back(PoseType{
             .p_wb = frame.p_wc(),
             .q_wb = frame.q_wc(),
-            .scale = 0.5f,
+            .scale = 0.2f,
         });
     }
 

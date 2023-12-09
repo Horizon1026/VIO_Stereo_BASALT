@@ -26,7 +26,6 @@ struct DataManagerOptions {
 /* Definition of Feature Points. */
 struct FeatureParameter {
     Vec3 p_w = Vec3::Zero();
-    float invdep = 1.0f;
     bool is_solved = false;
 };
 

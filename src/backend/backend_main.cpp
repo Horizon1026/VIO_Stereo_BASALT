@@ -14,7 +14,6 @@ bool Backend::RunOnce() {
         if (TryToInitialize()) {
             status_.is_initialized = true;
             ReportInfo(GREEN "[Backend] Backend succeed to initialize." RESET_COLOR);
-            ShowLocalMapWithFrames();
         } else {
             ResetToReintialize();
             ReportWarn("[Backend] Backend failed to initialize. All states will be reset for reinitialization.");
@@ -32,6 +31,7 @@ bool Backend::RunOnce() {
 
         // Debug.
         should_quit_ = true;
+        ShowLocalMapWithFrames();
     }
 
     return true;

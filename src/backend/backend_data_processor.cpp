@@ -70,7 +70,6 @@ bool Backend::TriangulizeAllVisualFeatures() {
         if (solver.Triangulate(q_wc_vec, p_wc_vec, norm_xy_vec, p_w)) {
             feature.param().p_w = p_w;
             feature.param().is_solved = true;
-            feature.param().invdep = 1.0f / (q_wc_vec.front().inverse() * (p_w - p_wc_vec.front())).z();
             ++triangulize_num;
         }
     }
