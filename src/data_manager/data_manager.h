@@ -73,7 +73,6 @@ public:
     CovisibleGraphType *visual_local_map() { return visual_local_map_.get(); }
     std::deque<FrameWithBias> &frames_with_bias() { return frames_with_bias_; }
     std::vector<CameraExtrinsic> &camera_extrinsics() { return camera_extrinsics_; }
-    std::vector<RelativeCameraExtrinsic> &relative_camera_extrinsics() { return relative_camera_extrinsics_; }
 
 private:
     // Options for data manager.
@@ -86,7 +85,6 @@ private:
     std::deque<FrameWithBias> frames_with_bias_;
     // Camera extrinsics.
     std::vector<CameraExtrinsic> camera_extrinsics_;
-    std::vector<RelativeCameraExtrinsic> relative_camera_extrinsics_;
 
 };
 
