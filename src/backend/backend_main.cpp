@@ -36,7 +36,7 @@ bool Backend::RunOnce() {
 
         // Debug.
         should_quit_ = true;
-        ShowLocalMapWithFrames();
+        ShowLocalMapWithFrames(1);
     }
 
     return true;

@@ -75,14 +75,14 @@ void Backend::ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id,
     Visualizor::WaitKey(0);
 }
 
-void Backend::ShowLocalMapWithFrames() {
+void Backend::ShowLocalMapWithFrames(const int32_t delay_ms) {
     Visualizor3D::Clear();
 
     // Add word frame.
     Visualizor3D::poses().emplace_back(PoseType{
         .p_wb = Vec3::Zero(),
         .q_wb = Quat::Identity(),
-        .scale = 3.0f,
+        .scale = 1.0f,
     });
 
     // Add all features in locap map.
@@ -101,12 +101,12 @@ void Backend::ShowLocalMapWithFrames() {
         Visualizor3D::poses().emplace_back(PoseType{
             .p_wb = frame.p_wc(),
             .q_wb = frame.q_wc(),
-            .scale = 0.2f,
+            .scale = 0.05f,
         });
     }
 
     while (!Visualizor3D::ShouldQuit()) {
-        Visualizor3D::Refresh("Visualizor 3D", 10);
+        Visualizor3D::Refresh("Visualizor 3D", delay_ms);
     }
 }
 

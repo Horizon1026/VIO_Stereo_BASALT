@@ -122,7 +122,10 @@ void TestRunVio(const uint32_t max_wait_ticks) {
     while (cnt) {
         const bool res = vio.RunOnce();
 
-        BREAK_IF(vio.backend()->should_quit());
+        if (vio.backend()->should_quit()) {
+            vio.backend()->ShowLocalMapWithFrames(10);
+            break;
+        }
 
         if (!res) {
             usleep(1000);
