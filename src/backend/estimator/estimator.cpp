@@ -17,6 +17,12 @@ bool Backend::TryToEstimate() {
     // [Vertices] Extrinsics of each camera.
     std::vector<std::unique_ptr<Vertex<Scalar>>> all_cameras_p_ic;
     std::vector<std::unique_ptr<VertexQuat<Scalar>>> all_cameras_q_ic;
+    for (const auto &extrinsic : data_manager_->camera_extrinsics()) {
+        all_cameras_p_ic.emplace_back(std::make_unique<Vertex<Scalar>>(3, 3));
+        all_cameras_p_ic.back()->param() = extrinsic.p_ic.cast<Scalar>();
+        all_cameras_q_ic.emplace_back(std::make_unique<VertexQuat<Scalar>>(4, 3));
+        all_cameras_q_ic.back()->param() << extrinsic.q_ic.w(), extrinsic.q_ic.x(), extrinsic.q_ic.y(), extrinsic.q_ic.z();
+    }
 
     // [Vertices] Camera pose of each frame.
     std::vector<uint32_t> all_frames_id;
@@ -73,6 +79,7 @@ bool Backend::TryToEstimate() {
                 ReportError("[Backend] Visual reprojection factor error. 'min_frame_id - idx_offset' = " << min_frame_id - idx_offset <<
                     ", 'idx - idx_offset' = " << idx - idx_offset << ", min_frame_id = " << min_frame_id << ", max_frame_id = " <<
                     max_frame_id << ", idx_offset = " << idx_offset << ".");
+                return false;
             }
         }
     }

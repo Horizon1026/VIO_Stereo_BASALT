@@ -78,7 +78,6 @@ bool Backend::TriangulizeAllVisualFeatures() {
                                      [       0                        1                ]   [  0      1  ]
                                    = [R_wc0 * R_ic0.t * R_ici  R_wc0 * R_ic0.t * t_ici - R_wc0 * R_ic0.t * t_ic0 + t_wc0]
                                      [           0                                          1                           ] */
-                const Quat q_wi = q_wc * q_ic0.inverse();
                 const Quat q_wci = q_wi * q_ici;
                 const Vec3 p_wci = q_wi * p_ici - q_wi * p_ic0 + p_wc;
                 const Vec2 norm_xy_i = obv[i].rectified_norm_xy;
