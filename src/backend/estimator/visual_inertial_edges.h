@@ -17,7 +17,10 @@ namespace VIO {
 /* Class Edge reprojection. Project feature 3-dof position on visual norm plane. */
 template <typename Scalar>
 class EdgeFeaturePosToNormPlane : public Edge<Scalar> {
-// vertex is [feature, p_w] [camera, p_wc] [camera, q_wc].
+// Vertices are [feature, p_w]
+//              [camera, p_wc]
+//              [camera, q_wc]
+
 public:
     EdgeFeaturePosToNormPlane() = delete;
     EdgeFeaturePosToNormPlane(int32_t residual_dim, int32_t vertex_num) : Edge<Scalar>(residual_dim, vertex_num) {}
@@ -75,7 +78,10 @@ private:
 /* Class Edge reprojection. Project feature 3-dof position on visual unit sphere. */
 template <typename Scalar>
 class EdgeFeaturePosToUnitSphere : public Edge<Scalar> {
-// vertex is [feature, p_w] [camera, p_wc] [camera, q_wc].
+// Vertices are [feature, p_w]
+//              [camera, p_wc]
+//              [camera, q_wc]
+
 public:
     EdgeFeaturePosToUnitSphere() = delete;
     EdgeFeaturePosToUnitSphere(int32_t residual_dim, int32_t vertex_num) : Edge<Scalar>(residual_dim, vertex_num) {}
@@ -136,7 +142,11 @@ private:
 /* Class Edge reprojection. Project feature 1-dof invdep on visual norm plane. */
 template <typename Scalar>
 class EdgeFeatureInvdepToNormPlane : public Edge<Scalar> {
-// vertex is [feature, invdep] [first camera, p_wc0] [first camera, q_wc0] [camera, p_wc] [camera, q_wc].
+// Vertices are [feature, invdep]
+//              [first camera, p_wc0]
+//              [first camera, q_wc0]
+//              [camera, p_wc]
+//              [camera, q_wc]
 
 public:
     EdgeFeatureInvdepToNormPlane() = delete;
@@ -219,13 +229,13 @@ private:
 /* Class Edge reprojection. Project feature 1-dof invdep on visual norm plane via imu pose. */
 template <typename Scalar>
 class EdgeFeatureInvdepToNormPlaneViaImu : public Edge<Scalar> {
-// vertex is [feature, invdep]
-//           [first imu pose, p_wi0]
-//           [first imu pose, q_wi0]
-//           [imu pose, p_wi]
-//           [imu pose, q_wi]
-//           [extrinsic, p_ic]
-//           [extrinsic, q_ic]
+// Vertices are [feature, invdep]
+//              [first imu pose, p_wi0]
+//              [first imu pose, q_wi0]
+//              [imu pose, p_wi]
+//              [imu pose, q_wi]
+//              [extrinsic, p_ic]
+//              [extrinsic, q_ic]
 
 public:
     EdgeFeatureInvdepToNormPlaneViaImu() = delete;
