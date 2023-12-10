@@ -1,5 +1,6 @@
 #include "backend.h"
 #include "log_report.h"
+#include "tick_tock.h"
 
 namespace VIO {
 
@@ -11,9 +12,10 @@ bool Backend::RunOnce() {
 
     // If backend is not initialized, try to initialize.
     if (!status_.is_initialized) {
+        TickTock timer;
         if (TryToInitialize()) {
             status_.is_initialized = true;
-            ReportInfo(GREEN "[Backend] Backend succeed to initialize." RESET_COLOR);
+            ReportInfo(GREEN "[Backend] Backend succeed to initialize within " << timer.TockTickInMillisecond() << " ms." RESET_COLOR);
         } else {
             ResetToReintialize();
             ReportWarn("[Backend] Backend failed to initialize. All states will be reset for reinitialization.");
@@ -23,10 +25,13 @@ bool Backend::RunOnce() {
 
     // If backend is initialized, try to estimate states.
     if (status_.is_initialized) {
+        TickTock timer;
         if (!TryToEstimate()) {
             ResetToReintialize();
             ReportWarn("[Backend] Backend failed to estimate.");
             return true;
+        } else {
+            ReportInfo(GREEN "[Backend] Backend succeed to estimate states within " << timer.TockTickInMillisecond() << " ms." RESET_COLOR);
         }
 
         // Debug.
