@@ -1,5 +1,6 @@
 #include "backend.h"
-#include "visual_inertial_vetices.h"
+#include "visual_edges.h"
+#include "inertial_edges.h"
 #include "visual_inertial_edges.h"
 
 #include "solver_lm.h"
