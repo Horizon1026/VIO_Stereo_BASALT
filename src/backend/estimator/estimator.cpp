@@ -41,7 +41,7 @@ bool Backend::TryToEstimate() {
     // [Edges] Visual reprojection factor.
     std::vector<uint32_t> all_features_id;
     std::vector<std::unique_ptr<Vertex<Scalar>>> all_features_invdep;
-    std::vector<std::unique_ptr<EdgeFeatureInvdepToNormPlaneViaImu<Scalar>>> all_visual_reproj_factors;
+    std::vector<std::unique_ptr<EdgeFeatureInvdepToNormPlaneViaImuWithinTwoFramesOneCamera<Scalar>>> all_visual_reproj_factors;
     for (const auto &pair : data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
         CONTINUE_IF(!feature.param().is_solved);
@@ -67,7 +67,7 @@ bool Backend::TryToEstimate() {
             observe_vector.tail<2>() = feature.observe(idx)[0].rectified_norm_xy;
 
             // Add edge of visual repeojection factor.
-            all_visual_reproj_factors.emplace_back(std::make_unique<EdgeFeatureInvdepToNormPlaneViaImu<Scalar>>());
+            all_visual_reproj_factors.emplace_back(std::make_unique<EdgeFeatureInvdepToNormPlaneViaImuWithinTwoFramesOneCamera<Scalar>>());
             auto &visual_reproj_factor = all_visual_reproj_factors.back();
             visual_reproj_factor->SetVertex(all_features_invdep.back().get(), 0);
             visual_reproj_factor->SetVertex(all_frames_p_wc[min_frame_id - idx_offset].get(), 1);
