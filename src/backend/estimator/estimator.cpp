@@ -41,7 +41,7 @@ bool Backend::TryToEstimate() {
     // [Edges] Visual reprojection factor.
     std::vector<uint32_t> all_features_id;
     std::vector<std::unique_ptr<Vertex<Scalar>>> all_features_invdep;
-    std::vector<std::unique_ptr<EdgeFeatureInvdepToNormPlane<Scalar>>> all_visual_reproj_factors;
+    std::vector<std::unique_ptr<EdgeFeatureInvdepToNormPlaneViaImu<Scalar>>> all_visual_reproj_factors;
     for (const auto &pair : data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
         CONTINUE_IF(!feature.param().is_solved);
@@ -67,13 +67,15 @@ bool Backend::TryToEstimate() {
             observe_vector.tail<2>() = feature.observe(idx)[0].rectified_norm_xy;
 
             // Add edge of visual repeojection factor.
-            all_visual_reproj_factors.emplace_back(std::make_unique<EdgeFeatureInvdepToNormPlane<Scalar>>(2, 5));
+            all_visual_reproj_factors.emplace_back(std::make_unique<EdgeFeatureInvdepToNormPlaneViaImu<Scalar>>());
             auto &visual_reproj_factor = all_visual_reproj_factors.back();
             visual_reproj_factor->SetVertex(all_features_invdep.back().get(), 0);
             visual_reproj_factor->SetVertex(all_frames_p_wc[min_frame_id - idx_offset].get(), 1);
             visual_reproj_factor->SetVertex(all_frames_q_wc[min_frame_id - idx_offset].get(), 2);
             visual_reproj_factor->SetVertex(all_frames_p_wc[idx - idx_offset].get(), 3);
             visual_reproj_factor->SetVertex(all_frames_q_wc[idx - idx_offset].get(), 4);
+            visual_reproj_factor->SetVertex(all_cameras_p_ic[0].get(), 5);
+            visual_reproj_factor->SetVertex(all_cameras_q_ic[0].get(), 6);
             visual_reproj_factor->observation() = observe_vector.cast<Scalar>();
             visual_reproj_factor->kernel() = std::make_unique<KernelHuber<Scalar>>(static_cast<Scalar>(0.8));
             if (!visual_reproj_factor->SelfCheck()) {
@@ -106,6 +108,15 @@ bool Backend::TryToEstimate() {
     SolverLm<Scalar> solver;
     solver.problem() = &graph_optimization_problem;
     solver.Solve(false);
+
+    // Update all camera extrinsics.
+    for (uint32_t i = 0; i < all_cameras_p_ic.size(); ++i) {
+        data_manager_->camera_extrinsics()[i].p_ic = all_cameras_p_ic[i]->param().cast<float>();
+        data_manager_->camera_extrinsics()[i].q_ic.w() = all_cameras_q_ic[i]->param()(0);
+        data_manager_->camera_extrinsics()[i].q_ic.x() = all_cameras_q_ic[i]->param()(1);
+        data_manager_->camera_extrinsics()[i].q_ic.y() = all_cameras_q_ic[i]->param()(2);
+        data_manager_->camera_extrinsics()[i].q_ic.z() = all_cameras_q_ic[i]->param()(3);
+    }
 
     // Update all frame pose in local map.
     for (uint32_t i = 0; i < all_frames_p_wc.size(); ++i) {
