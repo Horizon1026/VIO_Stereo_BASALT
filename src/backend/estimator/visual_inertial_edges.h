@@ -146,7 +146,7 @@ class EdgeFeatureInvdepToNormPlaneViaImuWithinTwoFramesTwoCamera : public Edge<S
 //              [extrinsic, q_ic]
 
 public:
-    EdgeFeatureInvdepToNormPlaneViaImuWithinTwoFramesTwoCamera() : Edge<Scalar>(2, 7) {}
+    EdgeFeatureInvdepToNormPlaneViaImuWithinTwoFramesTwoCamera() : Edge<Scalar>(2, 9) {}
     virtual ~EdgeFeatureInvdepToNormPlaneViaImuWithinTwoFramesTwoCamera() = default;
 
     // Compute residual and jacobians for each vertex. These operations should be defined by subclass.
@@ -193,19 +193,29 @@ public:
                               0, inv_depth, - p_c(1) * inv_depth_2;
         }
 
-        const TMat3<Scalar> jacobian_cam0_p = ;
-        const TMat3<Scalar> jacobian_cam0_q = ;
+        const TQuat<Scalar> q_ci = q_ic.inverse();
+        const TQuat<Scalar> q_cw = q_ci * q_wi.inverse();
+        const TQuat<Scalar> q_ci0 = q_cw * q_wi0;
+        const TQuat<Scalar> q_cc0 = q_ci0 * q_ic;
+        const TMat3<Scalar> R_ci = q_ci.toRotationMatrix();
+        const TMat3<Scalar> R_cw = q_cw.toRotationMatrix();
+        const TMat3<Scalar> R_ci0 = q_ci0.toRotationMatrix();
+        const TMat3<Scalar> R_cc0 = q_cc0.toRotationMatrix();
 
-        const TMat3<Scalar> jacobian_cam_p = ;
-        const TMat3<Scalar> jacobian_cam_q = ;
+        const TMat3<Scalar> jacobian_cam0_p = R_cw;
+        const TMat3<Scalar> jacobian_cam0_q = - R_ci0 * Utility::SkewSymmetricMatrix(p_i0);
 
-        const TVec3<Scalar> jacobian_invdep = ;
+        const TMat3<Scalar> jacobian_cam_p = - R_cw;
+        const TMat3<Scalar> jacobian_cam_q = R_ci * Utility::SkewSymmetricMatrix(p_i);
 
-        const TMat3<Scalar> jacobian_ex0_p = ;
-        const TMat3<Scalar> jacobian_ex0_q = ;
+        const TVec3<Scalar> jacobian_invdep = - R_cc0 *
+             TVec3<Scalar>(norm_xy0.x(), norm_xy0.y(), static_cast<Scalar>(1)) / (inv_depth0 * inv_depth0);
 
-        const TMat3<Scalar> jacobian_ex_p = ;
-        const TMat3<Scalar> jacobian_ex_q = ;
+        const TMat3<Scalar> jacobian_ex0_p = R_ci0;
+        const TMat3<Scalar> jacobian_ex0_q = - R_cc0 * Utility::SkewSymmetricMatrix(p_c0);
+
+        const TMat3<Scalar> jacobian_ex_p = - R_ci;
+        const TMat3<Scalar> jacobian_ex_q = Utility::SkewSymmetricMatrix(p_c);
 
         this->GetJacobian(0) = jacobian_2d_3d * jacobian_invdep;
         this->GetJacobian(1) = jacobian_2d_3d * jacobian_cam0_p;

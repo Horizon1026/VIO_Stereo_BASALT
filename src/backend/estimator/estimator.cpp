@@ -41,7 +41,7 @@ bool Backend::TryToEstimate() {
     // [Edges] Visual reprojection factor.
     std::vector<uint32_t> all_features_id;
     std::vector<std::unique_ptr<Vertex<Scalar>>> all_features_invdep;
-    std::vector<std::unique_ptr<EdgeFeatureInvdepToNormPlaneViaImuWithinTwoFramesOneCamera<Scalar>>> all_visual_reproj_factors;
+    std::vector<std::unique_ptr<Edge<Scalar>>> all_visual_reproj_factors;
     for (const auto &pair : data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
         CONTINUE_IF(!feature.param().is_solved);
@@ -63,10 +63,12 @@ bool Backend::TryToEstimate() {
         const uint32_t idx_offset = min_frame_id - data_manager_->visual_local_map()->frames().front().id() + 1;
         for (uint32_t idx = min_frame_id + 1; idx <= max_frame_id; ++idx) {
             Vec4 observe_vector = Vec4::Zero();
-            observe_vector.head<2>() = feature.observe(min_frame_id)[0].rectified_norm_xy;
-            observe_vector.tail<2>() = feature.observe(idx)[0].rectified_norm_xy;
+            const auto &obv_in_ref = feature.observe(min_frame_id);
+            const auto &obv_in_cur = feature.observe(idx);
+            observe_vector.head<2>() = obv_in_ref[0].rectified_norm_xy;
+            observe_vector.tail<2>() = obv_in_cur[0].rectified_norm_xy;
 
-            // Add edge of visual repeojection factor.
+            // Add edge of visual reprojection factor, considering one camera views two frames.
             all_visual_reproj_factors.emplace_back(std::make_unique<EdgeFeatureInvdepToNormPlaneViaImuWithinTwoFramesOneCamera<Scalar>>());
             auto &visual_reproj_factor = all_visual_reproj_factors.back();
             visual_reproj_factor->SetVertex(all_features_invdep.back().get(), 0);
@@ -78,11 +80,29 @@ bool Backend::TryToEstimate() {
             visual_reproj_factor->SetVertex(all_cameras_q_ic[0].get(), 6);
             visual_reproj_factor->observation() = observe_vector.cast<Scalar>();
             visual_reproj_factor->kernel() = std::make_unique<KernelHuber<Scalar>>(static_cast<Scalar>(0.8));
-            if (!visual_reproj_factor->SelfCheck()) {
-                ReportError("[Backend] Visual reprojection factor error. 'min_frame_id - idx_offset' = " << min_frame_id - idx_offset <<
-                    ", 'idx - idx_offset' = " << idx - idx_offset << ", min_frame_id = " << min_frame_id << ", max_frame_id = " <<
-                    max_frame_id << ", idx_offset = " << idx_offset << ".");
-                return false;
+            RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
+
+            // Add edge of visual reprojection factor, considering two cameras view one frame.
+            // TODO:
+
+            // Add edge of visual reprojection factor, considering two cameras view two frames.
+            for (uint32_t i = 1; i < obv_in_cur.size(); ++i) {
+                observe_vector.tail<2>() = obv_in_cur[i].rectified_norm_xy;
+
+                all_visual_reproj_factors.emplace_back(std::make_unique<EdgeFeatureInvdepToNormPlaneViaImuWithinTwoFramesTwoCamera<Scalar>>());
+                auto &visual_reproj_factor = all_visual_reproj_factors.back();
+                visual_reproj_factor->SetVertex(all_features_invdep.back().get(), 0);
+                visual_reproj_factor->SetVertex(all_frames_p_wc[min_frame_id - idx_offset].get(), 1);
+                visual_reproj_factor->SetVertex(all_frames_q_wc[min_frame_id - idx_offset].get(), 2);
+                visual_reproj_factor->SetVertex(all_frames_p_wc[idx - idx_offset].get(), 3);
+                visual_reproj_factor->SetVertex(all_frames_q_wc[idx - idx_offset].get(), 4);
+                visual_reproj_factor->SetVertex(all_cameras_p_ic[0].get(), 5);
+                visual_reproj_factor->SetVertex(all_cameras_q_ic[0].get(), 6);
+                visual_reproj_factor->SetVertex(all_cameras_p_ic[i].get(), 7);
+                visual_reproj_factor->SetVertex(all_cameras_q_ic[i].get(), 8);
+                visual_reproj_factor->observation() = observe_vector.cast<Scalar>();
+                visual_reproj_factor->kernel() = std::make_unique<KernelHuber<Scalar>>(static_cast<Scalar>(0.8));
+                RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
             }
         }
     }
