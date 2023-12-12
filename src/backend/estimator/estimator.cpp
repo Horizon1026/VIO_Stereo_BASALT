@@ -8,6 +8,7 @@
 
 #include "log_report.h"
 #include "tick_tock.h"
+#include "math_kinematics.h"
 
 namespace VIO {
 
@@ -21,20 +22,27 @@ bool Backend::TryToEstimate() {
     for (const auto &extrinsic : data_manager_->camera_extrinsics()) {
         all_cameras_p_ic.emplace_back(std::make_unique<Vertex<Scalar>>(3, 3));
         all_cameras_p_ic.back()->param() = extrinsic.p_ic.cast<Scalar>();
+        all_cameras_p_ic.back()->SetFixed(true);
         all_cameras_q_ic.emplace_back(std::make_unique<VertexQuat<Scalar>>(4, 3));
         all_cameras_q_ic.back()->param() << extrinsic.q_ic.w(), extrinsic.q_ic.x(), extrinsic.q_ic.y(), extrinsic.q_ic.z();
     }
 
     // [Vertices] Camera pose of each frame.
     std::vector<uint32_t> all_frames_id;
-    std::vector<std::unique_ptr<Vertex<Scalar>>> all_frames_p_wc;
-    std::vector<std::unique_ptr<VertexQuat<Scalar>>> all_frames_q_wc;
+    std::vector<std::unique_ptr<Vertex<Scalar>>> all_frames_p_wi;
+    std::vector<std::unique_ptr<VertexQuat<Scalar>>> all_frames_q_wi;
     for (const auto &frame : data_manager_->visual_local_map()->frames()) {
         all_frames_id.emplace_back(frame.id());
-        all_frames_p_wc.emplace_back(std::make_unique<Vertex<Scalar>>(3, 3));
-        all_frames_p_wc.back()->param() = frame.p_wc().cast<Scalar>();
-        all_frames_q_wc.emplace_back(std::make_unique<VertexQuat<Scalar>>(4, 3));
-        all_frames_q_wc.back()->param() << frame.q_wc().w(), frame.q_wc().x(), frame.q_wc().y(), frame.q_wc().z();
+
+        Vec3 p_wi = Vec3::Zero();
+        Quat q_wi = Quat::Identity();
+        Utility::ComputeTransformTransformInverse(frame.p_wc(), frame.q_wc(), data_manager_->camera_extrinsics().front().p_ic,
+            data_manager_->camera_extrinsics().front().q_ic, p_wi, q_wi);
+
+        all_frames_p_wi.emplace_back(std::make_unique<Vertex<Scalar>>(3, 3));
+        all_frames_p_wi.back()->param() = p_wi.cast<Scalar>();
+        all_frames_q_wi.emplace_back(std::make_unique<VertexQuat<Scalar>>(4, 3));
+        all_frames_q_wi.back()->param() << q_wi.w(), q_wi.x(), q_wi.y(), q_wi.z();
     }
 
     // [Vertices] Inverse depth of each feature.
@@ -72,10 +80,10 @@ bool Backend::TryToEstimate() {
             all_visual_reproj_factors.emplace_back(std::make_unique<EdgeFeatureInvdepToNormPlaneViaImuWithinTwoFramesOneCamera<Scalar>>());
             auto &visual_reproj_factor = all_visual_reproj_factors.back();
             visual_reproj_factor->SetVertex(all_features_invdep.back().get(), 0);
-            visual_reproj_factor->SetVertex(all_frames_p_wc[min_frame_id - idx_offset].get(), 1);
-            visual_reproj_factor->SetVertex(all_frames_q_wc[min_frame_id - idx_offset].get(), 2);
-            visual_reproj_factor->SetVertex(all_frames_p_wc[idx - idx_offset].get(), 3);
-            visual_reproj_factor->SetVertex(all_frames_q_wc[idx - idx_offset].get(), 4);
+            visual_reproj_factor->SetVertex(all_frames_p_wi[min_frame_id - idx_offset].get(), 1);
+            visual_reproj_factor->SetVertex(all_frames_q_wi[min_frame_id - idx_offset].get(), 2);
+            visual_reproj_factor->SetVertex(all_frames_p_wi[idx - idx_offset].get(), 3);
+            visual_reproj_factor->SetVertex(all_frames_q_wi[idx - idx_offset].get(), 4);
             visual_reproj_factor->SetVertex(all_cameras_p_ic[0].get(), 5);
             visual_reproj_factor->SetVertex(all_cameras_q_ic[0].get(), 6);
             visual_reproj_factor->observation() = observe_vector.cast<Scalar>();
@@ -92,10 +100,10 @@ bool Backend::TryToEstimate() {
                 all_visual_reproj_factors.emplace_back(std::make_unique<EdgeFeatureInvdepToNormPlaneViaImuWithinTwoFramesTwoCamera<Scalar>>());
                 auto &visual_reproj_factor = all_visual_reproj_factors.back();
                 visual_reproj_factor->SetVertex(all_features_invdep.back().get(), 0);
-                visual_reproj_factor->SetVertex(all_frames_p_wc[min_frame_id - idx_offset].get(), 1);
-                visual_reproj_factor->SetVertex(all_frames_q_wc[min_frame_id - idx_offset].get(), 2);
-                visual_reproj_factor->SetVertex(all_frames_p_wc[idx - idx_offset].get(), 3);
-                visual_reproj_factor->SetVertex(all_frames_q_wc[idx - idx_offset].get(), 4);
+                visual_reproj_factor->SetVertex(all_frames_p_wi[min_frame_id - idx_offset].get(), 1);
+                visual_reproj_factor->SetVertex(all_frames_q_wi[min_frame_id - idx_offset].get(), 2);
+                visual_reproj_factor->SetVertex(all_frames_p_wi[idx - idx_offset].get(), 3);
+                visual_reproj_factor->SetVertex(all_frames_q_wi[idx - idx_offset].get(), 4);
                 visual_reproj_factor->SetVertex(all_cameras_p_ic[0].get(), 5);
                 visual_reproj_factor->SetVertex(all_cameras_q_ic[0].get(), 6);
                 visual_reproj_factor->SetVertex(all_cameras_p_ic[i].get(), 7);
@@ -113,9 +121,9 @@ bool Backend::TryToEstimate() {
         graph_optimization_problem.AddVertex(all_cameras_p_ic[i].get());
         graph_optimization_problem.AddVertex(all_cameras_q_ic[i].get());
     }
-    for (uint32_t i = 0; i < all_frames_p_wc.size(); ++i) {
-        graph_optimization_problem.AddVertex(all_frames_p_wc[i].get());
-        graph_optimization_problem.AddVertex(all_frames_q_wc[i].get());
+    for (uint32_t i = 0; i < all_frames_p_wi.size(); ++i) {
+        graph_optimization_problem.AddVertex(all_frames_p_wi[i].get());
+        graph_optimization_problem.AddVertex(all_frames_q_wi[i].get());
     }
     for (auto &vertex : all_features_invdep) {
         graph_optimization_problem.AddVertex(vertex.get());
@@ -139,13 +147,13 @@ bool Backend::TryToEstimate() {
     }
 
     // Update all frame pose in local map.
-    for (uint32_t i = 0; i < all_frames_p_wc.size(); ++i) {
+    for (uint32_t i = 0; i < all_frames_p_wi.size(); ++i) {
+        const Vec3 p_wi = all_frames_p_wi[i]->param().cast<float>();
+        const Quat q_wi = Quat(all_frames_q_wi[i]->param()(0), all_frames_q_wi[i]->param()(1), all_frames_q_wi[i]->param()(2), all_frames_q_wi[i]->param()(3));
+
         auto frame_ptr = data_manager_->visual_local_map()->frame(all_frames_id[i]);
-        frame_ptr->p_wc() = all_frames_p_wc[i]->param().cast<float>();
-        frame_ptr->q_wc().w() = all_frames_q_wc[i]->param()(0);
-        frame_ptr->q_wc().x() = all_frames_q_wc[i]->param()(1);
-        frame_ptr->q_wc().y() = all_frames_q_wc[i]->param()(2);
-        frame_ptr->q_wc().z() = all_frames_q_wc[i]->param()(3);
+        Utility::ComputeTransformTransform(p_wi, q_wi, data_manager_->camera_extrinsics().front().p_ic, data_manager_->camera_extrinsics().front().q_ic,
+            frame_ptr->p_wc(), frame_ptr->q_wc());
     }
 
     // Update all feature position in local map.
