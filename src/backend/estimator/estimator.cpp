@@ -22,7 +22,6 @@ bool Backend::TryToEstimate() {
     for (const auto &extrinsic : data_manager_->camera_extrinsics()) {
         all_cameras_p_ic.emplace_back(std::make_unique<Vertex<Scalar>>(3, 3));
         all_cameras_p_ic.back()->param() = extrinsic.p_ic.cast<Scalar>();
-        all_cameras_p_ic.back()->SetFixed(true);
         all_cameras_q_ic.emplace_back(std::make_unique<VertexQuat<Scalar>>(4, 3));
         all_cameras_q_ic.back()->param() << extrinsic.q_ic.w(), extrinsic.q_ic.x(), extrinsic.q_ic.y(), extrinsic.q_ic.z();
     }
@@ -65,15 +64,34 @@ bool Backend::TryToEstimate() {
         all_features_invdep.emplace_back(std::make_unique<Vertex<Scalar>>(1, 1));
         all_features_invdep.back()->param() = TVec1<Scalar>(invdep);
 
-        // Iterate all observations of this feature.
+        // Determine the range of all observations of this feature.
         const uint32_t min_frame_id = feature.first_frame_id();
         const uint32_t max_frame_id = feature.final_frame_id();
         const uint32_t idx_offset = min_frame_id - data_manager_->visual_local_map()->frames().front().id() + 1;
+
+        // Add edge of visual reprojection factor, considering two cameras view one frame.
+        const auto &obv_in_ref = feature.observe(min_frame_id);
+        Vec4 observe_vector = Vec4::Zero();
+        observe_vector.head<2>() = obv_in_ref[0].rectified_norm_xy;
+        for (uint32_t i = 1; i < obv_in_ref.size(); ++i) {
+            observe_vector.tail<2>() = obv_in_ref[i].rectified_norm_xy;
+
+            // Add edge of visual reprojection factor, considering two camera view one frame.
+            all_visual_reproj_factors.emplace_back(std::make_unique<EdgeFeatureInvdepToNormPlaneViaImuWithinOneFramesTwoCamera<Scalar>>());
+            auto &visual_reproj_factor = all_visual_reproj_factors.back();
+            visual_reproj_factor->SetVertex(all_features_invdep.back().get(), 0);
+            visual_reproj_factor->SetVertex(all_cameras_p_ic[0].get(), 1);
+            visual_reproj_factor->SetVertex(all_cameras_q_ic[0].get(), 2);
+            visual_reproj_factor->SetVertex(all_cameras_p_ic[i].get(), 3);
+            visual_reproj_factor->SetVertex(all_cameras_q_ic[i].get(), 4);
+            visual_reproj_factor->observation() = observe_vector.cast<Scalar>();
+            visual_reproj_factor->kernel() = std::make_unique<KernelHuber<Scalar>>(static_cast<Scalar>(1.0));
+            RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
+        }
+
+        // Iterate all observations of this feature.
         for (uint32_t idx = min_frame_id + 1; idx <= max_frame_id; ++idx) {
-            Vec4 observe_vector = Vec4::Zero();
-            const auto &obv_in_ref = feature.observe(min_frame_id);
             const auto &obv_in_cur = feature.observe(idx);
-            observe_vector.head<2>() = obv_in_ref[0].rectified_norm_xy;
             observe_vector.tail<2>() = obv_in_cur[0].rectified_norm_xy;
 
             // Add edge of visual reprojection factor, considering one camera views two frames.
@@ -87,11 +105,8 @@ bool Backend::TryToEstimate() {
             visual_reproj_factor->SetVertex(all_cameras_p_ic[0].get(), 5);
             visual_reproj_factor->SetVertex(all_cameras_q_ic[0].get(), 6);
             visual_reproj_factor->observation() = observe_vector.cast<Scalar>();
-            visual_reproj_factor->kernel() = std::make_unique<KernelHuber<Scalar>>(static_cast<Scalar>(0.8));
+            visual_reproj_factor->kernel() = std::make_unique<KernelHuber<Scalar>>(static_cast<Scalar>(1.0));
             RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
-
-            // Add edge of visual reprojection factor, considering two cameras view one frame.
-            // TODO:
 
             // Add edge of visual reprojection factor, considering two cameras view two frames.
             for (uint32_t i = 1; i < obv_in_cur.size(); ++i) {
@@ -109,7 +124,7 @@ bool Backend::TryToEstimate() {
                 visual_reproj_factor->SetVertex(all_cameras_p_ic[i].get(), 7);
                 visual_reproj_factor->SetVertex(all_cameras_q_ic[i].get(), 8);
                 visual_reproj_factor->observation() = observe_vector.cast<Scalar>();
-                visual_reproj_factor->kernel() = std::make_unique<KernelHuber<Scalar>>(static_cast<Scalar>(0.8));
+                visual_reproj_factor->kernel() = std::make_unique<KernelHuber<Scalar>>(static_cast<Scalar>(1.0));
                 RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
             }
         }
@@ -152,8 +167,9 @@ bool Backend::TryToEstimate() {
         const Quat q_wi = Quat(all_frames_q_wi[i]->param()(0), all_frames_q_wi[i]->param()(1), all_frames_q_wi[i]->param()(2), all_frames_q_wi[i]->param()(3));
 
         auto frame_ptr = data_manager_->visual_local_map()->frame(all_frames_id[i]);
-        Utility::ComputeTransformTransform(p_wi, q_wi, data_manager_->camera_extrinsics().front().p_ic, data_manager_->camera_extrinsics().front().q_ic,
-            frame_ptr->p_wc(), frame_ptr->q_wc());
+        const Vec3 &p_ic = data_manager_->camera_extrinsics().front().p_ic;
+        const Quat &q_ic = data_manager_->camera_extrinsics().front().q_ic;
+        Utility::ComputeTransformTransform(p_wi, q_wi, p_ic, q_ic, frame_ptr->p_wc(), frame_ptr->q_wc());
     }
 
     // Update all feature position in local map.

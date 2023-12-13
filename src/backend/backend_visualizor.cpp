@@ -1,5 +1,6 @@
 #include "backend.h"
 #include "log_report.h"
+#include "math_kinematics.h"
 #include "visualizor.h"
 #include "visualizor_3d.h"
 
@@ -97,12 +98,22 @@ void Backend::ShowLocalMapWithFrames(const int32_t delay_ms) {
     }
 
     // Add all frames in locap map.
+    Vec3 p_wi = Vec3::Zero();
+    Quat q_wi = Quat::Identity();
+    Vec3 p_wc = Vec3::Zero();
+    Quat q_wc = Quat::Identity();
     for (const auto &frame : data_manager_->visual_local_map()->frames()) {
-        Visualizor3D::poses().emplace_back(PoseType{
-            .p_wb = frame.p_wc(),
-            .q_wb = frame.q_wc(),
-            .scale = 0.05f,
-        });
+        // Add imu frame in local map.
+        Utility::ComputeTransformTransformInverse(frame.p_wc(), frame.q_wc(),
+            data_manager_->camera_extrinsics().front().p_ic,
+            data_manager_->camera_extrinsics().front().q_ic, p_wi, q_wi);
+        Visualizor3D::poses().emplace_back(PoseType{ .p_wb = p_wi, .q_wb = q_wi, .scale = 0.1f });
+
+        // Add all camera frames in local map.
+        for (const auto &extrinsic : data_manager_->camera_extrinsics()) {
+            Utility::ComputeTransformTransform(p_wi, q_wi, extrinsic.p_ic, extrinsic.q_ic, p_wc, q_wc);
+            Visualizor3D::poses().emplace_back(PoseType{ .p_wb = p_wc, .q_wb = q_wc, .scale = 0.05f });
+        }
     }
 
     while (!Visualizor3D::ShouldQuit()) {
