@@ -12,7 +12,7 @@
 
 namespace VIO {
 
-using Scalar = double;
+using Scalar = float;
 
 bool Backend::TryToEstimate() {
     // Generate vertices of states to be optimized.
@@ -22,6 +22,7 @@ bool Backend::TryToEstimate() {
     for (const auto &extrinsic : data_manager_->camera_extrinsics()) {
         all_cameras_p_ic.emplace_back(std::make_unique<Vertex<Scalar>>(3, 3));
         all_cameras_p_ic.back()->param() = extrinsic.p_ic.cast<Scalar>();
+        all_cameras_p_ic.back()->SetFixed(true);
         all_cameras_q_ic.emplace_back(std::make_unique<VertexQuat<Scalar>>(4, 3));
         all_cameras_q_ic.back()->param() << extrinsic.q_ic.w(), extrinsic.q_ic.x(), extrinsic.q_ic.y(), extrinsic.q_ic.z();
     }
@@ -69,7 +70,7 @@ bool Backend::TryToEstimate() {
         const uint32_t max_frame_id = feature.final_frame_id();
         const uint32_t idx_offset = min_frame_id - data_manager_->visual_local_map()->frames().front().id() + 1;
 
-        // Add edge of visual reprojection factor, considering two cameras view one frame.
+        // Add edges of visual reprojection factor, considering two cameras view one frame.
         const auto &obv_in_ref = feature.observe(min_frame_id);
         Vec4 observe_vector = Vec4::Zero();
         observe_vector.head<2>() = obv_in_ref[0].rectified_norm_xy;
@@ -89,12 +90,12 @@ bool Backend::TryToEstimate() {
             RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
         }
 
-        // Iterate all observations of this feature.
+        // In order to add other edges, iterate all observations of this feature.
         for (uint32_t idx = min_frame_id + 1; idx <= max_frame_id; ++idx) {
             const auto &obv_in_cur = feature.observe(idx);
             observe_vector.tail<2>() = obv_in_cur[0].rectified_norm_xy;
 
-            // Add edge of visual reprojection factor, considering one camera views two frames.
+            // Add edges of visual reprojection factor, considering one camera views two frames.
             all_visual_reproj_factors.emplace_back(std::make_unique<EdgeFeatureInvdepToNormPlaneViaImuWithinTwoFramesOneCamera<Scalar>>());
             auto &visual_reproj_factor = all_visual_reproj_factors.back();
             visual_reproj_factor->SetVertex(all_features_invdep.back().get(), 0);
@@ -108,7 +109,7 @@ bool Backend::TryToEstimate() {
             visual_reproj_factor->kernel() = std::make_unique<KernelHuber<Scalar>>(static_cast<Scalar>(1.0));
             RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
 
-            // Add edge of visual reprojection factor, considering two cameras view two frames.
+            // Add edges of visual reprojection factor, considering two cameras view two frames.
             for (uint32_t i = 1; i < obv_in_cur.size(); ++i) {
                 observe_vector.tail<2>() = obv_in_cur[i].rectified_norm_xy;
 
@@ -129,6 +130,37 @@ bool Backend::TryToEstimate() {
             }
         }
     }
+
+    // [Vertices] Velocity of each new frame.
+    std::vector<std::unique_ptr<Vertex<Scalar>>> all_new_frames_v_wi;
+    const uint32_t min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
+    const uint32_t max_frames_idx = data_manager_->visual_local_map()->frames().back().id();
+    const uint32_t idx_offset = data_manager_->visual_local_map()->frames().size() - data_manager_->frames_with_bias().size();
+    for (uint32_t frame_idx = min_frames_idx + idx_offset; frame_idx <= max_frames_idx; ++frame_idx) {
+        all_new_frames_v_wi.emplace_back(std::make_unique<Vertex<Scalar>>(3, 3));
+        all_new_frames_v_wi.back()->param() = data_manager_->visual_local_map()->frame(frame_idx)->v_wc().cast<Scalar>();
+    }
+
+    // [Vertices] Bias_accel and bias_gyro of each new frame.
+    std::vector<std::unique_ptr<Vertex<Scalar>>> all_new_frames_ba;
+    std::vector<std::unique_ptr<Vertex<Scalar>>> all_new_frames_bg;
+    for (const auto &frame : data_manager_->frames_with_bias()) {
+        // Add vertex of bias_accel and bias_gyro.
+        all_new_frames_ba.emplace_back(std::make_unique<Vertex<Scalar>>(3, 3));
+        all_new_frames_ba.back()->param() = frame.imu_preint_block.bias_accel().cast<Scalar>();
+        all_new_frames_bg.emplace_back(std::make_unique<Vertex<Scalar>>(3, 3));
+        all_new_frames_bg.back()->param() = frame.imu_preint_block.bias_gyro().cast<Scalar>();
+    }
+    RETURN_FALSE_IF(all_new_frames_v_wi.size() != all_new_frames_ba.size());
+
+    // [Edges] Inerial preintegration factor.
+    // std::vector<std::unique_ptr<Edge<Scalar>>> all_imu_factors;
+    // for (const auto &frame : data_manager_->frames_with_bias()) {
+    //     // Add edges of imu preintegration.
+    //     all_imu_factors.emplace_back(std::make_unique<EdgeImuPreintegrationBetweenRelativePose<Scalar>>(
+    //         frame.imu_preint_block, options_.kGravityInWordFrame));
+    //     auto &imu_factor = all_imu_factors.back();
+    // }
 
     // Construct graph problem, add all vertices and edges.
     Graph<Scalar> graph_optimization_problem;

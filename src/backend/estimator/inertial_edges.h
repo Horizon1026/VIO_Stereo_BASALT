@@ -88,9 +88,9 @@ public:
         TMat15x3<Scalar> dr_dp0 = TMat15x3<Scalar>::Zero();
         dr_dp0.template block<3, 3>(ImuIndex::kPosition, 0) = - R_i0w;
         TMat15x3<Scalar> dr_dq0 = TMat15x3<Scalar>::Zero();
-        dr_dq0.template block<3, 3>(ImuIndex::kPosition, 0) = Utility::SkewSymmetricMatrix(q_wi0_.inverse() * (0.5 * this->gravity_w * dt2 + p_wi1_ - p_wi0_ - v_wi0_ * dt));
+        dr_dq0.template block<3, 3>(ImuIndex::kPosition, 0) = Utility::SkewSymmetricMatrix(q_wi0_.inverse() * (0.5 * gravity_w_ * dt2 + p_wi1_ - p_wi0_ - v_wi0_ * dt));
         dr_dq0.template block<3, 3>(ImuIndex::kRotation, 0) = - (Utility::Qleft(q_wi1_.inverse() * q_wi0_) * Utility::Qright(q_ij_)).template bottomRightCorner<3, 3>();
-        dr_dq0.template block<3, 3>(ImuIndex::kVelocity, 0) = Utility::SkewSymmetricMatrix(q_wi0_.inverse() * (this->gravity_w * dt + v_wi1_ - v_wi0_));
+        dr_dq0.template block<3, 3>(ImuIndex::kVelocity, 0) = Utility::SkewSymmetricMatrix(q_wi0_.inverse() * (gravity_w_ * dt + v_wi1_ - v_wi0_));
         TMat15x3<Scalar> dr_dv0 = TMat15x3<Scalar>::Zero();
         dr_dv0.template block<3, 3>(ImuIndex::kPosition, 0) = - R_i0w * dt;
         dr_dv0.template block<3, 3>(ImuIndex::kVelocity, 0) = - R_i0w;
