@@ -51,7 +51,7 @@ bool Backend::TryToEstimate() {
     std::vector<std::unique_ptr<Edge<Scalar>>> all_visual_reproj_factors;
     for (const auto &pair : data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
-        CONTINUE_IF(!feature.param().is_solved);
+        CONTINUE_IF(feature.observes().size() < 2);
 
         // Compute inverse depth by p_w of this feature.
         const auto &frame = data_manager_->visual_local_map()->frame(feature.first_frame_id());
@@ -179,6 +179,12 @@ bool Backend::TryToEstimate() {
         auto &observe = feature_ptr->observe(feature_ptr->first_frame_id());
         const Vec3 p_c = Vec3(observe[0].rectified_norm_xy.x(), observe[0].rectified_norm_xy.y(), 1) / all_features_invdep[i]->param()(0);
         feature_ptr->param().p_w = frame_ptr->q_wc() * p_c + frame_ptr->p_wc();
+
+        if (p_c.z() > kZero) {
+            feature_ptr->status() = FeatureSolvedStatus::kSolved;
+        } else {
+            feature_ptr->status() = FeatureSolvedStatus::kUnsolved;
+        }
     }
 
     return true;
