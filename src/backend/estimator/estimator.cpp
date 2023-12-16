@@ -154,13 +154,30 @@ bool Backend::TryToEstimate() {
     RETURN_FALSE_IF(all_new_frames_v_wi.size() != all_new_frames_ba.size());
 
     // [Edges] Inerial preintegration factor.
-    // std::vector<std::unique_ptr<Edge<Scalar>>> all_imu_factors;
-    // for (const auto &frame : data_manager_->frames_with_bias()) {
-    //     // Add edges of imu preintegration.
-    //     all_imu_factors.emplace_back(std::make_unique<EdgeImuPreintegrationBetweenRelativePose<Scalar>>(
-    //         frame.imu_preint_block, options_.kGravityInWordFrame));
-    //     auto &imu_factor = all_imu_factors.back();
-    // }
+    uint32_t frame_idx = min_frames_idx + idx_offset;
+    uint32_t new_frame_idx = 0;
+    std::vector<std::unique_ptr<Edge<Scalar>>> all_imu_factors;
+    for (const auto &frame : data_manager_->frames_with_bias()) {
+        // Add edges of imu preintegration.
+        all_imu_factors.emplace_back(std::make_unique<EdgeImuPreintegrationBetweenRelativePose<Scalar>>(
+            frame.imu_preint_block, options_.kGravityInWordFrame));
+        auto &imu_factor = all_imu_factors.back();
+        imu_factor->SetVertex(all_frames_p_wi[frame_idx].get(), 0);
+        imu_factor->SetVertex(all_frames_q_wi[frame_idx].get(), 1);
+        imu_factor->SetVertex(all_new_frames_v_wi[new_frame_idx].get(), 2);
+        imu_factor->SetVertex(all_new_frames_ba[new_frame_idx].get(), 3);
+        imu_factor->SetVertex(all_new_frames_bg[new_frame_idx].get(), 4);
+        imu_factor->SetVertex(all_frames_p_wi[frame_idx + 1].get(), 5);
+        imu_factor->SetVertex(all_frames_q_wi[frame_idx + 1].get(), 6);
+        imu_factor->SetVertex(all_new_frames_v_wi[new_frame_idx + 1].get(), 7);
+        imu_factor->SetVertex(all_new_frames_ba[new_frame_idx + 1].get(), 8);
+        imu_factor->SetVertex(all_new_frames_bg[new_frame_idx + 1].get(), 9);
+        RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
+
+        ++frame_idx;
+        ++new_frame_idx;
+        BREAK_IF(frame_idx > max_frames_idx);
+    }
 
     // Construct graph problem, add all vertices and edges.
     Graph<Scalar> graph_optimization_problem;
