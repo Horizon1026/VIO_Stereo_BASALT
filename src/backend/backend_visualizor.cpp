@@ -107,12 +107,12 @@ void Backend::ShowLocalMapWithFrames(const int32_t delay_ms) {
         Utility::ComputeTransformTransformInverse(frame.p_wc(), frame.q_wc(),
             data_manager_->camera_extrinsics().front().p_ic,
             data_manager_->camera_extrinsics().front().q_ic, p_wi, q_wi);
-        Visualizor3D::poses().emplace_back(PoseType{ .p_wb = p_wi, .q_wb = q_wi, .scale = 0.1f });
+        Visualizor3D::poses().emplace_back(PoseType{ .p_wb = p_wi, .q_wb = q_wi, .scale = 0.02f });
 
         // Add all camera frames in local map.
         for (const auto &extrinsic : data_manager_->camera_extrinsics()) {
             Utility::ComputeTransformTransform(p_wi, q_wi, extrinsic.p_ic, extrinsic.q_ic, p_wc, q_wc);
-            Visualizor3D::poses().emplace_back(PoseType{ .p_wb = p_wc, .q_wb = q_wc, .scale = 0.05f });
+            Visualizor3D::poses().emplace_back(PoseType{ .p_wb = p_wc, .q_wb = q_wc, .scale = 0.01f });
         }
     }
 
