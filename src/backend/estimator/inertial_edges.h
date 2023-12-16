@@ -80,7 +80,29 @@ public:
     }
 
     virtual void ComputeJacobians() override {
+        // Compute dr d_state0.
+        const TMat3<Scalar> dp_dp0 = - q_wi0_.inverse().toRotationMatrix();
+        const TMat3<Scalar> dp_dq0 = SkewSymmetricMatrix(q_wb_i.inverse() * (0.5 * this->gravity_w * dt2 + p_wb_j - p_wb_i - v_wb_i * dt));
+        const TMat3<Scalar> dq_dq0 = - (Qleft(q_wb_j.inverse() * q_wb_i) * Qright(delta_r)).template bottomRightCorner<3, 3>();
+        const TMat3<Scalar> dv_dq0 = SkewSymmetricMatrix(q_wb_i.inverse() * (this->gravity_w * dt + v_wb_j - v_wb_i));
 
+        const TMat3<Scalar> dp_dv0 = - R_wb_i.transpose() * dt;
+        const TMat3<Scalar> dp_dba0 = - this->jacobians.dp_dba;
+        const TMat3<Scalar> dp_dbg0 = - this->jacobians.dp_dbg;
+        const TMat3<Scalar> dq_dbg0 = - Qleft(q_wb_j.inverse() * q_wb_i * delta_r).template bottomRightCorner<3, 3>() * this->jacobians.dr_dbg;
+        const TMat3<Scalar> dv_dv0 = - R_wb_i.transpose();
+        const TMat3<Scalar> dv_dba0 = - this->jacobians.dv_dba;
+        const TMat3<Scalar> dv_dbg0 = - this->jacobians.dv_dbg;
+        const TMat3<Scalar> dba_dba0 = - Matrix3<Scalar>::Identity();
+        const TMat3<Scalar> dbg_dbg0 = - Matrix3<Scalar>::Identity();
+
+        // Compute dr d_state1.
+        const TMat3<Scalar> dp_dp1 = R_wb_i.transpose();
+        const TMat3<Scalar> dq_dq1 = Qleft(delta_r.inverse() * q_wb_i.inverse() * q_wb_j).template bottomRightCorner<3, 3>();
+
+        const TMat3<Scalar> dv_dv1 = R_wb_i.transpose();
+        const TMat3<Scalar> dba_dba1 = Matrix3<Scalar>::Identity();
+        const TMat3<Scalar> dbg_dbg1 = Matrix3<Scalar>::Identity();
     }
 
     void CorrectObservation(const TVec3<Scalar> &bias_a,
