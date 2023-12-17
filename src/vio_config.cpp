@@ -122,6 +122,8 @@ bool Vio::ConfigComponentOfBackend() {
     backend_->options().kEnableRecordBinaryCurveLog = options_.backend.enable_recording_curve_binlog;
     backend_->options().kMethodIndexToEstimateGyroBiasForInitialization = options_.backend.method_index_to_estimate_gyro_bias_for_initialization;
     backend_->options().kGravityInWordFrame = options_.backend.gravity_w;
+    backend_->options().kMaxValidFeatureDepthInMeter = options_.backend.max_valid_feature_depth_in_meter;
+    backend_->options().kMinValidFeatureDepthInMeter = options_.backend.min_valid_feature_depth_in_meter;
 
     // Config imu model.
     backend_->imu_model() = std::make_unique<Imu>();

@@ -89,9 +89,9 @@ void Backend::ShowLocalMapWithFrames(const int32_t delay_ms) {
     // Add all features in locap map.
     for (const auto &pair : data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
-        CONTINUE_IF(!feature.param().is_solved);
+        CONTINUE_IF(feature.status() != FeatureSolvedStatus::kSolved);
         Visualizor3D::points().emplace_back(PointType{
-            .p_w = feature.param().p_w,
+            .p_w = feature.param(),
             .color = RgbPixel{.r = 0, .g = 255, .b = 255},
             .radius = 2,
         });

@@ -24,10 +24,7 @@ struct DataManagerOptions {
 };
 
 /* Definition of Feature Points. */
-struct FeatureParameter {
-    Vec3 p_w = Vec3::Zero();
-    bool is_solved = false;
-};
+using FeatureParameter = Vec3;
 
 /* Definition of Covisible Graph. */
 using FeatureObserve = std::vector<ObservePerView>; // Use std::vector to store observations of left and right camera.

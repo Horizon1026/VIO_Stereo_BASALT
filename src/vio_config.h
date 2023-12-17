@@ -59,6 +59,8 @@ struct VioOptionsOfBackend {
     uint32_t method_index_to_estimate_gyro_bias_for_initialization = 3;
 
     Vec3 gravity_w = Vec3(0.0f, 0.0f, 9.8f);
+    float max_valid_feature_depth_in_meter = 50.0f;
+    float min_valid_feature_depth_in_meter = 0.1f;
 
     bool enable_recording_curve_binlog = true;
     std::string log_file_name = "backend.binlog";

@@ -29,8 +29,10 @@ bool Backend::TryToEstimate() {
     for (const auto &extrinsic : data_manager_->camera_extrinsics()) {
         all_cameras_p_ic.emplace_back(std::make_unique<Vertex<Scalar>>(3, 3));
         all_cameras_p_ic.back()->param() = extrinsic.p_ic.cast<Scalar>();
+        all_cameras_p_ic.back()->SetFixed(true);
         all_cameras_q_ic.emplace_back(std::make_unique<VertexQuat<Scalar>>(4, 3));
         all_cameras_q_ic.back()->param() << extrinsic.q_ic.w(), extrinsic.q_ic.x(), extrinsic.q_ic.y(), extrinsic.q_ic.z();
+        all_cameras_q_ic.back()->SetFixed(true);
     }
 
     // [Vertices] Camera pose of each frame.
@@ -62,7 +64,7 @@ bool Backend::TryToEstimate() {
 
         // Compute inverse depth by p_w of this feature.
         const auto &frame = data_manager_->visual_local_map()->frame(feature.first_frame_id());
-        const Vec3 p_c = frame->q_wc().inverse() * (feature.param().p_w - frame->p_wc());
+        const Vec3 p_c = frame->q_wc().inverse() * (feature.param() - frame->p_wc());
         const float invdep = 1.0f / p_c.z();
         CONTINUE_IF(std::isinf(invdep) || std::isnan(invdep));
 
@@ -93,7 +95,7 @@ bool Backend::TryToEstimate() {
             visual_reproj_factor->SetVertex(all_cameras_q_ic[i].get(), 4);
             visual_reproj_factor->observation() = observe_vector.cast<Scalar>();
             visual_reproj_factor->information() = visual_info_matrix;
-            visual_reproj_factor->kernel() = std::make_unique<KernelHuber<Scalar>>(static_cast<Scalar>(1.0));
+            visual_reproj_factor->kernel() = std::make_unique<KernelHuber<Scalar>>(static_cast<Scalar>(0.1));
             RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
         }
 
@@ -114,7 +116,7 @@ bool Backend::TryToEstimate() {
             visual_reproj_factor->SetVertex(all_cameras_q_ic[0].get(), 6);
             visual_reproj_factor->observation() = observe_vector.cast<Scalar>();
             visual_reproj_factor->information() = visual_info_matrix;
-            visual_reproj_factor->kernel() = std::make_unique<KernelHuber<Scalar>>(static_cast<Scalar>(1.0));
+            visual_reproj_factor->kernel() = std::make_unique<KernelHuber<Scalar>>(static_cast<Scalar>(0.1));
             RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
 
             // Add edges of visual reprojection factor, considering two cameras view two frames.
@@ -134,7 +136,7 @@ bool Backend::TryToEstimate() {
                 visual_reproj_factor->SetVertex(all_cameras_q_ic[i].get(), 8);
                 visual_reproj_factor->observation() = observe_vector.cast<Scalar>();
                 visual_reproj_factor->information() = visual_info_matrix;
-                visual_reproj_factor->kernel() = std::make_unique<KernelHuber<Scalar>>(static_cast<Scalar>(1.0));
+                visual_reproj_factor->kernel() = std::make_unique<KernelHuber<Scalar>>(static_cast<Scalar>(0.1));
                 RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
             }
         }
@@ -252,9 +254,9 @@ bool Backend::TryToEstimate() {
         auto frame_ptr = data_manager_->visual_local_map()->frame(feature_ptr->first_frame_id());
         auto &observe = feature_ptr->observe(feature_ptr->first_frame_id());
         const Vec3 p_c = Vec3(observe[0].rectified_norm_xy.x(), observe[0].rectified_norm_xy.y(), 1) / all_features_invdep[i]->param()(0);
-        feature_ptr->param().p_w = frame_ptr->q_wc() * p_c + frame_ptr->p_wc();
+        feature_ptr->param() = frame_ptr->q_wc() * p_c + frame_ptr->p_wc();
 
-        if (p_c.z() > kZero) {
+        if (p_c.z() > options_.kMinValidFeatureDepthInMeter && p_c.z() < options_.kMaxValidFeatureDepthInMeter) {
             feature_ptr->status() = FeatureSolvedStatus::kSolved;
         } else {
             feature_ptr->status() = FeatureSolvedStatus::kUnsolved;
@@ -267,14 +269,18 @@ bool Backend::TryToEstimate() {
         frame.imu_preint_block.Reset();
         frame.imu_preint_block.bias_accel() = all_new_frames_ba[idx]->param().cast<float>();
         frame.imu_preint_block.bias_gyro() = all_new_frames_bg[idx]->param().cast<float>();
+        ++idx;
+
         frame.imu_preint_block.SetImuNoiseSigma(imu_model_->options().kAccelNoise,
                                                 imu_model_->options().kGyroNoise,
                                                 imu_model_->options().kAccelRandomWalk,
                                                 imu_model_->options().kGyroRandomWalk);
+
         const int32_t max_idx = static_cast<int32_t>(frame.packed_measure->imus.size());
         for (int32_t i = 1; i < max_idx; ++i) {
             frame.imu_preint_block.Propagate(*frame.packed_measure->imus[i - 1], *frame.packed_measure->imus[i]);
         }
+        frame.imu_preint_block.SimpleInformation();
     }
 
     return true;
