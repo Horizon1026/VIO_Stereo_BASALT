@@ -96,11 +96,6 @@ bool Backend::TransformAllStatesToWorldFrameForInitialization(const Vec3 &gravit
         frame->v_wc() = q_wc0 * v_c0c;
     }
 
-    // Debug: Report states of all frames after initialization.
-    for (const auto &frame : data_manager_->visual_local_map()->frames()) {
-        frame.SimpleInformation();
-    }
-
     return true;
 }
 

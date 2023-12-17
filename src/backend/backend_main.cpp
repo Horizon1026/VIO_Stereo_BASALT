@@ -34,6 +34,11 @@ bool Backend::RunOnce() {
             ReportInfo(GREEN "[Backend] Backend succeed to estimate states within " << timer.TockTickInMillisecond() << " ms." RESET_COLOR);
         }
 
+        // Debug: Report states of all frames after initialization.
+        for (const auto &frame : data_manager_->visual_local_map()->frames()) {
+            frame.SimpleInformation();
+        }
+
         // Debug.
         should_quit_ = true;
         ShowLocalMapWithFrames(1);

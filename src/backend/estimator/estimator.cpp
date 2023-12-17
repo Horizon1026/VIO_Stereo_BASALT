@@ -199,11 +199,20 @@ bool Backend::TryToEstimate() {
     for (uint32_t i = 0; i < all_frames_p_wi.size(); ++i) {
         graph_optimization_problem.AddVertex(all_frames_p_wi[i].get());
         graph_optimization_problem.AddVertex(all_frames_q_wi[i].get());
+        if (i >= idx_offset) {
+            const uint32_t j = i - idx_offset;
+            graph_optimization_problem.AddVertex(all_new_frames_v_wi[j].get());
+            graph_optimization_problem.AddVertex(all_new_frames_ba[j].get());
+            graph_optimization_problem.AddVertex(all_new_frames_bg[j].get());
+        }
     }
     for (auto &vertex : all_features_invdep) {
         graph_optimization_problem.AddVertex(vertex.get());
     }
     for (auto &edge : all_visual_reproj_factors) {
+        graph_optimization_problem.AddEdge(edge.get());
+    }
+    for (auto &edge : all_imu_factors) {
         graph_optimization_problem.AddEdge(edge.get());
     }
 
@@ -230,6 +239,11 @@ bool Backend::TryToEstimate() {
         const Vec3 &p_ic = data_manager_->camera_extrinsics().front().p_ic;
         const Quat &q_ic = data_manager_->camera_extrinsics().front().q_ic;
         Utility::ComputeTransformTransform(p_wi, q_wi, p_ic, q_ic, frame_ptr->p_wc(), frame_ptr->q_wc());
+
+        if (i > idx_offset) {
+            const uint32_t j = i - idx_offset;
+            frame_ptr->v_wc() = all_new_frames_v_wi[j]->param().cast<float>();
+        }
     }
 
     // Update all feature position in local map.
@@ -244,6 +258,22 @@ bool Backend::TryToEstimate() {
             feature_ptr->status() = FeatureSolvedStatus::kSolved;
         } else {
             feature_ptr->status() = FeatureSolvedStatus::kUnsolved;
+        }
+    }
+
+    // Recompute imu preintegration.
+    uint32_t idx = 0;
+    for (auto &frame : data_manager_->frames_with_bias()) {
+        frame.imu_preint_block.Reset();
+        frame.imu_preint_block.bias_accel() = all_new_frames_ba[idx]->param().cast<float>();
+        frame.imu_preint_block.bias_gyro() = all_new_frames_bg[idx]->param().cast<float>();
+        frame.imu_preint_block.SetImuNoiseSigma(imu_model_->options().kAccelNoise,
+                                                imu_model_->options().kGyroNoise,
+                                                imu_model_->options().kAccelRandomWalk,
+                                                imu_model_->options().kGyroRandomWalk);
+        const int32_t max_idx = static_cast<int32_t>(frame.packed_measure->imus.size());
+        for (int32_t i = 1; i < max_idx; ++i) {
+            frame.imu_preint_block.Propagate(*frame.packed_measure->imus[i - 1], *frame.packed_measure->imus[i]);
         }
     }
 
