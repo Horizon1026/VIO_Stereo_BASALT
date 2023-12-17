@@ -72,11 +72,11 @@ public:
 
         // Compute residual.
         this->residual().setZero(15);
-        this->residual().block<3, 1>(ImuIndex::kPosition, 0) = q_wi0_.inverse() * (p_wi1_ - p_wi0_ - v_wi0_ * dt + static_cast<Scalar>(0.5) * gravity_w_ * dt * dt) - p_ij_;
-        this->residual().block<3, 1>(ImuIndex::kRotation, 0) = static_cast<Scalar>(2) * (q_ij_.inverse() * (q_wi0_.inverse() * q_wi1_)).vec();
-        this->residual().block<3, 1>(ImuIndex::kVelocity, 0) = q_wi0_.inverse() * (v_wi1_ - v_wi0_ + gravity_w_ * dt) - v_ij_;
-        this->residual().block<3, 1>(ImuIndex::kBiasAccel, 0) = bias_a1_ - bias_a0_;
-        this->residual().block<3, 1>(ImuIndex::kBiasGyro, 0) = bias_g1_ - bias_g0_;
+        this->residual().template block<3, 1>(ImuIndex::kPosition, 0) = q_wi0_.inverse() * (p_wi1_ - p_wi0_ - v_wi0_ * dt + static_cast<Scalar>(0.5) * gravity_w_ * dt * dt) - p_ij_;
+        this->residual().template block<3, 1>(ImuIndex::kRotation, 0) = static_cast<Scalar>(2) * (q_ij_.inverse() * (q_wi0_.inverse() * q_wi1_)).vec();
+        this->residual().template block<3, 1>(ImuIndex::kVelocity, 0) = q_wi0_.inverse() * (v_wi1_ - v_wi0_ + gravity_w_ * dt) - v_ij_;
+        this->residual().template block<3, 1>(ImuIndex::kBiasAccel, 0) = bias_a1_ - bias_a0_;
+        this->residual().template block<3, 1>(ImuIndex::kBiasGyro, 0) = bias_g1_ - bias_g0_;
     }
 
     virtual void ComputeJacobians() override {

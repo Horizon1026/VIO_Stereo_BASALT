@@ -15,6 +15,13 @@ namespace VIO {
 using Scalar = float;
 
 bool Backend::TryToEstimate() {
+    // Compute information marix of visual observation.
+    const auto &camera_model = visual_frontend_->camera_model();
+    const Scalar residual_in_pixel = 1.0;
+    const TVec2<Scalar> visual_observe_info_vec = TVec2<Scalar>(camera_model->fx() * camera_model->fx(),
+        camera_model->fy() * camera_model->fy()) / residual_in_pixel;
+    const TMat2<Scalar> visual_info_matrix = visual_observe_info_vec.asDiagonal();
+
     // Generate vertices of states to be optimized.
     // [Vertices] Extrinsics of each camera.
     std::vector<std::unique_ptr<Vertex<Scalar>>> all_cameras_p_ic;
@@ -22,7 +29,6 @@ bool Backend::TryToEstimate() {
     for (const auto &extrinsic : data_manager_->camera_extrinsics()) {
         all_cameras_p_ic.emplace_back(std::make_unique<Vertex<Scalar>>(3, 3));
         all_cameras_p_ic.back()->param() = extrinsic.p_ic.cast<Scalar>();
-        all_cameras_p_ic.back()->SetFixed(true);
         all_cameras_q_ic.emplace_back(std::make_unique<VertexQuat<Scalar>>(4, 3));
         all_cameras_q_ic.back()->param() << extrinsic.q_ic.w(), extrinsic.q_ic.x(), extrinsic.q_ic.y(), extrinsic.q_ic.z();
     }
@@ -86,6 +92,7 @@ bool Backend::TryToEstimate() {
             visual_reproj_factor->SetVertex(all_cameras_p_ic[i].get(), 3);
             visual_reproj_factor->SetVertex(all_cameras_q_ic[i].get(), 4);
             visual_reproj_factor->observation() = observe_vector.cast<Scalar>();
+            visual_reproj_factor->information() = visual_info_matrix;
             visual_reproj_factor->kernel() = std::make_unique<KernelHuber<Scalar>>(static_cast<Scalar>(1.0));
             RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
         }
@@ -106,6 +113,7 @@ bool Backend::TryToEstimate() {
             visual_reproj_factor->SetVertex(all_cameras_p_ic[0].get(), 5);
             visual_reproj_factor->SetVertex(all_cameras_q_ic[0].get(), 6);
             visual_reproj_factor->observation() = observe_vector.cast<Scalar>();
+            visual_reproj_factor->information() = visual_info_matrix;
             visual_reproj_factor->kernel() = std::make_unique<KernelHuber<Scalar>>(static_cast<Scalar>(1.0));
             RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
 
@@ -125,6 +133,7 @@ bool Backend::TryToEstimate() {
                 visual_reproj_factor->SetVertex(all_cameras_p_ic[i].get(), 7);
                 visual_reproj_factor->SetVertex(all_cameras_q_ic[i].get(), 8);
                 visual_reproj_factor->observation() = observe_vector.cast<Scalar>();
+                visual_reproj_factor->information() = visual_info_matrix;
                 visual_reproj_factor->kernel() = std::make_unique<KernelHuber<Scalar>>(static_cast<Scalar>(1.0));
                 RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
             }
@@ -154,11 +163,13 @@ bool Backend::TryToEstimate() {
     RETURN_FALSE_IF(all_new_frames_v_wi.size() != all_new_frames_ba.size());
 
     // [Edges] Inerial preintegration factor.
-    uint32_t frame_idx = min_frames_idx + idx_offset;
+    uint32_t frame_idx = idx_offset;
     uint32_t new_frame_idx = 0;
     std::vector<std::unique_ptr<Edge<Scalar>>> all_imu_factors;
-    for (const auto &frame : data_manager_->frames_with_bias()) {
+    for (auto it = std::next(data_manager_->frames_with_bias().begin()); it != data_manager_->frames_with_bias().end(); ++it) {
+        // The imu preintegration block combined with the oldest 'new frame with bias' is useless.
         // Add edges of imu preintegration.
+        const auto &frame = *it;
         all_imu_factors.emplace_back(std::make_unique<EdgeImuPreintegrationBetweenRelativePose<Scalar>>(
             frame.imu_preint_block, options_.kGravityInWordFrame));
         auto &imu_factor = all_imu_factors.back();
@@ -172,7 +183,7 @@ bool Backend::TryToEstimate() {
         imu_factor->SetVertex(all_new_frames_v_wi[new_frame_idx + 1].get(), 7);
         imu_factor->SetVertex(all_new_frames_ba[new_frame_idx + 1].get(), 8);
         imu_factor->SetVertex(all_new_frames_bg[new_frame_idx + 1].get(), 9);
-        RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
+        RETURN_FALSE_IF(!imu_factor->SelfCheck());
 
         ++frame_idx;
         ++new_frame_idx;
