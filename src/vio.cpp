@@ -43,7 +43,7 @@ bool Vio::RunOnce() {
         return false;
     }
 
-    // Control the dimension of problem.
+    // Control the dimension of local map.
     if (data_manager_->frames_with_bias().size() >= data_manager_->options().kMaxStoredNewFrames) {
         data_manager_->frames_with_bias().pop_front();
     }

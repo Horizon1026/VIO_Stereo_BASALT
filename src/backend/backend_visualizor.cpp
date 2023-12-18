@@ -118,6 +118,7 @@ void Backend::ShowLocalMapWithFrames(const int32_t delay_ms) {
 
     while (!Visualizor3D::ShouldQuit()) {
         Visualizor3D::Refresh("Visualizor 3D", delay_ms);
+        BREAK_IF(delay_ms < 1);
     }
 }
 

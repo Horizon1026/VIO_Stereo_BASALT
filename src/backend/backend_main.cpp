@@ -23,8 +23,10 @@ bool Backend::RunOnce() {
         }
     }
 
-    // If backend is initialized, try to estimate states.
+    // If backend is initialized.
     if (status_.is_initialized) {
+
+        // Try to estimate states.
         TickTock timer;
         if (!TryToEstimate()) {
             ResetToReintialize();
@@ -34,14 +36,8 @@ bool Backend::RunOnce() {
             ReportInfo(GREEN "[Backend] Backend succeed to estimate states within " << timer.TockTickInMillisecond() << " ms." RESET_COLOR);
         }
 
-        // Debug: Report states of all frames after initialization.
-        for (const auto &frame : data_manager_->visual_local_map()->frames()) {
-            frame.SimpleInformation();
-        }
-
         // Debug.
         should_quit_ = true;
-        ShowLocalMapWithFrames(1);
     }
 
     return true;

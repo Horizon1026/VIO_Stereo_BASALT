@@ -12,33 +12,27 @@
 
 namespace VIO {
 
-using Scalar = float;
-
 bool Backend::TryToEstimate() {
-    // Compute information marix of visual observation.
-    const auto &camera_model = visual_frontend_->camera_model();
-    const Scalar residual_in_pixel = 1.0;
-    const TVec2<Scalar> visual_observe_info_vec = TVec2<Scalar>(camera_model->fx() * camera_model->fx(),
-        camera_model->fy() * camera_model->fy()) / residual_in_pixel;
-    const TMat2<Scalar> visual_info_matrix = visual_observe_info_vec.asDiagonal();
+    // Compute information matrix of visual observation.
+    const TMat2<DorF> visual_info_matrix = GetVisualObserveInformationMatrix();
 
     // Generate vertices of states to be optimized.
     // [Vertices] Extrinsics of each camera.
-    std::vector<std::unique_ptr<Vertex<Scalar>>> all_cameras_p_ic;
-    std::vector<std::unique_ptr<VertexQuat<Scalar>>> all_cameras_q_ic;
+    std::vector<std::unique_ptr<Vertex<DorF>>> all_cameras_p_ic;
+    std::vector<std::unique_ptr<VertexQuat<DorF>>> all_cameras_q_ic;
     for (const auto &extrinsic : data_manager_->camera_extrinsics()) {
-        all_cameras_p_ic.emplace_back(std::make_unique<Vertex<Scalar>>(3, 3));
-        all_cameras_p_ic.back()->param() = extrinsic.p_ic.cast<Scalar>();
+        all_cameras_p_ic.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
+        all_cameras_p_ic.back()->param() = extrinsic.p_ic.cast<DorF>();
         all_cameras_p_ic.back()->SetFixed(true);
-        all_cameras_q_ic.emplace_back(std::make_unique<VertexQuat<Scalar>>(4, 3));
+        all_cameras_q_ic.emplace_back(std::make_unique<VertexQuat<DorF>>(4, 3));
         all_cameras_q_ic.back()->param() << extrinsic.q_ic.w(), extrinsic.q_ic.x(), extrinsic.q_ic.y(), extrinsic.q_ic.z();
         all_cameras_q_ic.back()->SetFixed(true);
     }
 
     // [Vertices] Camera pose of each frame.
     std::vector<uint32_t> all_frames_id;
-    std::vector<std::unique_ptr<Vertex<Scalar>>> all_frames_p_wi;
-    std::vector<std::unique_ptr<VertexQuat<Scalar>>> all_frames_q_wi;
+    std::vector<std::unique_ptr<Vertex<DorF>>> all_frames_p_wi;
+    std::vector<std::unique_ptr<VertexQuat<DorF>>> all_frames_q_wi;
     for (const auto &frame : data_manager_->visual_local_map()->frames()) {
         all_frames_id.emplace_back(frame.id());
 
@@ -47,17 +41,17 @@ bool Backend::TryToEstimate() {
         Utility::ComputeTransformTransformInverse(frame.p_wc(), frame.q_wc(), data_manager_->camera_extrinsics().front().p_ic,
             data_manager_->camera_extrinsics().front().q_ic, p_wi, q_wi);
 
-        all_frames_p_wi.emplace_back(std::make_unique<Vertex<Scalar>>(3, 3));
-        all_frames_p_wi.back()->param() = p_wi.cast<Scalar>();
-        all_frames_q_wi.emplace_back(std::make_unique<VertexQuat<Scalar>>(4, 3));
+        all_frames_p_wi.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
+        all_frames_p_wi.back()->param() = p_wi.cast<DorF>();
+        all_frames_q_wi.emplace_back(std::make_unique<VertexQuat<DorF>>(4, 3));
         all_frames_q_wi.back()->param() << q_wi.w(), q_wi.x(), q_wi.y(), q_wi.z();
     }
 
     // [Vertices] Inverse depth of each feature.
     // [Edges] Visual reprojection factor.
     std::vector<uint32_t> all_features_id;
-    std::vector<std::unique_ptr<Vertex<Scalar>>> all_features_invdep;
-    std::vector<std::unique_ptr<Edge<Scalar>>> all_visual_reproj_factors;
+    std::vector<std::unique_ptr<Vertex<DorF>>> all_features_invdep;
+    std::vector<std::unique_ptr<Edge<DorF>>> all_visual_reproj_factors;
     for (const auto &pair : data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
         CONTINUE_IF(feature.observes().size() < 2);
@@ -70,8 +64,8 @@ bool Backend::TryToEstimate() {
 
         // Add vertex of feature invdep.
         all_features_id.emplace_back(feature.id());
-        all_features_invdep.emplace_back(std::make_unique<Vertex<Scalar>>(1, 1));
-        all_features_invdep.back()->param() = TVec1<Scalar>(invdep);
+        all_features_invdep.emplace_back(std::make_unique<Vertex<DorF>>(1, 1));
+        all_features_invdep.back()->param() = TVec1<DorF>(invdep);
 
         // Determine the range of all observations of this feature.
         const uint32_t min_frame_id = feature.first_frame_id();
@@ -86,16 +80,16 @@ bool Backend::TryToEstimate() {
             observe_vector.tail<2>() = obv_in_ref[i].rectified_norm_xy;
 
             // Add edge of visual reprojection factor, considering two camera view one frame.
-            all_visual_reproj_factors.emplace_back(std::make_unique<EdgeFeatureInvdepToNormPlaneViaImuWithinOneFramesTwoCamera<Scalar>>());
+            all_visual_reproj_factors.emplace_back(std::make_unique<EdgeFeatureInvdepToNormPlaneViaImuWithinOneFramesTwoCamera<DorF>>());
             auto &visual_reproj_factor = all_visual_reproj_factors.back();
             visual_reproj_factor->SetVertex(all_features_invdep.back().get(), 0);
             visual_reproj_factor->SetVertex(all_cameras_p_ic[0].get(), 1);
             visual_reproj_factor->SetVertex(all_cameras_q_ic[0].get(), 2);
             visual_reproj_factor->SetVertex(all_cameras_p_ic[i].get(), 3);
             visual_reproj_factor->SetVertex(all_cameras_q_ic[i].get(), 4);
-            visual_reproj_factor->observation() = observe_vector.cast<Scalar>();
+            visual_reproj_factor->observation() = observe_vector.cast<DorF>();
             visual_reproj_factor->information() = visual_info_matrix;
-            visual_reproj_factor->kernel() = std::make_unique<KernelHuber<Scalar>>(static_cast<Scalar>(0.1));
+            visual_reproj_factor->kernel() = std::make_unique<KernelHuber<DorF>>(static_cast<DorF>(0.1));
             RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
         }
 
@@ -105,7 +99,7 @@ bool Backend::TryToEstimate() {
             observe_vector.tail<2>() = obv_in_cur[0].rectified_norm_xy;
 
             // Add edges of visual reprojection factor, considering one camera views two frames.
-            all_visual_reproj_factors.emplace_back(std::make_unique<EdgeFeatureInvdepToNormPlaneViaImuWithinTwoFramesOneCamera<Scalar>>());
+            all_visual_reproj_factors.emplace_back(std::make_unique<EdgeFeatureInvdepToNormPlaneViaImuWithinTwoFramesOneCamera<DorF>>());
             auto &visual_reproj_factor = all_visual_reproj_factors.back();
             visual_reproj_factor->SetVertex(all_features_invdep.back().get(), 0);
             visual_reproj_factor->SetVertex(all_frames_p_wi[min_frame_id - idx_offset].get(), 1);
@@ -114,16 +108,16 @@ bool Backend::TryToEstimate() {
             visual_reproj_factor->SetVertex(all_frames_q_wi[idx - idx_offset].get(), 4);
             visual_reproj_factor->SetVertex(all_cameras_p_ic[0].get(), 5);
             visual_reproj_factor->SetVertex(all_cameras_q_ic[0].get(), 6);
-            visual_reproj_factor->observation() = observe_vector.cast<Scalar>();
+            visual_reproj_factor->observation() = observe_vector.cast<DorF>();
             visual_reproj_factor->information() = visual_info_matrix;
-            visual_reproj_factor->kernel() = std::make_unique<KernelHuber<Scalar>>(static_cast<Scalar>(0.1));
+            visual_reproj_factor->kernel() = std::make_unique<KernelHuber<DorF>>(static_cast<DorF>(0.1));
             RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
 
             // Add edges of visual reprojection factor, considering two cameras view two frames.
             for (uint32_t i = 1; i < obv_in_cur.size(); ++i) {
                 observe_vector.tail<2>() = obv_in_cur[i].rectified_norm_xy;
 
-                all_visual_reproj_factors.emplace_back(std::make_unique<EdgeFeatureInvdepToNormPlaneViaImuWithinTwoFramesTwoCamera<Scalar>>());
+                all_visual_reproj_factors.emplace_back(std::make_unique<EdgeFeatureInvdepToNormPlaneViaImuWithinTwoFramesTwoCamera<DorF>>());
                 auto &visual_reproj_factor = all_visual_reproj_factors.back();
                 visual_reproj_factor->SetVertex(all_features_invdep.back().get(), 0);
                 visual_reproj_factor->SetVertex(all_frames_p_wi[min_frame_id - idx_offset].get(), 1);
@@ -134,45 +128,45 @@ bool Backend::TryToEstimate() {
                 visual_reproj_factor->SetVertex(all_cameras_q_ic[0].get(), 6);
                 visual_reproj_factor->SetVertex(all_cameras_p_ic[i].get(), 7);
                 visual_reproj_factor->SetVertex(all_cameras_q_ic[i].get(), 8);
-                visual_reproj_factor->observation() = observe_vector.cast<Scalar>();
+                visual_reproj_factor->observation() = observe_vector.cast<DorF>();
                 visual_reproj_factor->information() = visual_info_matrix;
-                visual_reproj_factor->kernel() = std::make_unique<KernelHuber<Scalar>>(static_cast<Scalar>(0.1));
+                visual_reproj_factor->kernel() = std::make_unique<KernelHuber<DorF>>(static_cast<DorF>(0.1));
                 RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
             }
         }
     }
 
     // [Vertices] Velocity of each new frame.
-    std::vector<std::unique_ptr<Vertex<Scalar>>> all_new_frames_v_wi;
+    std::vector<std::unique_ptr<Vertex<DorF>>> all_new_frames_v_wi;
     const uint32_t min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
     const uint32_t max_frames_idx = data_manager_->visual_local_map()->frames().back().id();
     const uint32_t idx_offset = data_manager_->visual_local_map()->frames().size() - data_manager_->frames_with_bias().size();
     for (uint32_t frame_idx = min_frames_idx + idx_offset; frame_idx <= max_frames_idx; ++frame_idx) {
-        all_new_frames_v_wi.emplace_back(std::make_unique<Vertex<Scalar>>(3, 3));
-        all_new_frames_v_wi.back()->param() = data_manager_->visual_local_map()->frame(frame_idx)->v_wc().cast<Scalar>();
+        all_new_frames_v_wi.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
+        all_new_frames_v_wi.back()->param() = data_manager_->visual_local_map()->frame(frame_idx)->v_wc().cast<DorF>();
     }
 
     // [Vertices] Bias_accel and bias_gyro of each new frame.
-    std::vector<std::unique_ptr<Vertex<Scalar>>> all_new_frames_ba;
-    std::vector<std::unique_ptr<Vertex<Scalar>>> all_new_frames_bg;
+    std::vector<std::unique_ptr<Vertex<DorF>>> all_new_frames_ba;
+    std::vector<std::unique_ptr<Vertex<DorF>>> all_new_frames_bg;
     for (const auto &frame : data_manager_->frames_with_bias()) {
         // Add vertex of bias_accel and bias_gyro.
-        all_new_frames_ba.emplace_back(std::make_unique<Vertex<Scalar>>(3, 3));
-        all_new_frames_ba.back()->param() = frame.imu_preint_block.bias_accel().cast<Scalar>();
-        all_new_frames_bg.emplace_back(std::make_unique<Vertex<Scalar>>(3, 3));
-        all_new_frames_bg.back()->param() = frame.imu_preint_block.bias_gyro().cast<Scalar>();
+        all_new_frames_ba.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
+        all_new_frames_ba.back()->param() = frame.imu_preint_block.bias_accel().cast<DorF>();
+        all_new_frames_bg.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
+        all_new_frames_bg.back()->param() = frame.imu_preint_block.bias_gyro().cast<DorF>();
     }
     RETURN_FALSE_IF(all_new_frames_v_wi.size() != all_new_frames_ba.size());
 
     // [Edges] Inerial preintegration factor.
     uint32_t frame_idx = idx_offset;
     uint32_t new_frame_idx = 0;
-    std::vector<std::unique_ptr<Edge<Scalar>>> all_imu_factors;
+    std::vector<std::unique_ptr<Edge<DorF>>> all_imu_factors;
     for (auto it = std::next(data_manager_->frames_with_bias().begin()); it != data_manager_->frames_with_bias().end(); ++it) {
         // The imu preintegration block combined with the oldest 'new frame with bias' is useless.
         // Add edges of imu preintegration.
         const auto &frame = *it;
-        all_imu_factors.emplace_back(std::make_unique<EdgeImuPreintegrationBetweenRelativePose<Scalar>>(
+        all_imu_factors.emplace_back(std::make_unique<EdgeImuPreintegrationBetweenRelativePose<DorF>>(
             frame.imu_preint_block, options_.kGravityInWordFrame));
         auto &imu_factor = all_imu_factors.back();
         imu_factor->SetVertex(all_frames_p_wi[frame_idx].get(), 0);
@@ -193,7 +187,7 @@ bool Backend::TryToEstimate() {
     }
 
     // Construct graph problem, add all vertices and edges.
-    Graph<Scalar> graph_optimization_problem;
+    Graph<DorF> graph_optimization_problem;
     for (uint32_t i = 0; i < all_cameras_p_ic.size(); ++i) {
         graph_optimization_problem.AddVertex(all_cameras_p_ic[i].get());
         graph_optimization_problem.AddVertex(all_cameras_q_ic[i].get());
@@ -219,7 +213,7 @@ bool Backend::TryToEstimate() {
     }
 
     // Construct solver to solve this problem.
-    SolverLm<Scalar> solver;
+    SolverLm<DorF> solver;
     solver.problem() = &graph_optimization_problem;
     solver.Solve(false);
 
@@ -280,10 +274,17 @@ bool Backend::TryToEstimate() {
         for (int32_t i = 1; i < max_idx; ++i) {
             frame.imu_preint_block.Propagate(*frame.packed_measure->imus[i - 1], *frame.packed_measure->imus[i]);
         }
-        frame.imu_preint_block.SimpleInformation();
     }
 
     return true;
+}
+
+TMat2<DorF> Backend::GetVisualObserveInformationMatrix() {
+    const auto &camera_model = visual_frontend_->camera_model();
+    const DorF residual_in_pixel = 1.0;
+    const TVec2<DorF> visual_observe_info_vec = TVec2<DorF>(camera_model->fx() * camera_model->fx(),
+        camera_model->fy() * camera_model->fy()) / residual_in_pixel;
+    return visual_observe_info_vec.asDiagonal();
 }
 
 }

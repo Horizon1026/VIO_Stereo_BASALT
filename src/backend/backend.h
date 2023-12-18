@@ -14,6 +14,7 @@ using namespace SLAM_UTILITY;
 using namespace SLAM_DATA_LOG;
 using namespace SLAM_SOLVER;
 using namespace SENSOR_MODEL;
+using DorF = float;
 
 /* Options for Backend. */
 struct BackendOptions {
@@ -80,6 +81,8 @@ public:
 
     // Backend estimator.
     bool TryToEstimate();
+    TMat2<DorF> GetVisualObserveInformationMatrix();
+    // Add vertices and edges for estimation.
 
     // Backend data processor.
     void RecomputeImuPreintegration();
