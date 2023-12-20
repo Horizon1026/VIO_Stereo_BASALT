@@ -36,10 +36,26 @@ bool Backend::RunOnce() {
             ReportInfo(GREEN "[Backend] Backend succeed to estimate states within " << timer.TockTickInMillisecond() << " ms." RESET_COLOR);
         }
 
+        // Try to marginalize if necessary.
+        // TODO:
+
+        // Control the size of local map.
+        // TODO:
+        if (data_manager_->visual_local_map()->frames().size() > data_manager_->options().kMaxStoredKeyframes) {
+            const auto oldest_frame_id = data_manager_->visual_local_map()->frames().front().id();
+            data_manager_->visual_local_map()->RemoveFrame(oldest_frame_id);
+
+        }
+
         // Debug.
         should_quit_ = true;
     }
 
+    // Control the dimension of local map.
+    // TODO:
+    if (data_manager_->frames_with_bias().size() >= data_manager_->options().kMaxStoredNewFrames) {
+        data_manager_->frames_with_bias().pop_front();
+    }
     return true;
 }
 

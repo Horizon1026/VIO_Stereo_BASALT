@@ -27,7 +27,7 @@ bool Vio::RunOnce() {
     // Transform image measurement to be features measurement.
     if (!frontend_->RunOnce(GrayImage(packed_measure->left_image->image),
                             GrayImage(packed_measure->right_image->image),
-                            packed_measure->imu.back()->time_stamp_s)) {
+                            packed_measure->imus.back()->time_stamp_s)) {
         ReportWarn("[Vio] Visual frontend failed to run once at " << vio_sys_timer_.TockInSecond() << " s.");
         return false;
     }
@@ -43,11 +43,6 @@ bool Vio::RunOnce() {
     if (!backend_->RunOnce()) {
         ReportWarn("[Vio] Backend failed to process feature and imu measurements at " << vio_sys_timer_.TockInSecond() << " s.");
         return false;
-    }
-
-    // Control the dimension of local map.
-    if (data_manager_->frames_with_bias().size() >= data_manager_->options().kMaxStoredNewFrames) {
-        data_manager_->frames_with_bias().pop_front();
     }
 
     HeartBeat();

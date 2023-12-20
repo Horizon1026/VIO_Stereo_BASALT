@@ -5,6 +5,7 @@
 #include "thread"
 
 #include "visualizor.h"
+#include "visualizor_3d.h"
 #include "vio.h"
 #include "tick_tock.h"
 
@@ -173,6 +174,9 @@ int main(int argc, char **argv) {
 
     // Config vio.
     vio.ConfigAllComponents();
+
+    // Config visualizor 3d.
+    Visualizor3D::camera_view().p_wc.z() = -3.0f;
 
     // Start threads for data pipeline and vio node.
     const float imu_timeout_ms = 3.5f;

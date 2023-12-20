@@ -73,6 +73,7 @@ bool Vio::ConfigComponentOfDataLoader() {
     data_loader_->options().kMaxToleranceTimeDifferenceBetweenImuAndImageInSeconds = 0.001f;
     data_loader_->options().kMaxToleranceTimeDelayBetweenImuAndImageInSeconds = 1.0f;
     data_loader_->options().kEnableRecordBinaryCurveLog = options_.data_loader.enable_recording_curve_binlog;
+    data_loader_->options().kEnableRecordRawData = options_.data_loader.enable_recording_raw_data_binlog;
     RETURN_FALSE_IF_FALSE(data_loader_->Initialize(options_.log_file_root_name + options_.data_loader.log_file_name));
 
     return true;

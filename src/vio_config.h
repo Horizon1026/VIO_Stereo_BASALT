@@ -69,6 +69,7 @@ struct VioOptionsOfBackend {
 struct VioOptionsOfDataLoader {
     bool enable_recording_curve_binlog = true;
     std::string log_file_name = "data_loader.binlog";
+    bool enable_recording_raw_data_binlog = true;
 };
 
 struct VioOptionsOfDataManager {

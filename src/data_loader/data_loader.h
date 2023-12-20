@@ -38,6 +38,7 @@ struct DataLoaderOptions {
     float kMaxToleranceTimeDifferenceBetweenImuAndImageInSeconds = 0.001f;
     float kMaxToleranceTimeDelayBetweenImuAndImageInSeconds = 1.0f;
     bool kEnableRecordBinaryCurveLog = true;
+    bool kEnableRecordRawData = true;
 };
 
 /* Packages of log to be recorded. */
@@ -49,6 +50,15 @@ struct DataLoaderLog {
     uint32_t num_of_imu_in_buffer = 0;
     uint32_t num_of_left_image_in_buffer = 0;
     uint32_t num_of_right_image_in_buffer = 0;
+};
+struct ImuRawDataLog {
+    float time_stamp_s = 0.0f;
+    float accel_x_ms2 = 0.0f;
+    float accel_y_ms2 = 0.0f;
+    float accel_z_ms2 = 0.0f;
+    float gyro_x_ms2 = 0.0f;
+    float gyro_y_ms2 = 0.0f;
+    float gyro_z_ms2 = 0.0f;
 };
 #pragma pack()
 
@@ -114,6 +124,7 @@ private:
     // Record log.
     SLAM_DATA_LOG::BinaryDataLog logger_;
     DataLoaderLog log_package_data_;
+    ImuRawDataLog imu_raw_package_data_;
 
 };
 
