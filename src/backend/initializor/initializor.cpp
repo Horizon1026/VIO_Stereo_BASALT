@@ -47,6 +47,7 @@ bool Backend::ConvertNewFramesToCovisibleGraphForInitialization() {
     RETURN_FALSE_IF(data_manager_->visual_local_map() == nullptr);
 
     auto local_map_ptr = data_manager_->visual_local_map();
+    local_map_ptr->Clear();
     int32_t frame_id = 1;
     for (const auto &frame : data_manager_->frames_with_bias()) {
         RETURN_FALSE_IF(frame.visual_measure == nullptr);

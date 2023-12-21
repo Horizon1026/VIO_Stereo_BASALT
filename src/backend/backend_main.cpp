@@ -10,6 +10,13 @@ bool Backend::RunOnce() {
         return false;
     }
 
+    // Add newest frame_with_bias into visual_local_map.
+    const auto &newest_frame = data_manager_->frames_with_bias().back();
+    if (newest_frame.visual_measure == nullptr) {
+        ReportError("[Backend] Backend failed to add newest frame_with_bias into visual_local_map.");
+        return false;
+    }
+
     // If backend is not initialized, try to initialize.
     if (!status_.is_initialized) {
         TickTock timer;
