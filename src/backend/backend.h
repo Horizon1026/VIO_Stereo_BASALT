@@ -81,6 +81,7 @@ public:
 
     // Backend estimator.
     bool TryToEstimate();
+    bool AddNewestFrameWithBiasIntoLocalMap();
     TMat2<DorF> GetVisualObserveInformationMatrix();
     // Add vertices and edges for estimation.
 

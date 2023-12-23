@@ -104,4 +104,59 @@ bool Backend::TriangulizeAllVisualFeatures() {
     return true;
 }
 
+bool Backend::AddNewestFrameWithBiasIntoLocalMap() {
+    if (status_.is_initialized && !data_manager_->frames_with_bias().empty() && !data_manager_->visual_local_map()->frames().empty()) {
+        auto &newest_frame_imu = data_manager_->frames_with_bias().back();
+        if (newest_frame_imu.visual_measure == nullptr) {
+            ReportError("[Backend] Error: data_manager_->frames_with_bias().back().visual_measure == nullptr.");
+            return false;
+        }
+
+        // Preintegrate imu measurements.
+        auto &sub_new_frame_with_imu = *std::prev(std::prev(data_manager_->frames_with_bias().end()));
+        newest_frame_imu.imu_preint_block.Reset();
+        newest_frame_imu.imu_preint_block.bias_gyro() = sub_new_frame_with_imu.imu_preint_block.bias_gyro();
+        newest_frame_imu.imu_preint_block.bias_accel() = sub_new_frame_with_imu.imu_preint_block.bias_accel();
+        newest_frame_imu.imu_preint_block.SetImuNoiseSigma(imu_model_->options().kAccelNoise,
+                                                           imu_model_->options().kGyroNoise,
+                                                           imu_model_->options().kAccelRandomWalk,
+                                                           imu_model_->options().kGyroRandomWalk);
+        const int32_t max_idx = static_cast<int32_t>(newest_frame_imu.packed_measure->imus.size());
+        for (int32_t i = 1; i < max_idx; ++i) {
+            newest_frame_imu.imu_preint_block.Propagate(*newest_frame_imu.packed_measure->imus[i - 1], *newest_frame_imu.packed_measure->imus[i]);
+        }
+
+        // Add new frame into local map.
+        const auto &sub_new_frame = data_manager_->visual_local_map()->frames().back();
+        const int32_t frame_id = data_manager_->visual_local_map()->frames().back().id() + 1;
+        data_manager_->visual_local_map()->AddNewFrameWithFeatures(newest_frame_imu.visual_measure->features_id,
+                                                                   newest_frame_imu.visual_measure->observes_per_frame,
+                                                                   newest_frame_imu.time_stamp_s,
+                                                                   frame_id);
+        auto &newest_frame = data_manager_->visual_local_map()->frames().back();
+
+
+        Vec3 p_wi = Vec3::Zero();
+        Quat q_wi = Quat::Identity();
+        const Vec3 &p_ic = data_manager_->camera_extrinsics().front().p_ic;
+        const Quat &q_ic = data_manager_->camera_extrinsics().front().q_ic;
+        Utility::ComputeTransformTransformInverse(sub_new_frame.p_wc(), sub_new_frame.q_wc(), p_ic, q_ic, p_wi, q_wi);
+
+        Vec3 new_p_wi = Vec3::Zero();
+        Quat new_q_wi = Quat::Identity();
+        Vec3 new_v_wi = Vec3::Zero();
+        const float dt = newest_frame_imu.imu_preint_block.integrate_time_s();
+        new_q_wi = q_wi * newest_frame_imu.imu_preint_block.q_ij();
+        new_p_wi = q_wi * newest_frame_imu.imu_preint_block.p_ij() + p_wi +
+            sub_new_frame.v_wc() * dt - 0.5f * options_.kGravityInWordFrame * dt * dt;
+        new_v_wi = q_wi * newest_frame_imu.imu_preint_block.v_ij() + sub_new_frame.v_wc() -
+            options_.kGravityInWordFrame * dt;
+
+        Utility::ComputeTransformTransformInverse(new_p_wi, new_q_wi, p_ic, q_ic, newest_frame.p_wc(), newest_frame.q_wc());
+        newest_frame.v_wc() = new_v_wi;
+    }
+
+    return true;
+}
+
 }

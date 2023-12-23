@@ -11,9 +11,8 @@ bool Backend::RunOnce() {
     }
 
     // Add newest frame_with_bias into visual_local_map.
-    const auto &newest_frame = data_manager_->frames_with_bias().back();
-    if (newest_frame.visual_measure == nullptr) {
-        ReportError("[Backend] Backend failed to add newest frame_with_bias into visual_local_map.");
+    if (!AddNewestFrameWithBiasIntoLocalMap()) {
+        ReportError("[Backend] Backend failed to add newest frame_with_bias into local map.");
         return false;
     }
 
@@ -32,6 +31,14 @@ bool Backend::RunOnce() {
 
     // If backend is initialized.
     if (status_.is_initialized) {
+        // Debug.
+        for (const auto &frame : data_manager_->frames_with_bias()) {
+            ReportDebug("frame with bias timestamp_s is " << frame.time_stamp_s);
+            frame.imu_preint_block.SimpleInformation();
+        }
+        for (const auto &frame : data_manager_->visual_local_map()->frames()) {
+            frame.SimpleInformation();
+        }
 
         // Try to estimate states.
         TickTock timer;
@@ -50,17 +57,14 @@ bool Backend::RunOnce() {
         // TODO:
         if (data_manager_->visual_local_map()->frames().size() > data_manager_->options().kMaxStoredKeyframes) {
             const auto oldest_frame_id = data_manager_->visual_local_map()->frames().front().id();
-            data_manager_->visual_local_map()->RemoveFrame(oldest_frame_id);
-
+            // data_manager_->visual_local_map()->RemoveFrame(oldest_frame_id);
+            should_quit_ = true;
         }
-
-        // Debug.
-        should_quit_ = true;
     }
 
     // Control the dimension of local map.
     // TODO:
-    if (data_manager_->frames_with_bias().size() >= data_manager_->options().kMaxStoredNewFrames) {
+    if (data_manager_->frames_with_bias().size() > data_manager_->options().kMaxStoredNewFrames) {
         data_manager_->frames_with_bias().pop_front();
     }
     return true;
