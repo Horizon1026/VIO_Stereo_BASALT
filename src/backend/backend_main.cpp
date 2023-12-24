@@ -58,7 +58,7 @@ bool Backend::RunOnce() {
 
         // Try to marginalize if necessary.
         // TODO:
-        if (data_manager_->visual_local_map()->frames().size() != data_manager_->options().kMaxStoredNewFrames) {
+        if (data_manager_->visual_local_map()->frames().size() >= data_manager_->options().kMaxStoredKeyframes) {
             ReportDebug("[Backend] visual_local_map frame size " << data_manager_->visual_local_map()->frames().size() <<
                 ", frame_with_bias size " << data_manager_->frames_with_bias().size());
             should_quit_ = true;
@@ -66,11 +66,11 @@ bool Backend::RunOnce() {
     }
 
     // Control the dimension of local map.
-    if (data_manager_->visual_local_map()->frames().size() > data_manager_->options().kMaxStoredKeyframes) {
+    if (data_manager_->visual_local_map()->frames().size() >= data_manager_->options().kMaxStoredKeyframes) {
         const auto oldest_frame_id = data_manager_->visual_local_map()->frames().front().id();
         data_manager_->visual_local_map()->RemoveFrame(oldest_frame_id);
     }
-    if (data_manager_->frames_with_bias().size() > data_manager_->options().kMaxStoredNewFrames) {
+    if (data_manager_->frames_with_bias().size() >= data_manager_->options().kMaxStoredNewFrames) {
         data_manager_->frames_with_bias().pop_front();
     }
     return true;

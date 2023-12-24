@@ -226,7 +226,7 @@ bool Backend::TryToEstimate() {
     // Construct solver to solve this problem.
     SolverLm<DorF> solver;
     solver.problem() = &graph_optimization_problem;
-    solver.Solve(false);
+    solver.Solve(true);
 
     // Update all camera extrinsics.
     for (uint32_t i = 0; i < all_cameras_p_ic.size(); ++i) {
