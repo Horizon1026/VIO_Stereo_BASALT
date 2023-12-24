@@ -60,6 +60,12 @@ bool Backend::RunOnce() {
             ReportDebug("[Backend] visual_local_map frame size " << data_manager_->visual_local_map()->frames().size() <<
                 ", frame_with_bias size " << data_manager_->frames_with_bias().size());
             should_quit_ = true;
+
+            const uint32_t min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
+            const uint32_t max_frames_idx = data_manager_->visual_local_map()->frames().back().id();
+            for (uint32_t idx = min_frames_idx; idx < max_frames_idx; ++idx) {
+                ShowFeaturePairsBetweenTwoFrames(idx, idx + 1, true);
+            }
         }
     }
 
