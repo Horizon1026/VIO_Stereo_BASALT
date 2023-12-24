@@ -152,7 +152,7 @@ bool Backend::AddNewestFrameWithBiasIntoLocalMap() {
         new_v_wi = q_wi * newest_frame_imu.imu_preint_block.v_ij() + sub_new_frame.v_wc() -
             options_.kGravityInWordFrame * dt;
 
-        Utility::ComputeTransformTransformInverse(new_p_wi, new_q_wi, p_ic, q_ic, newest_frame.p_wc(), newest_frame.q_wc());
+        Utility::ComputeTransformTransform(new_p_wi, new_q_wi, p_ic, q_ic, newest_frame.p_wc(), newest_frame.q_wc());
         newest_frame.v_wc() = new_v_wi;
     }
 

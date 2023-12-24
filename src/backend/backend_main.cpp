@@ -15,6 +15,10 @@ bool Backend::RunOnce() {
         ReportError("[Backend] Backend failed to add newest frame_with_bias into local map.");
         return false;
     }
+    if (!TriangulizeAllVisualFeatures()) {
+        ReportError("[Backend] Backend failed to triangulize features in local map.");
+        return false;
+    }
 
     // If backend is not initialized, try to initialize.
     if (!status_.is_initialized) {
@@ -52,18 +56,18 @@ bool Backend::RunOnce() {
 
         // Try to marginalize if necessary.
         // TODO:
-
-        // Control the size of local map.
-        // TODO:
-        if (data_manager_->visual_local_map()->frames().size() > data_manager_->options().kMaxStoredKeyframes) {
-            const auto oldest_frame_id = data_manager_->visual_local_map()->frames().front().id();
-            // data_manager_->visual_local_map()->RemoveFrame(oldest_frame_id);
+        if (data_manager_->visual_local_map()->frames().size() != data_manager_->options().kMaxStoredNewFrames) {
+            ReportDebug("[Backend] visual_local_map frame size " << data_manager_->visual_local_map()->frames().size() <<
+                ", frame_with_bias size " << data_manager_->frames_with_bias().size());
             should_quit_ = true;
         }
     }
 
     // Control the dimension of local map.
-    // TODO:
+    if (data_manager_->visual_local_map()->frames().size() > data_manager_->options().kMaxStoredKeyframes) {
+        const auto oldest_frame_id = data_manager_->visual_local_map()->frames().front().id();
+        data_manager_->visual_local_map()->RemoveFrame(oldest_frame_id);
+    }
     if (data_manager_->frames_with_bias().size() > data_manager_->options().kMaxStoredNewFrames) {
         data_manager_->frames_with_bias().pop_front();
     }
