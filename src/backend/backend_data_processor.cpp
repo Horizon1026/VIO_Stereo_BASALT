@@ -156,7 +156,7 @@ bool Backend::AddNewestFrameWithBiasIntoLocalMap() {
         newest_frame.v_wc() = new_v_wi;
     }
 
-    return true;
+    return data_manager_->visual_local_map()->SelfCheck();
 }
 
 }
