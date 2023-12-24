@@ -11,13 +11,15 @@ bool Backend::RunOnce() {
     }
 
     // Add newest frame_with_bias into visual_local_map.
-    if (!AddNewestFrameWithBiasIntoLocalMap()) {
-        ReportError("[Backend] Backend failed to add newest frame_with_bias into local map.");
-        return false;
-    }
-    if (!TriangulizeAllVisualFeatures()) {
-        ReportError("[Backend] Backend failed to triangulize features in local map.");
-        return false;
+    if (status_.is_initialized) {
+        if (!AddNewestFrameWithBiasIntoLocalMap()) {
+            ReportError("[Backend] Backend failed to add newest frame_with_bias into local map.");
+            return false;
+        }
+        if (!TriangulizeAllVisualFeatures()) {
+            ReportError("[Backend] Backend failed to triangulize features in local map.");
+            return false;
+        }
     }
 
     // If backend is not initialized, try to initialize.
@@ -60,12 +62,6 @@ bool Backend::RunOnce() {
             ReportDebug("[Backend] visual_local_map frame size " << data_manager_->visual_local_map()->frames().size() <<
                 ", frame_with_bias size " << data_manager_->frames_with_bias().size());
             should_quit_ = true;
-
-            const uint32_t min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
-            const uint32_t max_frames_idx = data_manager_->visual_local_map()->frames().back().id();
-            for (uint32_t idx = min_frames_idx; idx < max_frames_idx; ++idx) {
-                ShowFeaturePairsBetweenTwoFrames(idx, idx + 1, true);
-            }
         }
     }
 

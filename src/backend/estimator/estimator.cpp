@@ -203,7 +203,7 @@ bool Backend::TryToEstimate() {
         }
     }
     for (auto &vertex : all_features_invdep) {
-        graph_optimization_problem.AddVertex(vertex.get());
+        graph_optimization_problem.AddVertex(vertex.get(), false);
     }
     for (auto &edge : all_visual_reproj_factors) {
         graph_optimization_problem.AddEdge(edge.get());
@@ -211,6 +211,17 @@ bool Backend::TryToEstimate() {
     for (auto &edge : all_imu_factors) {
         graph_optimization_problem.AddEdge(edge.get());
     }
+    ReportDebug("[Backend] Estimator add " <<
+        all_cameras_p_ic.size() << " all_cameras_p_ic, " <<
+        all_cameras_q_ic.size() << " all_cameras_q_ic, " <<
+        all_frames_p_wi.size() << " all_frames_p_wi, " <<
+        all_frames_q_wi.size() << " all_frames_q_wi, " <<
+        all_new_frames_v_wi.size() << " all_new_frames_v_wi, " <<
+        all_new_frames_ba.size() << " all_new_frames_ba, " <<
+        all_new_frames_bg.size() << " all_new_frames_bg, and " <<
+
+        all_visual_reproj_factors.size() << " all_visual_reproj_factors, " <<
+        all_imu_factors.size() << " all_imu_factors.");
 
     // Construct solver to solve this problem.
     SolverLm<DorF> solver;
@@ -236,7 +247,7 @@ bool Backend::TryToEstimate() {
         const Quat &q_ic = data_manager_->camera_extrinsics().front().q_ic;
         Utility::ComputeTransformTransform(p_wi, q_wi, p_ic, q_ic, frame_ptr->p_wc(), frame_ptr->q_wc());
 
-        if (i > idx_offset) {
+        if (i >= idx_offset) {
             const uint32_t j = i - idx_offset;
             frame_ptr->v_wc() = all_new_frames_v_wi[j]->param().cast<float>();
         }
