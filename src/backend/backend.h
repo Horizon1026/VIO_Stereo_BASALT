@@ -33,11 +33,16 @@ struct BackendLog {
 #pragma pack()
 
 /* Status of Backend. */
+enum class BackendMarginalizeType : uint32_t {
+    kNotMarginalize = 0,
+    kMarginalizeOldestFrame = 1,
+    kMarginalizeSubnewFrame = 2,
+};
+
 union BackendStatus {
     struct {
         uint32_t is_initialized : 1;
-        uint32_t is_imu_static : 1;
-        uint32_t is_camera_static : 1;
+        BackendMarginalizeType marginalize_type : 2;
         uint32_t reserved : 29;
     };
     uint32_t all_bits = 0;
@@ -83,7 +88,11 @@ public:
     bool TryToEstimate();
     bool AddNewestFrameWithBiasIntoLocalMap();
     TMat2<DorF> GetVisualObserveInformationMatrix();
-    // Add vertices and edges for estimation.
+
+    // Backend maginalizor.
+    bool TryToMarginalize();
+    bool MarginalizeOldestFrame();
+    bool MarginalizeSubnewFrame();
 
     // Backend data processor.
     void RecomputeImuPreintegration();

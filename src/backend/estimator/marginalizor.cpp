@@ -3,16 +3,47 @@
 #include "inertial_edges.h"
 #include "visual_inertial_edges.h"
 
-#include "solver_lm.h"
-#include "solver_dogleg.h"
-
 #include "log_report.h"
 #include "tick_tock.h"
 #include "math_kinematics.h"
 
+// Debug.
+#include "visualizor.h"
+using namespace SLAM_VISUALIZOR;
+
 namespace VIO {
 
-bool Backend::TryToEstimate() {
+bool Backend::TryToMarginalize() {
+    switch (status_.marginalize_type) {
+        case BackendMarginalizeType::kMarginalizeOldestFrame: {
+            return MarginalizeOldestFrame();
+            break;
+        }
+        case BackendMarginalizeType::kMarginalizeSubnewFrame: {
+            return MarginalizeSubnewFrame();
+            break;
+        }
+        default:
+        case BackendMarginalizeType::kNotMarginalize: {
+            ReportInfo("[Bakcend] Backend not marginalize any frame.");
+            break;
+        }
+    }
+
+    return true;
+}
+
+void ShowMatrixImage(const std::string &title, const TMat<DorF> &matrix) {
+    const uint32_t scale = 3;
+    uint8_t *buf = (uint8_t *)malloc(matrix.rows() * matrix.cols() * scale * scale * sizeof(uint8_t));
+    GrayImage image_matrix(buf, matrix.rows() * scale, matrix.cols() * scale, true);
+    Visualizor::ConvertMatrixToImage<float>(matrix, image_matrix, 2.0f, scale);
+    Visualizor::ShowImage(title, image_matrix);
+}
+
+bool Backend::MarginalizeOldestFrame() {
+    ReportInfo("[Bakcend] Backend try to marginalize oldest frame.");
+
     // Compute information matrix of visual observation.
     const TMat2<DorF> visual_info_matrix = GetVisualObserveInformationMatrix();
 
@@ -55,6 +86,7 @@ bool Backend::TryToEstimate() {
     for (const auto &pair : data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
         CONTINUE_IF(feature.observes().size() < 2);
+        CONTINUE_IF(feature.first_frame_id() != data_manager_->visual_local_map()->frames().front().id());
 
         // Compute inverse depth by p_w of this feature.
         const auto &frame = data_manager_->visual_local_map()->frame(feature.first_frame_id());
@@ -159,32 +191,26 @@ bool Backend::TryToEstimate() {
     RETURN_FALSE_IF(all_new_frames_v_wi.size() != all_new_frames_ba.size());
 
     // [Edges] Inerial preintegration factor.
-    uint32_t frame_idx = idx_offset;
-    uint32_t new_frame_idx = 0;
+    const uint32_t frame_idx = idx_offset;
+    const uint32_t new_frame_idx = 0;
     std::vector<std::unique_ptr<Edge<DorF>>> all_imu_factors;
-    for (auto it = std::next(data_manager_->frames_with_bias().begin()); it != data_manager_->frames_with_bias().end(); ++it) {
-        // The imu preintegration block combined with the oldest 'new frame with bias' is useless.
-        // Add edges of imu preintegration.
-        const auto &frame = *it;
-        all_imu_factors.emplace_back(std::make_unique<EdgeImuPreintegrationBetweenRelativePose<DorF>>(
-            frame.imu_preint_block, options_.kGravityInWordFrame));
-        auto &imu_factor = all_imu_factors.back();
-        imu_factor->SetVertex(all_frames_p_wi[frame_idx].get(), 0);
-        imu_factor->SetVertex(all_frames_q_wi[frame_idx].get(), 1);
-        imu_factor->SetVertex(all_new_frames_v_wi[new_frame_idx].get(), 2);
-        imu_factor->SetVertex(all_new_frames_ba[new_frame_idx].get(), 3);
-        imu_factor->SetVertex(all_new_frames_bg[new_frame_idx].get(), 4);
-        imu_factor->SetVertex(all_frames_p_wi[frame_idx + 1].get(), 5);
-        imu_factor->SetVertex(all_frames_q_wi[frame_idx + 1].get(), 6);
-        imu_factor->SetVertex(all_new_frames_v_wi[new_frame_idx + 1].get(), 7);
-        imu_factor->SetVertex(all_new_frames_ba[new_frame_idx + 1].get(), 8);
-        imu_factor->SetVertex(all_new_frames_bg[new_frame_idx + 1].get(), 9);
-        RETURN_FALSE_IF(!imu_factor->SelfCheck());
-
-        ++frame_idx;
-        ++new_frame_idx;
-        BREAK_IF(frame_idx > max_frames_idx);
-    }
+    // The imu preintegration block combined with the oldest 'new frame with bias' is useless.
+    // Add edges of imu preintegration.
+    const auto &frame = *std::next(data_manager_->frames_with_bias().begin());
+    all_imu_factors.emplace_back(std::make_unique<EdgeImuPreintegrationBetweenRelativePose<DorF>>(
+        frame.imu_preint_block, options_.kGravityInWordFrame));
+    auto &imu_factor = all_imu_factors.back();
+    imu_factor->SetVertex(all_frames_p_wi[frame_idx].get(), 0);
+    imu_factor->SetVertex(all_frames_q_wi[frame_idx].get(), 1);
+    imu_factor->SetVertex(all_new_frames_v_wi[new_frame_idx].get(), 2);
+    imu_factor->SetVertex(all_new_frames_ba[new_frame_idx].get(), 3);
+    imu_factor->SetVertex(all_new_frames_bg[new_frame_idx].get(), 4);
+    imu_factor->SetVertex(all_frames_p_wi[frame_idx + 1].get(), 5);
+    imu_factor->SetVertex(all_frames_q_wi[frame_idx + 1].get(), 6);
+    imu_factor->SetVertex(all_new_frames_v_wi[new_frame_idx + 1].get(), 7);
+    imu_factor->SetVertex(all_new_frames_ba[new_frame_idx + 1].get(), 8);
+    imu_factor->SetVertex(all_new_frames_bg[new_frame_idx + 1].get(), 9);
+    RETURN_FALSE_IF(!imu_factor->SelfCheck());
 
     // Construct graph problem, add all vertices and edges.
     Graph<DorF> graph_optimization_problem;
@@ -211,7 +237,7 @@ bool Backend::TryToEstimate() {
     for (auto &edge : all_imu_factors) {
         graph_optimization_problem.AddEdge(edge.get());
     }
-    ReportDebug("[Backend] Estimator adds " <<
+    ReportDebug("[Backend] Marginalizor adds " <<
         all_cameras_p_ic.size() << " all_cameras_p_ic, " <<
         all_cameras_q_ic.size() << " all_cameras_q_ic, " <<
         all_frames_p_wi.size() << " all_frames_p_wi, " <<
@@ -223,79 +249,32 @@ bool Backend::TryToEstimate() {
         all_visual_reproj_factors.size() << " all_visual_reproj_factors, " <<
         all_imu_factors.size() << " all_imu_factors.");
 
-    // Construct solver to solve this problem.
-    SolverLm<DorF> solver;
-    solver.problem() = &graph_optimization_problem;
-    solver.Solve(true);
+    // Set vertices to be marged.
+    std::vector<Vertex<DorF> *> vertices_to_be_marged = {
+        all_frames_p_wi[0].get(),
+        all_frames_q_wi[0].get(),
+        all_new_frames_v_wi[0].get(),
+        all_new_frames_ba[0].get(),
+        all_new_frames_bg[0].get(),
+    };
+    Marginalizor<DorF> marger;
+    marger.problem() = &graph_optimization_problem;
+    marger.options().kSortDirection = SortMargedVerticesDirection::kSortAtBack;
+    marger.Marginalize(vertices_to_be_marged, false);
 
-    // Update all camera extrinsics.
-    for (uint32_t i = 0; i < all_cameras_p_ic.size(); ++i) {
-        data_manager_->camera_extrinsics()[i].p_ic = all_cameras_p_ic[i]->param().cast<float>();
-        data_manager_->camera_extrinsics()[i].q_ic.w() = all_cameras_q_ic[i]->param()(0);
-        data_manager_->camera_extrinsics()[i].q_ic.x() = all_cameras_q_ic[i]->param()(1);
-        data_manager_->camera_extrinsics()[i].q_ic.y() = all_cameras_q_ic[i]->param()(2);
-        data_manager_->camera_extrinsics()[i].q_ic.z() = all_cameras_q_ic[i]->param()(3);
-    }
-
-    // Update all frame pose in local map.
-    for (uint32_t i = 0; i < all_frames_p_wi.size(); ++i) {
-        const Vec3 p_wi = all_frames_p_wi[i]->param().cast<float>();
-        const Quat q_wi = Quat(all_frames_q_wi[i]->param()(0), all_frames_q_wi[i]->param()(1), all_frames_q_wi[i]->param()(2), all_frames_q_wi[i]->param()(3));
-
-        auto frame_ptr = data_manager_->visual_local_map()->frame(all_frames_id[i]);
-        const Vec3 &p_ic = data_manager_->camera_extrinsics().front().p_ic;
-        const Quat &q_ic = data_manager_->camera_extrinsics().front().q_ic;
-        Utility::ComputeTransformTransform(p_wi, q_wi, p_ic, q_ic, frame_ptr->p_wc(), frame_ptr->q_wc());
-
-        if (i >= idx_offset) {
-            const uint32_t j = i - idx_offset;
-            frame_ptr->v_wc() = all_new_frames_v_wi[j]->param().cast<float>();
-        }
-    }
-
-    // Update all feature position in local map.
-    for (uint32_t i = 0; i < all_features_invdep.size(); ++i) {
-        auto feature_ptr = data_manager_->visual_local_map()->feature(all_features_id[i]);
-        auto frame_ptr = data_manager_->visual_local_map()->frame(feature_ptr->first_frame_id());
-        auto &observe = feature_ptr->observe(feature_ptr->first_frame_id());
-        const Vec3 p_c = Vec3(observe[0].rectified_norm_xy.x(), observe[0].rectified_norm_xy.y(), 1) / all_features_invdep[i]->param()(0);
-        feature_ptr->param() = frame_ptr->q_wc() * p_c + frame_ptr->p_wc();
-
-        if (p_c.z() > options_.kMinValidFeatureDepthInMeter && p_c.z() < options_.kMaxValidFeatureDepthInMeter) {
-            feature_ptr->status() = FeatureSolvedStatus::kSolved;
-        } else {
-            feature_ptr->status() = FeatureSolvedStatus::kUnsolved;
-        }
-    }
-
-    // Recompute imu preintegration.
-    uint32_t idx = 0;
-    for (auto &frame : data_manager_->frames_with_bias()) {
-        frame.imu_preint_block.Reset();
-        frame.imu_preint_block.bias_accel() = all_new_frames_ba[idx]->param().cast<float>();
-        frame.imu_preint_block.bias_gyro() = all_new_frames_bg[idx]->param().cast<float>();
-        ++idx;
-
-        frame.imu_preint_block.SetImuNoiseSigma(imu_model_->options().kAccelNoise,
-                                                imu_model_->options().kGyroNoise,
-                                                imu_model_->options().kAccelRandomWalk,
-                                                imu_model_->options().kGyroRandomWalk);
-
-        const int32_t max_idx = static_cast<int32_t>(frame.packed_measure->imus.size());
-        for (int32_t i = 1; i < max_idx; ++i) {
-            frame.imu_preint_block.Propagate(*frame.packed_measure->imus[i - 1], *frame.packed_measure->imus[i]);
-        }
-    }
+    // Debug.
+    ShowMatrixImage("hessian", marger.problem()->hessian());
+    ShowMatrixImage("prior hessian", marger.problem()->prior_hessian());
+    ShowMatrixImage("prior jacobian", marger.problem()->prior_jacobian());
+    Visualizor::WaitKey(0);
 
     return true;
 }
 
-TMat2<DorF> Backend::GetVisualObserveInformationMatrix() {
-    const auto &camera_model = visual_frontend_->camera_model();
-    const DorF residual_in_pixel = 1.0;
-    const TVec2<DorF> visual_observe_info_vec = TVec2<DorF>(camera_model->fx() * camera_model->fx(),
-        camera_model->fy() * camera_model->fy()) / residual_in_pixel;
-    return visual_observe_info_vec.asDiagonal();
+bool Backend::MarginalizeSubnewFrame() {
+    ReportInfo("[Bakcend] Backend try to marginalize subnew frame.");
+
+    return true;
 }
 
 }

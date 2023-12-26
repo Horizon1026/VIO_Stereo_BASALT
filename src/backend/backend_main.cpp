@@ -56,8 +56,23 @@ bool Backend::RunOnce() {
             ReportInfo(GREEN "[Backend] Backend succeed to estimate states within " << timer.TockTickInMillisecond() << " ms." RESET_COLOR);
         }
 
+        // Decide marginalization type.
+        if (data_manager_->visual_local_map()->frames().size() >= data_manager_->options().kMaxStoredKeyframes) {
+            status_.marginalize_type = BackendMarginalizeType::kMarginalizeOldestFrame;
+        } else {
+            status_.marginalize_type = BackendMarginalizeType::kNotMarginalize;
+        }
+
         // Try to marginalize if necessary.
-        // TODO:
+        if (!TryToMarginalize()) {
+            ResetToReintialize();
+            ReportWarn("[Backend] Backend failed to marginalize.");
+            return true;
+        } else {
+            ReportInfo(GREEN "[Backend] Backend succeed to marginalize states within " << timer.TockTickInMillisecond() << " ms." RESET_COLOR);
+        }
+
+        // Debug.
         if (data_manager_->visual_local_map()->frames().size() >= data_manager_->options().kMaxStoredKeyframes) {
             ReportDebug("[Backend] visual_local_map frame size " << data_manager_->visual_local_map()->frames().size() <<
                 ", frame_with_bias size " << data_manager_->frames_with_bias().size());
