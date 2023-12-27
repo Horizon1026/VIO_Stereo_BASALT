@@ -211,7 +211,7 @@ bool Backend::TryToEstimate() {
     for (auto &edge : all_imu_factors) {
         graph_optimization_problem.AddEdge(edge.get());
     }
-    ReportDebug("[Backend] Estimator adds " <<
+    ReportDebug(BLUE "[Backend] Estimator adds " <<
         all_cameras_p_ic.size() << " all_cameras_p_ic, " <<
         all_cameras_q_ic.size() << " all_cameras_q_ic, " <<
         all_frames_p_wi.size() << " all_frames_p_wi, " <<
@@ -221,12 +221,12 @@ bool Backend::TryToEstimate() {
         all_new_frames_bg.size() << " all_new_frames_bg, and " <<
 
         all_visual_reproj_factors.size() << " all_visual_reproj_factors, " <<
-        all_imu_factors.size() << " all_imu_factors.");
+        all_imu_factors.size() << " all_imu_factors." RESET_COLOR);
 
     // Construct solver to solve this problem.
     SolverLm<DorF> solver;
     solver.problem() = &graph_optimization_problem;
-    solver.Solve(true);
+    solver.Solve(states_.prior.is_valid);
 
     // Update all camera extrinsics.
     for (uint32_t i = 0; i < all_cameras_p_ic.size(); ++i) {

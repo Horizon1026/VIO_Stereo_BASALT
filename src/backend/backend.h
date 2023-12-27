@@ -33,21 +33,40 @@ struct BackendLog {
 #pragma pack()
 
 /* Status of Backend. */
-enum class BackendMarginalizeType : uint32_t {
+enum class BackendMarginalizeType : uint8_t {
     kNotMarginalize = 0,
     kMarginalizeOldestFrame = 1,
     kMarginalizeSubnewFrame = 2,
 };
 
-union BackendStatus {
+struct BackendStates {
+    // Status bits.
     struct {
         uint32_t is_initialized : 1;
-        BackendMarginalizeType marginalize_type : 2;
-        uint32_t reserved : 29;
+        uint32_t reserved : 31;
     };
-    uint32_t all_bits = 0;
+    BackendMarginalizeType marginalize_type = BackendMarginalizeType::kNotMarginalize;
+
+    // Prior information.
+    struct {
+        bool is_valid = false;
+        TMat<DorF> hessian;
+        TVec<DorF> bias;
+        TMat<DorF> jacobian;
+        TMat<DorF> jacobian_t_inv;
+        TVec<DorF> residual;
+    } prior;
+
+    // Motion states.
+    struct {
+        Vec3 p_wi = Vec3::Zero();
+        Quat q_wi = Quat::Identity();
+        Vec3 v_wi = Vec3::Zero();
+        Vec3 ba = Vec3::Zero();
+        Vec3 bg = Vec3::Zero();
+        float time_stamp_s = 0.0f;
+    };
 };
-static_assert(sizeof(BackendStatus) == sizeof(uint32_t), "Size of BackendStatus should be equal to size of uint32_t.");
 
 /* Class Backend Declaration. */
 class Backend final {
@@ -117,7 +136,7 @@ public:
 private:
     // Options and status of backend.
     BackendOptions options_;
-    BackendStatus status_;
+    BackendStates states_;
 
     // Register some relative components.
     VisualFrontend *visual_frontend_ = nullptr;

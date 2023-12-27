@@ -14,7 +14,7 @@ using namespace SLAM_VISUALIZOR;
 namespace VIO {
 
 bool Backend::TryToMarginalize() {
-    switch (status_.marginalize_type) {
+    switch (states_.marginalize_type) {
         case BackendMarginalizeType::kMarginalizeOldestFrame: {
             return MarginalizeOldestFrame();
             break;
@@ -237,7 +237,7 @@ bool Backend::MarginalizeOldestFrame() {
     for (auto &edge : all_imu_factors) {
         graph_optimization_problem.AddEdge(edge.get());
     }
-    ReportDebug("[Backend] Marginalizor adds " <<
+    ReportDebug(BLUE "[Backend] Marginalizor adds " <<
         all_cameras_p_ic.size() << " all_cameras_p_ic, " <<
         all_cameras_q_ic.size() << " all_cameras_q_ic, " <<
         all_frames_p_wi.size() << " all_frames_p_wi, " <<
@@ -247,7 +247,7 @@ bool Backend::MarginalizeOldestFrame() {
         all_new_frames_bg.size() << " all_new_frames_bg, and " <<
 
         all_visual_reproj_factors.size() << " all_visual_reproj_factors, " <<
-        all_imu_factors.size() << " all_imu_factors.");
+        all_imu_factors.size() << " all_imu_factors." RESET_COLOR);
 
     // Set vertices to be marged.
     std::vector<Vertex<DorF> *> vertices_to_be_marged = {
@@ -260,7 +260,7 @@ bool Backend::MarginalizeOldestFrame() {
     Marginalizor<DorF> marger;
     marger.problem() = &graph_optimization_problem;
     marger.options().kSortDirection = SortMargedVerticesDirection::kSortAtBack;
-    marger.Marginalize(vertices_to_be_marged, false);
+    marger.Marginalize(vertices_to_be_marged, states_.prior.is_valid);
 
     // Debug.
     ShowMatrixImage("hessian", marger.problem()->hessian());

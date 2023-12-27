@@ -11,7 +11,7 @@ bool Backend::RunOnce() {
     }
 
     // Add newest frame_with_bias into visual_local_map.
-    if (status_.is_initialized) {
+    if (states_.is_initialized) {
         if (!AddNewestFrameWithBiasIntoLocalMap()) {
             ReportError("[Backend] Backend failed to add newest frame_with_bias into local map.");
             return false;
@@ -23,10 +23,10 @@ bool Backend::RunOnce() {
     }
 
     // If backend is not initialized, try to initialize.
-    if (!status_.is_initialized) {
+    if (!states_.is_initialized) {
         TickTock timer;
         if (TryToInitialize()) {
-            status_.is_initialized = true;
+            states_.is_initialized = true;
             ReportInfo(GREEN "[Backend] Backend succeed to initialize within " << timer.TockTickInMillisecond() << " ms." RESET_COLOR);
         } else {
             ResetToReintialize();
@@ -36,7 +36,7 @@ bool Backend::RunOnce() {
     }
 
     // If backend is initialized.
-    if (status_.is_initialized) {
+    if (states_.is_initialized) {
         // Debug.
         for (const auto &frame : data_manager_->frames_with_bias()) {
             ReportDebug("frame with bias timestamp_s is " << frame.time_stamp_s);
@@ -58,9 +58,9 @@ bool Backend::RunOnce() {
 
         // Decide marginalization type.
         if (data_manager_->visual_local_map()->frames().size() >= data_manager_->options().kMaxStoredKeyframes) {
-            status_.marginalize_type = BackendMarginalizeType::kMarginalizeOldestFrame;
+            states_.marginalize_type = BackendMarginalizeType::kMarginalizeOldestFrame;
         } else {
-            status_.marginalize_type = BackendMarginalizeType::kNotMarginalize;
+            states_.marginalize_type = BackendMarginalizeType::kNotMarginalize;
         }
 
         // Try to marginalize if necessary.
@@ -97,7 +97,7 @@ void Backend::Reset() {
     data_manager_->visual_local_map()->Clear();
 
     // Reset status.
-    status_.is_initialized = false;
+    states_.is_initialized = false;
 }
 
 void Backend::ResetToReintialize() {
@@ -108,7 +108,7 @@ void Backend::ResetToReintialize() {
     data_manager_->visual_local_map()->Clear();
 
     // Reset status.
-    status_.is_initialized = false;
+    states_.is_initialized = false;
 }
 
 }
