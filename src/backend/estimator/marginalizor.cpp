@@ -37,7 +37,7 @@ void ShowMatrixImage(const std::string &title, const TMat<DorF> &matrix) {
     const uint32_t scale = 3;
     uint8_t *buf = (uint8_t *)malloc(matrix.rows() * matrix.cols() * scale * scale * sizeof(uint8_t));
     GrayImage image_matrix(buf, matrix.rows() * scale, matrix.cols() * scale, true);
-    Visualizor::ConvertMatrixToImage<float>(matrix, image_matrix, 2.0f, scale);
+    Visualizor::ConvertMatrixToImage<DorF>(matrix, image_matrix, 2.0f, scale);
     Visualizor::ShowImage(title, image_matrix);
 }
 
@@ -237,7 +237,7 @@ bool Backend::MarginalizeOldestFrame() {
     for (auto &edge : all_imu_factors) {
         graph_optimization_problem.AddEdge(edge.get());
     }
-    ReportDebug(BLUE "[Backend] Marginalizor adds " <<
+    ReportDebug(RED "[Backend] Marginalizor adds " <<
         all_cameras_p_ic.size() << " all_cameras_p_ic, " <<
         all_cameras_q_ic.size() << " all_cameras_q_ic, " <<
         all_frames_p_wi.size() << " all_frames_p_wi, " <<
@@ -249,24 +249,41 @@ bool Backend::MarginalizeOldestFrame() {
         all_visual_reproj_factors.size() << " all_visual_reproj_factors, " <<
         all_imu_factors.size() << " all_imu_factors." RESET_COLOR);
 
+    // Add prior information if valid.
+    if (states_.prior.is_valid) {
+        graph_optimization_problem.prior_hessian() = states_.prior.hessian;
+        graph_optimization_problem.prior_bias() = states_.prior.bias;
+        graph_optimization_problem.prior_jacobian_t_inv() = states_.prior.jacobian_t_inv;
+        graph_optimization_problem.prior_residual() = states_.prior.residual;
+    }
+
     // Set vertices to be marged.
     std::vector<Vertex<DorF> *> vertices_to_be_marged = {
-        all_frames_p_wi[0].get(),
-        all_frames_q_wi[0].get(),
-        all_new_frames_v_wi[0].get(),
-        all_new_frames_ba[0].get(),
-        all_new_frames_bg[0].get(),
+        all_frames_p_wi.front().get(),
+        all_frames_q_wi.front().get(),
+        all_new_frames_v_wi.front().get(),
+        all_new_frames_ba.front().get(),
+        all_new_frames_bg.front().get(),
     };
+
+    // Do marginalization.
     Marginalizor<DorF> marger;
     marger.problem() = &graph_optimization_problem;
     marger.options().kSortDirection = SortMargedVerticesDirection::kSortAtBack;
-    marger.Marginalize(vertices_to_be_marged, states_.prior.is_valid);
+    states_.prior.is_valid = marger.Marginalize(vertices_to_be_marged, states_.prior.is_valid);
+
+    // Store prior information.
+    if (states_.prior.is_valid) {
+        states_.prior.hessian = marger.problem()->prior_hessian();
+        states_.prior.bias = marger.problem()->prior_bias();
+        states_.prior.jacobian_t_inv = marger.problem()->prior_jacobian_t_inv();
+        states_.prior.residual = marger.problem()->prior_residual();
+    }
 
     // Debug.
-    ShowMatrixImage("hessian", marger.problem()->hessian());
-    ShowMatrixImage("prior hessian", marger.problem()->prior_hessian());
-    ShowMatrixImage("prior jacobian", marger.problem()->prior_jacobian());
-    Visualizor::WaitKey(0);
+    ReportDebug("[Backend] Marginalized prior residual norm is " << marger.problem()->prior_residual().norm());
+    ShowMatrixImage("generated prior", marger.problem()->prior_hessian());
+    Visualizor::WaitKey(1);
 
     return true;
 }

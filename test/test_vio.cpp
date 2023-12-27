@@ -126,6 +126,8 @@ void TestRunVio(const uint32_t max_wait_ticks) {
         if (vio.backend()->should_quit()) {
             vio.backend()->ShowLocalMapWithFrames(10);
             break;
+        } else {
+            vio.backend()->ShowLocalMapWithFrames(0);
         }
 
         if (!res) {
@@ -174,7 +176,8 @@ int main(int argc, char **argv) {
     vio.ConfigAllComponents();
 
     // Config visualizor 3d.
-    Visualizor3D::camera_view().p_wc.z() = -3.0f;
+    Visualizor3D::camera_view().q_wc = Quat(1, -0.5, 0, 0).normalized();
+    Visualizor3D::camera_view().p_wc.y() = -2.0f;
 
     // Start threads for data pipeline and vio node.
     const float imu_timeout_ms = 3.5f;

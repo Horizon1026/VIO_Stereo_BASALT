@@ -211,7 +211,7 @@ bool Backend::TryToEstimate() {
     for (auto &edge : all_imu_factors) {
         graph_optimization_problem.AddEdge(edge.get());
     }
-    ReportDebug(BLUE "[Backend] Estimator adds " <<
+    ReportDebug(YELLOW "[Backend] Estimator adds " <<
         all_cameras_p_ic.size() << " all_cameras_p_ic, " <<
         all_cameras_q_ic.size() << " all_cameras_q_ic, " <<
         all_frames_p_wi.size() << " all_frames_p_wi, " <<
@@ -222,6 +222,17 @@ bool Backend::TryToEstimate() {
 
         all_visual_reproj_factors.size() << " all_visual_reproj_factors, " <<
         all_imu_factors.size() << " all_imu_factors." RESET_COLOR);
+
+    // Add prior information if valid.
+    if (states_.prior.is_valid) {
+        graph_optimization_problem.prior_hessian() = states_.prior.hessian;
+        graph_optimization_problem.prior_bias() = states_.prior.bias;
+        graph_optimization_problem.prior_jacobian_t_inv() = states_.prior.jacobian_t_inv;
+        graph_optimization_problem.prior_residual() = states_.prior.residual;
+
+        // Debug.
+        ReportDebug("[Backend] Before estimation, prior residual norm is " << graph_optimization_problem.prior_residual().norm());
+    }
 
     // Construct solver to solve this problem.
     SolverLm<DorF> solver;
@@ -268,7 +279,7 @@ bool Backend::TryToEstimate() {
         }
     }
 
-    // Recompute imu preintegration.
+    // Update imu preintegration.
     uint32_t idx = 0;
     for (auto &frame : data_manager_->frames_with_bias()) {
         frame.imu_preint_block.Reset();
@@ -285,6 +296,17 @@ bool Backend::TryToEstimate() {
         for (int32_t i = 1; i < max_idx; ++i) {
             frame.imu_preint_block.Propagate(*frame.packed_measure->imus[i - 1], *frame.packed_measure->imus[i]);
         }
+    }
+
+    // Update prior information.
+    if (states_.prior.is_valid) {
+        states_.prior.hessian = solver.problem()->prior_hessian();
+        states_.prior.bias = solver.problem()->prior_bias();
+        states_.prior.jacobian_t_inv = solver.problem()->prior_jacobian_t_inv();
+        states_.prior.residual = solver.problem()->prior_residual();
+
+        // Debug.
+        ReportDebug("[Backend] After estimation, prior residual norm is " << solver.problem()->prior_residual().norm());
     }
 
     return true;

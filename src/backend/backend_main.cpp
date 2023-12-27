@@ -38,13 +38,13 @@ bool Backend::RunOnce() {
     // If backend is initialized.
     if (states_.is_initialized) {
         // Debug.
-        for (const auto &frame : data_manager_->frames_with_bias()) {
-            ReportDebug("frame with bias timestamp_s is " << frame.time_stamp_s);
-            frame.imu_preint_block.SimpleInformation();
-        }
-        for (const auto &frame : data_manager_->visual_local_map()->frames()) {
-            frame.SimpleInformation();
-        }
+        // for (const auto &frame : data_manager_->frames_with_bias()) {
+        //     ReportDebug("frame with bias timestamp_s is " << frame.time_stamp_s);
+        //     frame.imu_preint_block.SimpleInformation();
+        // }
+        // for (const auto &frame : data_manager_->visual_local_map()->frames()) {
+        //     frame.SimpleInformation();
+        // }
 
         // Try to estimate states.
         TickTock timer;
@@ -55,6 +55,11 @@ bool Backend::RunOnce() {
         } else {
             ReportInfo(GREEN "[Backend] Backend succeed to estimate states within " << timer.TockTickInMillisecond() << " ms." RESET_COLOR);
         }
+
+        // Debug.
+        // if (states_.prior.is_valid) {
+        //     should_quit_ = true;
+        // }
 
         // Decide marginalization type.
         if (data_manager_->visual_local_map()->frames().size() >= data_manager_->options().kMaxStoredKeyframes) {
@@ -71,23 +76,27 @@ bool Backend::RunOnce() {
         } else {
             ReportInfo(GREEN "[Backend] Backend succeed to marginalize states within " << timer.TockTickInMillisecond() << " ms." RESET_COLOR);
         }
-
-        // Debug.
-        if (data_manager_->visual_local_map()->frames().size() >= data_manager_->options().kMaxStoredKeyframes) {
-            ReportDebug("[Backend] visual_local_map frame size " << data_manager_->visual_local_map()->frames().size() <<
-                ", frame_with_bias size " << data_manager_->frames_with_bias().size());
-            should_quit_ = true;
-        }
     }
 
     // Control the dimension of local map.
-    if (data_manager_->visual_local_map()->frames().size() >= data_manager_->options().kMaxStoredKeyframes) {
-        const auto oldest_frame_id = data_manager_->visual_local_map()->frames().front().id();
-        data_manager_->visual_local_map()->RemoveFrame(oldest_frame_id);
+    switch (states_.marginalize_type) {
+        case BackendMarginalizeType::kMarginalizeOldestFrame: {
+            const auto oldest_frame_id = data_manager_->visual_local_map()->frames().front().id();
+            data_manager_->visual_local_map()->RemoveFrame(oldest_frame_id);
+            data_manager_->frames_with_bias().pop_front();
+            break;
+        }
+        case BackendMarginalizeType::kMarginalizeSubnewFrame: {
+
+            break;
+        }
+        default:
+        case BackendMarginalizeType::kNotMarginalize: {
+
+            break;
+        }
     }
-    if (data_manager_->frames_with_bias().size() >= data_manager_->options().kMaxStoredNewFrames) {
-        data_manager_->frames_with_bias().pop_front();
-    }
+
     return true;
 }
 
