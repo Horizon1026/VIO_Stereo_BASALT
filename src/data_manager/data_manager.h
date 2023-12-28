@@ -18,7 +18,7 @@ using namespace SENSOR_MODEL;
 
 /* Options for Data Manager. */
 struct DataManagerOptions {
-    uint32_t kMaxStoredKeyframes = 5;
+    uint32_t kMaxStoredKeyFrames = 5;
     uint32_t kMaxStoredNewFrames = 3;
     bool kEnableRecordBinaryCurveLog = false;
 };

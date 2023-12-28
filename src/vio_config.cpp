@@ -47,7 +47,7 @@ bool Vio::ConfigAllComponents() {
 bool Vio::ConfigComponentOfDataManager() {
     // Config data manager.
     data_manager_ = std::make_unique<DataManager>();
-    data_manager_->options().kMaxStoredKeyframes = options_.data_manager.max_num_of_stored_keyframes;
+    data_manager_->options().kMaxStoredKeyFrames = options_.data_manager.max_num_of_stored_keyframes;
     data_manager_->options().kMaxStoredNewFrames = options_.data_manager.max_num_of_stored_new_frames;
     data_manager_->options().kEnableRecordBinaryCurveLog = options_.data_manager.enable_recording_curve_binlog;
 

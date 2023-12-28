@@ -234,10 +234,17 @@ bool Backend::TryToEstimate() {
         ReportDebug("[Backend] Before estimation, prior residual norm is " << graph_optimization_problem.prior_residual().norm());
     }
 
+    // Record pose of the first frame in visual local map.
+    const Vec3 p_wi0_ = all_frames_p_wi[0]->param().cast<float>();
+    const Quat q_wi0_ = Quat(all_frames_q_wi[0]->param()(0), all_frames_q_wi[0]->param()(1), all_frames_q_wi[0]->param()(2), all_frames_q_wi[0]->param()(3));
+
     // Construct solver to solve this problem.
     SolverLm<DorF> solver;
     solver.problem() = &graph_optimization_problem;
     solver.Solve(states_.prior.is_valid);
+
+    // Debug.
+    ShowMatrixImage("solve hessian", solver.problem()->hessian());
 
     // Update all camera extrinsics.
     for (uint32_t i = 0; i < all_cameras_p_ic.size(); ++i) {
@@ -248,10 +255,16 @@ bool Backend::TryToEstimate() {
         data_manager_->camera_extrinsics()[i].q_ic.z() = all_cameras_q_ic[i]->param()(3);
     }
 
+    // Compute transform of the first frame before and after optimization.
+    const Vec3 p_wi0 = all_frames_p_wi[0]->param().cast<float>();;
+    const Quat q_wi0 = Quat(all_frames_q_wi[0]->param()(0), all_frames_q_wi[0]->param()(1), all_frames_q_wi[0]->param()(2), all_frames_q_wi[0]->param()(3));
+    const Vec3 p_diff = p_wi0_;
+    const Quat q_diff = q_wi0_ * q_wi0.inverse();
+
     // Update all frame pose in local map.
     for (uint32_t i = 0; i < all_frames_p_wi.size(); ++i) {
-        const Vec3 p_wi = all_frames_p_wi[i]->param().cast<float>();
-        const Quat q_wi = Quat(all_frames_q_wi[i]->param()(0), all_frames_q_wi[i]->param()(1), all_frames_q_wi[i]->param()(2), all_frames_q_wi[i]->param()(3));
+        const Vec3 p_wi = q_diff * (all_frames_p_wi[i]->param().cast<float>() - p_wi0) + p_diff;
+        const Quat q_wi = q_diff * Quat(all_frames_q_wi[i]->param()(0), all_frames_q_wi[i]->param()(1), all_frames_q_wi[i]->param()(2), all_frames_q_wi[i]->param()(3));
 
         auto frame_ptr = data_manager_->visual_local_map()->frame(all_frames_id[i]);
         const Vec3 &p_ic = data_manager_->camera_extrinsics().front().p_ic;
@@ -260,7 +273,9 @@ bool Backend::TryToEstimate() {
 
         if (i >= idx_offset) {
             const uint32_t j = i - idx_offset;
-            frame_ptr->v_wc() = all_new_frames_v_wi[j]->param().cast<float>();
+            frame_ptr->v_wc() = q_diff * all_new_frames_v_wi[j]->param().cast<float>();
+        } else {
+            frame_ptr->v_wc() = q_diff * frame_ptr->v_wc();
         }
     }
 

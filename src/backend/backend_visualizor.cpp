@@ -76,6 +76,16 @@ void Backend::ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id,
     Visualizor::WaitKey(0);
 }
 
+void Backend::ShowMatrixImage(const std::string &title, const TMat<DorF> &matrix) {
+    const uint32_t scale = 3;
+    uint8_t *buf = (uint8_t *)malloc(matrix.rows() * matrix.cols() * scale * scale * sizeof(uint8_t));
+    GrayImage image_matrix(buf, matrix.rows() * scale, matrix.cols() * scale, true);
+    Visualizor::ConvertMatrixToImage<DorF>(matrix, image_matrix, 50.0f, scale);
+    Visualizor::ShowImage(title, image_matrix);
+
+    Visualizor::WaitKey(1);
+}
+
 void Backend::ShowLocalMapWithFrames(const int32_t delay_ms) {
     Visualizor3D::Clear();
 

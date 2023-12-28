@@ -7,10 +7,6 @@
 #include "tick_tock.h"
 #include "math_kinematics.h"
 
-// Debug.
-#include "visualizor.h"
-using namespace SLAM_VISUALIZOR;
-
 namespace VIO {
 
 bool Backend::TryToMarginalize() {
@@ -33,14 +29,6 @@ bool Backend::TryToMarginalize() {
     return true;
 }
 
-void ShowMatrixImage(const std::string &title, const TMat<DorF> &matrix) {
-    const uint32_t scale = 3;
-    uint8_t *buf = (uint8_t *)malloc(matrix.rows() * matrix.cols() * scale * scale * sizeof(uint8_t));
-    GrayImage image_matrix(buf, matrix.rows() * scale, matrix.cols() * scale, true);
-    Visualizor::ConvertMatrixToImage<DorF>(matrix, image_matrix, 2.0f, scale);
-    Visualizor::ShowImage(title, image_matrix);
-}
-
 bool Backend::MarginalizeOldestFrame() {
     ReportInfo("[Bakcend] Backend try to marginalize oldest frame.");
 
@@ -54,10 +42,8 @@ bool Backend::MarginalizeOldestFrame() {
     for (const auto &extrinsic : data_manager_->camera_extrinsics()) {
         all_cameras_p_ic.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
         all_cameras_p_ic.back()->param() = extrinsic.p_ic.cast<DorF>();
-        all_cameras_p_ic.back()->SetFixed(true);
         all_cameras_q_ic.emplace_back(std::make_unique<VertexQuat<DorF>>(4, 3));
         all_cameras_q_ic.back()->param() << extrinsic.q_ic.w(), extrinsic.q_ic.x(), extrinsic.q_ic.y(), extrinsic.q_ic.z();
-        all_cameras_q_ic.back()->SetFixed(true);
     }
 
     // [Vertices] Camera pose of each frame.
@@ -282,8 +268,8 @@ bool Backend::MarginalizeOldestFrame() {
 
     // Debug.
     ReportDebug("[Backend] Marginalized prior residual norm is " << marger.problem()->prior_residual().norm());
-    ShowMatrixImage("generated prior", marger.problem()->prior_hessian());
-    Visualizor::WaitKey(1);
+    ShowMatrixImage("marg hessian", marger.problem()->hessian());
+    ShowMatrixImage("prior", marger.problem()->prior_hessian());
 
     return true;
 }

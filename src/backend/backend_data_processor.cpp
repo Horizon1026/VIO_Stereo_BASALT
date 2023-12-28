@@ -26,7 +26,7 @@ bool Backend::TriangulizeAllVisualFeatures() {
     solver.options().kMethod = Triangulator::TriangulationMethod::kAnalytic;
 
     // Preallcate memory for temp variables.
-    const int32_t max_capacity = data_manager_->options().kMaxStoredKeyframes * data_manager_->camera_extrinsics().size();
+    const int32_t max_capacity = data_manager_->options().kMaxStoredKeyFrames * data_manager_->camera_extrinsics().size();
     std::vector<Quat> q_wc_vec;
     std::vector<Vec3> p_wc_vec;
     std::vector<Vec2> norm_xy_vec;

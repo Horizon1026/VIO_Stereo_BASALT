@@ -62,8 +62,12 @@ bool Backend::RunOnce() {
         // }
 
         // Decide marginalization type.
-        if (data_manager_->visual_local_map()->frames().size() >= data_manager_->options().kMaxStoredKeyframes) {
-            states_.marginalize_type = BackendMarginalizeType::kMarginalizeOldestFrame;
+        if (data_manager_->visual_local_map()->frames().size() >= data_manager_->options().kMaxStoredKeyFrames) {
+            // if (data_manager_->frames_with_bias().front().visual_measure->is_current_keyframe) {
+                states_.marginalize_type = BackendMarginalizeType::kMarginalizeOldestFrame;
+            // } else {
+            //     states_.marginalize_type = BackendMarginalizeType::kMarginalizeSubnewFrame;
+            // }
         } else {
             states_.marginalize_type = BackendMarginalizeType::kNotMarginalize;
         }
@@ -83,11 +87,14 @@ bool Backend::RunOnce() {
         case BackendMarginalizeType::kMarginalizeOldestFrame: {
             const auto oldest_frame_id = data_manager_->visual_local_map()->frames().front().id();
             data_manager_->visual_local_map()->RemoveFrame(oldest_frame_id);
-            data_manager_->frames_with_bias().pop_front();
+            RETURN_FALSE_IF(!data_manager_->visual_local_map()->SelfCheck());
             break;
         }
         case BackendMarginalizeType::kMarginalizeSubnewFrame: {
-
+            const auto subnew_frame_id = data_manager_->visual_local_map()->frames().back().id() -
+                data_manager_->options().kMaxStoredNewFrames + 1;
+            data_manager_->visual_local_map()->RemoveFrame(subnew_frame_id);
+            RETURN_FALSE_IF(!data_manager_->visual_local_map()->SelfCheck());
             break;
         }
         default:
@@ -95,6 +102,9 @@ bool Backend::RunOnce() {
 
             break;
         }
+    }
+    if (data_manager_->frames_with_bias().size() >= data_manager_->options().kMaxStoredNewFrames) {
+        data_manager_->frames_with_bias().pop_front();
     }
 
     return true;
