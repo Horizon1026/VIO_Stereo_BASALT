@@ -55,7 +55,7 @@ void PublishImuData(const std::string &csv_file_path,
         vio.data_loader()->PushImuMeasurement(accel.cast<float>(), gyro.cast<float>(), static_cast<float>(time_stamp_s * 1e-9 - time_stamp_offset));
 
         // Waiting for next timestamp.
-        while (timer.TockInMillisecond() < period_ms) {
+        while (timer.TockInMillisecond() < period_ms || vio.data_loader()->IsImuBufferFull()) {
             usleep(100);
         }
 
@@ -107,7 +107,7 @@ void PublishCameraData(const std::string &csv_file_path,
         vio.data_loader()->PushImageMeasurement(image.data(), image.rows(), image.cols(), static_cast<float>(time_stamp_s * 1e-9 - time_stamp_offset), is_left_camera);
 
         // Waiting for next timestamp.
-        while (timer.TockInMillisecond() < period_ms) {
+        while (timer.TockInMillisecond() < period_ms || vio.data_loader()->IsImageBufferFull()) {
             usleep(100);
         }
 
@@ -176,7 +176,7 @@ int main(int argc, char **argv) {
     vio.ConfigAllComponents();
 
     // Config visualizor 3d.
-    Visualizor3D::camera_view().q_wc = Quat(1, -0.5, 0, 0).normalized();
+    Visualizor3D::camera_view().q_wc = Quat(1, -0.6, 0, 0).normalized();
     Visualizor3D::camera_view().p_wc.y() = -2.0f;
 
     // Start threads for data pipeline and vio node.

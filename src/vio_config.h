@@ -67,6 +67,8 @@ struct VioOptionsOfBackend {
 };
 
 struct VioOptionsOfDataLoader {
+    uint32_t max_size_of_imu_buffer = 200;
+    uint32_t max_size_of_image_buffer = 20;
     bool enable_recording_curve_binlog = true;
     std::string log_file_name = "data_loader.binlog";
     bool enable_recording_raw_data_binlog = true;

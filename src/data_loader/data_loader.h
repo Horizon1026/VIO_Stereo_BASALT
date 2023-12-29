@@ -39,6 +39,8 @@ struct DataLoaderOptions {
     float kMaxToleranceTimeDelayBetweenImuAndImageInSeconds = 1.0f;
     bool kEnableRecordBinaryCurveLog = true;
     bool kEnableRecordRawData = true;
+    uint32_t kMaxSizeOfImuBuffer = 200;
+    uint32_t kMaxSizeOfImageBuffer = 20;
 };
 
 /* Packages of log to be recorded. */
@@ -88,8 +90,8 @@ public:
     bool PopPackedMeasurement(PackedMeasurement &measure);
 
     // Sync signal for imu and image buffer.
-    bool ShouldWaitingForImuData();
-    bool ShouldWaitingForImageData();
+    bool IsImuBufferFull() const { return imu_buffer.size() >= options_.kMaxSizeOfImuBuffer; }
+    bool IsImageBufferFull() const { return left_image_buffer.size() >= options_.kMaxSizeOfImageBuffer || right_image_buffer.size() >= options_.kMaxSizeOfImageBuffer; }
 
     // Reference for member variables.
     DataLoaderOptions &options() { return options_; }
