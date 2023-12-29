@@ -107,6 +107,8 @@ void Backend::ShowLocalMapWithFrames(const int32_t delay_ms) {
     }
 
     // Add all frames in locap map.
+    bool is_p_wi0_valid = false;
+    Vec3 p_wi0 = Vec3::Zero();
     Vec3 p_wi = Vec3::Zero();
     Quat q_wi = Quat::Identity();
     Vec3 p_wc = Vec3::Zero();
@@ -118,6 +120,13 @@ void Backend::ShowLocalMapWithFrames(const int32_t delay_ms) {
             data_manager_->camera_extrinsics().front().q_ic, p_wi, q_wi);
         Visualizor3D::poses().emplace_back(PoseType{ .p_wb = p_wi, .q_wb = q_wi, .scale = 0.02f });
 
+        // Link relative imu pose.
+        if (is_p_wi0_valid) {
+            Visualizor3D::lines().emplace_back(LineType{ .p_w_i = p_wi0, .p_w_j = p_wi, .color = RgbPixel{.r = 255, .g = 255, .b = 255} });
+        }
+        p_wi0 = p_wi;
+        is_p_wi0_valid = true;
+
         // Add all camera frames in local map.
         for (const auto &extrinsic : data_manager_->camera_extrinsics()) {
             Utility::ComputeTransformTransform(p_wi, q_wi, extrinsic.p_ic, extrinsic.q_ic, p_wc, q_wc);
@@ -128,6 +137,26 @@ void Backend::ShowLocalMapWithFrames(const int32_t delay_ms) {
     while (!Visualizor3D::ShouldQuit()) {
         Visualizor3D::Refresh("Visualizor 3D", delay_ms);
         BREAK_IF(delay_ms < 1);
+    }
+}
+
+void Backend::ShowSimpleInformationOfVisualLocalMap() {
+    for (const auto &frame : data_manager_->frames_with_bias()) {
+        ReportInfo(" - Frame with bias timestamp_s is " << frame.time_stamp_s);
+        frame.imu_preint_block.SimpleInformation();
+    }
+    for (const auto &frame : data_manager_->visual_local_map()->frames()) {
+        frame.SimpleInformation();
+    }
+}
+
+void Backend::ShowTinyInformationOfVisualLocalMap() {
+    ReportInfo("[Backend] Visual local map:");
+    for (const auto &frame : data_manager_->visual_local_map()->frames()) {
+        ReportInfo(" - frame " << frame.id() << " at " << frame.time_stamp_s() << "s.");
+    }
+    for (const auto &frame : data_manager_->frames_with_bias()) {
+        ReportInfo(" - frame with bias at " << frame.time_stamp_s << "s.");
     }
 }
 

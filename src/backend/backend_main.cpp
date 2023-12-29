@@ -37,15 +37,6 @@ bool Backend::RunOnce() {
 
     // If backend is initialized.
     if (states_.is_initialized) {
-        // Debug.
-        // for (const auto &frame : data_manager_->frames_with_bias()) {
-        //     ReportDebug("frame with bias timestamp_s is " << frame.time_stamp_s);
-        //     frame.imu_preint_block.SimpleInformation();
-        // }
-        // for (const auto &frame : data_manager_->visual_local_map()->frames()) {
-        //     frame.SimpleInformation();
-        // }
-
         // Try to estimate states.
         TickTock timer;
         if (!TryToEstimate()) {
@@ -57,9 +48,7 @@ bool Backend::RunOnce() {
         }
 
         // Debug.
-        // if (states_.prior.is_valid) {
-        //     should_quit_ = true;
-        // }
+        ShowTinyInformationOfVisualLocalMap();
 
         // Decide marginalization type.
         if (data_manager_->visual_local_map()->frames().size() >= data_manager_->options().kMaxStoredKeyFrames) {

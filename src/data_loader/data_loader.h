@@ -90,8 +90,8 @@ public:
     bool PopPackedMeasurement(PackedMeasurement &measure);
 
     // Sync signal for imu and image buffer.
-    bool IsImuBufferFull() const { return imu_buffer.size() >= options_.kMaxSizeOfImuBuffer; }
-    bool IsImageBufferFull() const { return left_image_buffer.size() >= options_.kMaxSizeOfImageBuffer || right_image_buffer.size() >= options_.kMaxSizeOfImageBuffer; }
+    bool IsImuBufferFull() const { return imu_buffer_.size() >= options_.kMaxSizeOfImuBuffer; }
+    bool IsImageBufferFull() const { return left_image_buffer_.size() >= options_.kMaxSizeOfImageBuffer || right_image_buffer_.size() >= options_.kMaxSizeOfImageBuffer; }
 
     // Reference for member variables.
     DataLoaderOptions &options() { return options_; }

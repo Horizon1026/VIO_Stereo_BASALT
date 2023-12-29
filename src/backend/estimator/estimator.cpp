@@ -56,6 +56,11 @@ bool Backend::TryToEstimate() {
         const auto &feature = pair.second;
         CONTINUE_IF(feature.observes().size() < 2);
 
+        // Determine the range of all observations of this feature.
+        const uint32_t min_frame_id = feature.first_frame_id();
+        const uint32_t max_frame_id = feature.final_frame_id();
+        const uint32_t idx_offset = min_frame_id - data_manager_->visual_local_map()->frames().front().id() + 1;
+
         // Compute inverse depth by p_w of this feature.
         const auto &frame = data_manager_->visual_local_map()->frame(feature.first_frame_id());
         const Vec3 p_c = frame->q_wc().inverse() * (feature.param() - frame->p_wc());
@@ -66,11 +71,6 @@ bool Backend::TryToEstimate() {
         all_features_id.emplace_back(feature.id());
         all_features_invdep.emplace_back(std::make_unique<Vertex<DorF>>(1, 1));
         all_features_invdep.back()->param() = TVec1<DorF>(invdep);
-
-        // Determine the range of all observations of this feature.
-        const uint32_t min_frame_id = feature.first_frame_id();
-        const uint32_t max_frame_id = feature.final_frame_id();
-        const uint32_t idx_offset = min_frame_id - data_manager_->visual_local_map()->frames().front().id() + 1;
 
         // Add edges of visual reprojection factor, considering two cameras view one frame.
         const auto &obv_in_ref = feature.observe(min_frame_id);
@@ -214,6 +214,7 @@ bool Backend::TryToEstimate() {
     ReportDebug(YELLOW "[Backend] Estimator adds " <<
         all_cameras_p_ic.size() << " all_cameras_p_ic, " <<
         all_cameras_q_ic.size() << " all_cameras_q_ic, " <<
+        all_features_invdep.size() << " all_features_invdep, " <<
         all_frames_p_wi.size() << " all_frames_p_wi, " <<
         all_frames_q_wi.size() << " all_frames_q_wi, " <<
         all_new_frames_v_wi.size() << " all_new_frames_v_wi, " <<
@@ -231,7 +232,7 @@ bool Backend::TryToEstimate() {
         graph_optimization_problem.prior_residual() = states_.prior.residual;
 
         // Debug.
-        ReportDebug("[Backend] Before estimation, prior residual norm is " << graph_optimization_problem.prior_residual().norm());
+        ReportDebug("[Backend] Before estimation, prior residual squared norm is " << graph_optimization_problem.prior_residual().squaredNorm());
     }
 
     // Record pose of the first frame in visual local map.
@@ -240,6 +241,7 @@ bool Backend::TryToEstimate() {
 
     // Construct solver to solve this problem.
     SolverLm<DorF> solver;
+    solver.options().kEnableReportEachIteration = false;
     solver.problem() = &graph_optimization_problem;
     solver.Solve(states_.prior.is_valid);
 
@@ -321,7 +323,7 @@ bool Backend::TryToEstimate() {
         states_.prior.residual = solver.problem()->prior_residual();
 
         // Debug.
-        ReportDebug("[Backend] After estimation, prior residual norm is " << solver.problem()->prior_residual().norm());
+        ReportDebug("[Backend] After estimation, prior residual squared norm is " << solver.problem()->prior_residual().squaredNorm());
     }
 
     return true;

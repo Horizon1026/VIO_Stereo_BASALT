@@ -74,6 +74,11 @@ bool Backend::MarginalizeOldestFrame() {
         CONTINUE_IF(feature.observes().size() < 2);
         CONTINUE_IF(feature.first_frame_id() != data_manager_->visual_local_map()->frames().front().id());
 
+        // Determine the range of all observations of this feature.
+        const uint32_t min_frame_id = feature.first_frame_id();
+        const uint32_t max_frame_id = feature.final_frame_id();
+        const uint32_t idx_offset = min_frame_id - data_manager_->visual_local_map()->frames().front().id() + 1;
+
         // Compute inverse depth by p_w of this feature.
         const auto &frame = data_manager_->visual_local_map()->frame(feature.first_frame_id());
         const Vec3 p_c = frame->q_wc().inverse() * (feature.param() - frame->p_wc());
@@ -84,11 +89,6 @@ bool Backend::MarginalizeOldestFrame() {
         all_features_id.emplace_back(feature.id());
         all_features_invdep.emplace_back(std::make_unique<Vertex<DorF>>(1, 1));
         all_features_invdep.back()->param() = TVec1<DorF>(invdep);
-
-        // Determine the range of all observations of this feature.
-        const uint32_t min_frame_id = feature.first_frame_id();
-        const uint32_t max_frame_id = feature.final_frame_id();
-        const uint32_t idx_offset = min_frame_id - data_manager_->visual_local_map()->frames().front().id() + 1;
 
         // Add edges of visual reprojection factor, considering two cameras view one frame.
         const auto &obv_in_ref = feature.observe(min_frame_id);
@@ -226,6 +226,7 @@ bool Backend::MarginalizeOldestFrame() {
     ReportDebug(RED "[Backend] Marginalizor adds " <<
         all_cameras_p_ic.size() << " all_cameras_p_ic, " <<
         all_cameras_q_ic.size() << " all_cameras_q_ic, " <<
+        all_features_invdep.size() << " all_features_invdep, " <<
         all_frames_p_wi.size() << " all_frames_p_wi, " <<
         all_frames_q_wi.size() << " all_frames_q_wi, " <<
         all_new_frames_v_wi.size() << " all_new_frames_v_wi, " <<
@@ -267,8 +268,9 @@ bool Backend::MarginalizeOldestFrame() {
     }
 
     // Debug.
-    ReportDebug("[Backend] Marginalized prior residual norm is " << marger.problem()->prior_residual().norm());
+    ReportDebug("[Backend] Marginalized prior residual squared norm is " << marger.problem()->prior_residual().squaredNorm());
     ShowMatrixImage("marg hessian", marger.problem()->hessian());
+    ShowMatrixImage("reverse hessian", marger.reverse_hessian());
     ShowMatrixImage("prior", marger.problem()->prior_hessian());
 
     return true;

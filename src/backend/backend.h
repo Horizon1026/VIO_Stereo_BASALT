@@ -14,7 +14,7 @@ using namespace SLAM_UTILITY;
 using namespace SLAM_DATA_LOG;
 using namespace SLAM_SOLVER;
 using namespace SENSOR_MODEL;
-using DorF = float;
+using DorF = double;
 
 /* Options for Backend. */
 struct BackendOptions {
@@ -121,6 +121,8 @@ public:
     void ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id, const uint32_t cur_frame_id, const bool use_rectify = false);
     void ShowLocalMapWithFrames(const int32_t delay_ms);
     void ShowMatrixImage(const std::string &title, const TMat<DorF> &matrix);
+    void ShowSimpleInformationOfVisualLocalMap();
+    void ShowTinyInformationOfVisualLocalMap();
 
     // Reference for member variables.
     BackendOptions &options() { return options_; }
