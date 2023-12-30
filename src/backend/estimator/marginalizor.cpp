@@ -42,8 +42,10 @@ bool Backend::MarginalizeOldestFrame() {
     for (const auto &extrinsic : data_manager_->camera_extrinsics()) {
         all_cameras_p_ic.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
         all_cameras_p_ic.back()->param() = extrinsic.p_ic.cast<DorF>();
+        // all_cameras_p_ic.back()->SetFixed(true);
         all_cameras_q_ic.emplace_back(std::make_unique<VertexQuat<DorF>>(4, 3));
         all_cameras_q_ic.back()->param() << extrinsic.q_ic.w(), extrinsic.q_ic.x(), extrinsic.q_ic.y(), extrinsic.q_ic.z();
+        // all_cameras_q_ic.back()->SetFixed(true);
     }
 
     // [Vertices] Camera pose of each frame.
@@ -83,7 +85,7 @@ bool Backend::MarginalizeOldestFrame() {
         const auto &frame = data_manager_->visual_local_map()->frame(feature.first_frame_id());
         const Vec3 p_c = frame->q_wc().inverse() * (feature.param() - frame->p_wc());
         const float invdep = 1.0f / p_c.z();
-        CONTINUE_IF(std::isinf(invdep) || std::isnan(invdep));
+        CONTINUE_IF(p_c.z() < kZero);
 
         // Add vertex of feature invdep.
         all_features_id.emplace_back(feature.id());
