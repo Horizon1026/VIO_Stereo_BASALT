@@ -184,7 +184,7 @@ bool Backend::MarginalizeOldestFrame() {
     std::vector<std::unique_ptr<Edge<DorF>>> all_imu_factors;
     // The imu preintegration block combined with the oldest 'new frame with bias' is useless.
     // Add edges of imu preintegration.
-    const auto &frame = *data_manager_->frames_with_bias().begin();
+    const auto &frame = *std::next(data_manager_->frames_with_bias().begin());
     all_imu_factors.emplace_back(std::make_unique<EdgeImuPreintegrationBetweenRelativePose<DorF>>(
         frame.imu_preint_block, options_.kGravityInWordFrame));
     auto &imu_factor = all_imu_factors.back();

@@ -153,10 +153,14 @@ void Backend::ShowSimpleInformationOfVisualLocalMap() {
 void Backend::ShowTinyInformationOfVisualLocalMap() {
     ReportInfo("[Backend] Visual local map:");
     for (const auto &frame : data_manager_->visual_local_map()->frames()) {
-        ReportInfo(" - frame " << frame.id() << " at " << frame.time_stamp_s() << "s.");
+        ReportInfo(" - frame " << frame.id() << " at " << frame.time_stamp_s() << "s, " <<
+            " q_wc " << LogQuat(frame.q_wc()) << ", p_wc " << LogVec(frame.p_wc()) <<
+            ", v_wc " << LogVec(frame.v_wc()));
     }
     for (const auto &frame : data_manager_->frames_with_bias()) {
-        ReportInfo(" - frame with bias at " << frame.time_stamp_s << "s.");
+        ReportInfo(" - frame with bias at " << frame.time_stamp_s << "s, " <<
+            "bias a " << LogVec(frame.imu_preint_block.bias_accel()) << ", bias g " <<
+            LogVec(frame.imu_preint_block.bias_gyro()));
     }
 }
 

@@ -134,8 +134,9 @@ public:
         const TVec3<Scalar> dba = bias_a - linear_point_.bias_a;
         const TVec3<Scalar> dbg = bias_g - linear_point_.bias_g;
         p_ij_ = linear_point_.p_ij + imu_jacobians_.dp_dba * dba + imu_jacobians_.dp_dbg * dbg;
-        q_ij_ = linear_point_.q_ij * Utility::DeltaQ(imu_jacobians_.dr_dbg * dbg);
         v_ij_ = linear_point_.v_ij + imu_jacobians_.dv_dba * dba + imu_jacobians_.dv_dbg * dbg;
+        q_ij_ = linear_point_.q_ij * Utility::DeltaQ(imu_jacobians_.dr_dbg * dbg);
+        q_ij_.normalize();
     }
 
     // Use string to represent edge type.

@@ -302,12 +302,11 @@ bool Backend::TryToEstimate() {
         frame.imu_preint_block.Reset();
         frame.imu_preint_block.bias_accel() = all_new_frames_ba[idx]->param().cast<float>();
         frame.imu_preint_block.bias_gyro() = all_new_frames_bg[idx]->param().cast<float>();
-        ++idx;
-
         frame.imu_preint_block.SetImuNoiseSigma(imu_model_->options().kAccelNoise,
                                                 imu_model_->options().kGyroNoise,
                                                 imu_model_->options().kAccelRandomWalk,
                                                 imu_model_->options().kGyroRandomWalk);
+        ++idx;
 
         const int32_t max_idx = static_cast<int32_t>(frame.packed_measure->imus.size());
         for (int32_t i = 1; i < max_idx; ++i) {

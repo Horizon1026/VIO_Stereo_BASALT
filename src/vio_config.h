@@ -19,10 +19,10 @@ struct VioOptionsOfCamera {
 };
 
 struct VioOptionsOfImu {
-    float noise_accel = 1e-2f;
-    float noise_gyro = 1e-2f;
-    float random_walk_accel = 1e-4f;
-    float random_walk_gyro = 1e-4f;
+    float noise_accel = 1e-1f;
+    float noise_gyro = 1e-1f;
+    float random_walk_accel = 1e-2f;
+    float random_walk_gyro = 1e-2f;
 };
 
 struct VioOptionsOfFeatureDetector {

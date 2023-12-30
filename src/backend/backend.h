@@ -14,7 +14,7 @@ using namespace SLAM_UTILITY;
 using namespace SLAM_DATA_LOG;
 using namespace SLAM_SOLVER;
 using namespace SENSOR_MODEL;
-using DorF = double;
+using DorF = float;
 
 /* Options for Backend. */
 struct BackendOptions {
