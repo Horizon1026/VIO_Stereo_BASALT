@@ -127,7 +127,7 @@ void TestRunVio(const uint32_t max_wait_ticks) {
             vio.backend()->ShowLocalMapWithFrames(10);
             break;
         } else {
-            vio.backend()->ShowLocalMapWithFrames(0);
+            // vio.backend()->ShowLocalMapWithFrames(0);
         }
 
         if (!res) {

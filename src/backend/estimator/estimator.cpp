@@ -323,6 +323,7 @@ bool Backend::TryToEstimate() {
 
         // Debug.
         ReportDebug("[Backend] After estimation, prior residual squared norm is " << solver.problem()->prior_residual().squaredNorm());
+        should_quit_ = true;
     }
 
     return true;
