@@ -282,6 +282,27 @@ bool Backend::MarginalizeOldestFrame() {
 bool Backend::MarginalizeSubnewFrame() {
     ReportInfo("[Bakcend] Backend try to marginalize subnew frame.");
 
+    // Discard relative prior information.
+    const uint32_t min_size = 6 * (data_manager_->options().kMaxStoredKeyFrames - data_manager_->options().kMaxStoredNewFrames);
+
+    if (min_size == 0) {
+        states_.prior.is_valid = false;
+        return true;
+    }
+
+    if (states_.prior.is_valid) {
+        if (states_.prior.hessian.cols() > min_size) {
+            states_.prior.hessian.conservativeResize(min_size, min_size);
+            states_.prior.bias.conservativeResize(min_size, 1);
+            states_.prior.jacobian_t_inv.conservativeResize(min_size, min_size);
+            states_.prior.residual.conservativeResize(min_size, 1);
+        }
+    }
+
+    // Debug.
+    ReportDebug("[Backend] Marginalized prior residual squared norm is " << states_.prior.residual.squaredNorm());
+    ShowMatrixImage("prior", states_.prior.hessian);
+
     return true;
 }
 
