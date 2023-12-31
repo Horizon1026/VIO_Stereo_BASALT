@@ -260,6 +260,7 @@ bool Backend::MarginalizeOldestFrame() {
     marger.problem() = &graph_optimization_problem;
     marger.options().kSortDirection = SortMargedVerticesDirection::kSortAtBack;
     states_.prior.is_valid = marger.Marginalize(vertices_to_be_marged, states_.prior.is_valid);
+    marger.problem()->VerticesInformation();
 
     // Store prior information.
     if (states_.prior.is_valid) {

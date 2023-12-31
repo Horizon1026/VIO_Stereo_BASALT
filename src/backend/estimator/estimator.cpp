@@ -23,9 +23,11 @@ bool Backend::TryToEstimate() {
     for (const auto &extrinsic : data_manager_->camera_extrinsics()) {
         all_cameras_p_ic.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
         all_cameras_p_ic.back()->param() = extrinsic.p_ic.cast<DorF>();
+        all_cameras_p_ic.back()->name() = std::string("p_ic");
         all_cameras_p_ic.back()->SetFixed(true);
         all_cameras_q_ic.emplace_back(std::make_unique<VertexQuat<DorF>>(4, 3));
         all_cameras_q_ic.back()->param() << extrinsic.q_ic.w(), extrinsic.q_ic.x(), extrinsic.q_ic.y(), extrinsic.q_ic.z();
+        all_cameras_q_ic.back()->name() = std::string("q_ic");
         all_cameras_q_ic.back()->SetFixed(true);
     }
 
@@ -43,8 +45,10 @@ bool Backend::TryToEstimate() {
 
         all_frames_p_wi.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
         all_frames_p_wi.back()->param() = p_wi.cast<DorF>();
+        all_frames_p_wi.back()->name() = std::string("p_wi") + std::to_string(frame.id());
         all_frames_q_wi.emplace_back(std::make_unique<VertexQuat<DorF>>(4, 3));
         all_frames_q_wi.back()->param() << q_wi.w(), q_wi.x(), q_wi.y(), q_wi.z();
+        all_frames_q_wi.back()->name() = std::string("q_wi") + std::to_string(frame.id());
     }
 
     // [Vertices] Inverse depth of each feature.
@@ -71,6 +75,7 @@ bool Backend::TryToEstimate() {
         all_features_id.emplace_back(feature.id());
         all_features_invdep.emplace_back(std::make_unique<Vertex<DorF>>(1, 1));
         all_features_invdep.back()->param() = TVec1<DorF>(invdep);
+        all_features_invdep.back()->name() = std::string("invdep ") + std::to_string(feature.id());
 
         // Add edges of visual reprojection factor, considering two cameras view one frame.
         const auto &obv_in_ref = feature.observe(min_frame_id);
@@ -90,6 +95,7 @@ bool Backend::TryToEstimate() {
             visual_reproj_factor->observation() = observe_vector.cast<DorF>();
             visual_reproj_factor->information() = visual_info_matrix;
             visual_reproj_factor->kernel() = std::make_unique<KernelHuber<DorF>>(static_cast<DorF>(0.1));
+            visual_reproj_factor->name() = std::string("one frame two cameras");
             RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
         }
 
@@ -111,6 +117,7 @@ bool Backend::TryToEstimate() {
             visual_reproj_factor->observation() = observe_vector.cast<DorF>();
             visual_reproj_factor->information() = visual_info_matrix;
             visual_reproj_factor->kernel() = std::make_unique<KernelHuber<DorF>>(static_cast<DorF>(0.1));
+            visual_reproj_factor->name() = std::string("two frames one camera");
             RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
 
             // Add edges of visual reprojection factor, considering two cameras view two frames.
@@ -131,6 +138,7 @@ bool Backend::TryToEstimate() {
                 visual_reproj_factor->observation() = observe_vector.cast<DorF>();
                 visual_reproj_factor->information() = visual_info_matrix;
                 visual_reproj_factor->kernel() = std::make_unique<KernelHuber<DorF>>(static_cast<DorF>(0.1));
+                visual_reproj_factor->name() = std::string("two frames two cameras");
                 RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
             }
         }
@@ -144,6 +152,7 @@ bool Backend::TryToEstimate() {
     for (uint32_t frame_idx = min_frames_idx + idx_offset; frame_idx <= max_frames_idx; ++frame_idx) {
         all_new_frames_v_wi.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
         all_new_frames_v_wi.back()->param() = data_manager_->visual_local_map()->frame(frame_idx)->v_wc().cast<DorF>();
+        all_new_frames_v_wi.back()->name() = std::string("v_wi") + std::to_string(frame_idx);
     }
 
     // [Vertices] Bias_accel and bias_gyro of each new frame.
@@ -153,8 +162,10 @@ bool Backend::TryToEstimate() {
         // Add vertex of bias_accel and bias_gyro.
         all_new_frames_ba.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
         all_new_frames_ba.back()->param() = frame.imu_preint_block.bias_accel().cast<DorF>();
+        all_new_frames_ba.back()->name() = std::string("bias_a");
         all_new_frames_bg.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
         all_new_frames_bg.back()->param() = frame.imu_preint_block.bias_gyro().cast<DorF>();
+        all_new_frames_bg.back()->name() = std::string("bias_g");
     }
     RETURN_FALSE_IF(all_new_frames_v_wi.size() != all_new_frames_ba.size());
 
@@ -246,6 +257,7 @@ bool Backend::TryToEstimate() {
     solver.Solve(states_.prior.is_valid);
 
     // Debug.
+    solver.problem()->VerticesInformation();
     ShowMatrixImage("solve hessian", solver.problem()->hessian());
 
     // Update all camera extrinsics.
