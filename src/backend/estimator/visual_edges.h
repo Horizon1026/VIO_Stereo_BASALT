@@ -59,9 +59,6 @@ public:
         this->GetJacobian(2) = jacobian_2d_3d * SLAM_UTILITY::Utility::Utility::SkewSymmetricMatrix(p_c_);
     }
 
-    // Use string to represent edge type.
-    virtual std::string GetType() { return std::string("[Edge] Reporject p_w -> norm plane."); }
-
 private:
     // Parameters will be calculated in ComputeResidual().
     // It should not be repeatedly calculated in ComputeJacobians().
@@ -117,9 +114,6 @@ public:
         this->GetJacobian(1) = - this->GetJacobian(0);
         this->GetJacobian(2) = jacobian_2d_3d * SLAM_UTILITY::Utility::SkewSymmetricMatrix(p_c_);
     }
-
-    // Use string to represent edge type.
-    virtual std::string GetType() { return std::string("[Edge] Reporject p_w -> unit sphere."); }
 
     // Set tangent base.
     void SetTrangetBase(const TVec3<Scalar> &vec) {
@@ -201,9 +195,6 @@ public:
         this->GetJacobian(3) = jacobian_2d_3d * jacobian_cam_p;
         this->GetJacobian(4) = jacobian_2d_3d * jacobian_cam_q;
     }
-
-    // Use string to represent edge type.
-    virtual std::string GetType() { return std::string("Edge Reprojection"); }
 
 private:
     // Parameters will be calculated in ComputeResidual().

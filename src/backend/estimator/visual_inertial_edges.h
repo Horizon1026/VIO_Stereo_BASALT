@@ -102,9 +102,6 @@ public:
         this->GetJacobian(6) = jacobian_2d_3d * jacobian_ex_q;
     }
 
-    // Use string to represent edge type.
-    virtual std::string GetType() { return std::string("Edge Reprojection"); }
-
 private:
     // Parameters will be calculated in ComputeResidual().
     // It should not be repeatedly calculated in ComputeJacobians().
@@ -228,9 +225,6 @@ public:
         this->GetJacobian(8) = jacobian_2d_3d * jacobian_ex_q;
     }
 
-    // Use string to represent edge type.
-    virtual std::string GetType() { return std::string("Edge Reprojection"); }
-
 private:
     // Parameters will be calculated in ComputeResidual().
     // It should not be repeatedly calculated in ComputeJacobians().
@@ -328,9 +322,6 @@ public:
         this->GetJacobian(3) = jacobian_2d_3d * jacobian_ex_p;
         this->GetJacobian(4) = jacobian_2d_3d * jacobian_ex_q;
     }
-
-    // Use string to represent edge type.
-    virtual std::string GetType() { return std::string("Edge Reprojection"); }
 
 private:
     // Parameters will be calculated in ComputeResidual().
