@@ -190,6 +190,7 @@ bool Backend::TryToEstimate() {
         imu_factor->SetVertex(all_new_frames_v_wi[new_frame_idx + 1].get(), 7);
         imu_factor->SetVertex(all_new_frames_ba[new_frame_idx + 1].get(), 8);
         imu_factor->SetVertex(all_new_frames_bg[new_frame_idx + 1].get(), 9);
+        imu_factor->name() = std::string("imu factor");
         RETURN_FALSE_IF(!imu_factor->SelfCheck());
 
         ++frame_idx;
