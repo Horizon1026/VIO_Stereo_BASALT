@@ -38,16 +38,11 @@ bool Backend::TryToEstimate() {
     for (const auto &frame : data_manager_->visual_local_map()->frames()) {
         all_frames_id.emplace_back(frame.id());
 
-        Vec3 p_wi = Vec3::Zero();
-        Quat q_wi = Quat::Identity();
-        Utility::ComputeTransformTransformInverse(frame.p_wc(), frame.q_wc(), data_manager_->camera_extrinsics().front().p_ic,
-            data_manager_->camera_extrinsics().front().q_ic, p_wi, q_wi);
-
         all_frames_p_wi.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
-        all_frames_p_wi.back()->param() = p_wi.cast<DorF>();
+        all_frames_p_wi.back()->param() = frame.p_wi().cast<DorF>();
         all_frames_p_wi.back()->name() = std::string("p_wi") + std::to_string(frame.id());
         all_frames_q_wi.emplace_back(std::make_unique<VertexQuat<DorF>>(4, 3));
-        all_frames_q_wi.back()->param() << q_wi.w(), q_wi.x(), q_wi.y(), q_wi.z();
+        all_frames_q_wi.back()->param() << frame.q_wi().w(), frame.q_wi().x(), frame.q_wi().y(), frame.q_wi().z();
         all_frames_q_wi.back()->name() = std::string("q_wi") + std::to_string(frame.id());
     }
 
@@ -247,10 +242,6 @@ bool Backend::TryToEstimate() {
         ReportDebug("[Backend] Before estimation, prior residual squared norm is " << graph_optimization_problem.prior_residual().squaredNorm());
     }
 
-    // Record pose of the first frame in visual local map.
-    const Vec3 p_wi0_ = all_frames_p_wi[0]->param().cast<float>();
-    const Quat q_wi0_ = Quat(all_frames_q_wi[0]->param()(0), all_frames_q_wi[0]->param()(1), all_frames_q_wi[0]->param()(2), all_frames_q_wi[0]->param()(3));
-
     // Construct solver to solve this problem.
     SolverLm<DorF> solver;
     solver.options().kEnableReportEachIteration = true;
@@ -270,27 +261,18 @@ bool Backend::TryToEstimate() {
         data_manager_->camera_extrinsics()[i].q_ic.z() = all_cameras_q_ic[i]->param()(3);
     }
 
-    // Compute transform of the first frame before and after optimization.
-    const Vec3 p_wi0 = all_frames_p_wi[0]->param().cast<float>();;
-    const Quat q_wi0 = Quat(all_frames_q_wi[0]->param()(0), all_frames_q_wi[0]->param()(1), all_frames_q_wi[0]->param()(2), all_frames_q_wi[0]->param()(3));
-    const Vec3 p_diff = p_wi0_;
-    const Quat q_diff = q_wi0_ * q_wi0.inverse();
-
     // Update all frame pose in local map.
+    const Vec3 &p_ic = data_manager_->camera_extrinsics().front().p_ic;
+    const Quat &q_ic = data_manager_->camera_extrinsics().front().q_ic;
     for (uint32_t i = 0; i < all_frames_p_wi.size(); ++i) {
-        const Vec3 p_wi = q_diff * (all_frames_p_wi[i]->param().cast<float>() - p_wi0) + p_diff;
-        const Quat q_wi = q_diff * Quat(all_frames_q_wi[i]->param()(0), all_frames_q_wi[i]->param()(1), all_frames_q_wi[i]->param()(2), all_frames_q_wi[i]->param()(3));
-
         auto frame_ptr = data_manager_->visual_local_map()->frame(all_frames_id[i]);
-        const Vec3 &p_ic = data_manager_->camera_extrinsics().front().p_ic;
-        const Quat &q_ic = data_manager_->camera_extrinsics().front().q_ic;
-        Utility::ComputeTransformTransform(p_wi, q_wi, p_ic, q_ic, frame_ptr->p_wc(), frame_ptr->q_wc());
+        frame_ptr->p_wi() = all_frames_p_wi[i]->param().cast<float>();
+        frame_ptr->q_wi() = Quat(all_frames_q_wi[i]->param()(0), all_frames_q_wi[i]->param()(1), all_frames_q_wi[i]->param()(2), all_frames_q_wi[i]->param()(3));
+        Utility::ComputeTransformTransform(frame_ptr->p_wi(), frame_ptr->q_wi(), p_ic, q_ic, frame_ptr->p_wc(), frame_ptr->q_wc());
 
         if (i >= idx_offset) {
             const uint32_t j = i - idx_offset;
-            frame_ptr->v_w() = q_diff * all_new_frames_v_wi[j]->param().cast<float>();
-        } else {
-            frame_ptr->v_w() = q_diff * frame_ptr->v_w();
+            frame_ptr->v_w() = all_new_frames_v_wi[j]->param().cast<float>();
         }
     }
 

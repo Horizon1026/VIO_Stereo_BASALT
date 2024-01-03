@@ -57,16 +57,11 @@ bool Backend::MarginalizeOldestFrame() {
     for (const auto &frame : data_manager_->visual_local_map()->frames()) {
         all_frames_id.emplace_back(frame.id());
 
-        Vec3 p_wi = Vec3::Zero();
-        Quat q_wi = Quat::Identity();
-        Utility::ComputeTransformTransformInverse(frame.p_wc(), frame.q_wc(), data_manager_->camera_extrinsics().front().p_ic,
-            data_manager_->camera_extrinsics().front().q_ic, p_wi, q_wi);
-
         all_frames_p_wi.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
-        all_frames_p_wi.back()->param() = p_wi.cast<DorF>();
+        all_frames_p_wi.back()->param() = frame.p_wi().cast<DorF>();
         all_frames_p_wi.back()->name() = std::string("p_wi") + std::to_string(frame.id());
         all_frames_q_wi.emplace_back(std::make_unique<VertexQuat<DorF>>(4, 3));
-        all_frames_q_wi.back()->param() << q_wi.w(), q_wi.x(), q_wi.y(), q_wi.z();
+        all_frames_q_wi.back()->param() << frame.q_wi().w(), frame.q_wi().x(), frame.q_wi().y(), frame.q_wi().z();
         all_frames_q_wi.back()->name() = std::string("q_wi") + std::to_string(frame.id());
     }
 
