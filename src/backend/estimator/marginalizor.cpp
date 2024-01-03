@@ -171,7 +171,7 @@ bool Backend::MarginalizeOldestFrame() {
     const uint32_t idx_offset = data_manager_->visual_local_map()->frames().size() - data_manager_->frames_with_bias().size();
     for (uint32_t frame_idx = min_frames_idx + idx_offset; frame_idx <= max_frames_idx; ++frame_idx) {
         all_new_frames_v_wi.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
-        all_new_frames_v_wi.back()->param() = data_manager_->visual_local_map()->frame(frame_idx)->v_wc().cast<DorF>();
+        all_new_frames_v_wi.back()->param() = data_manager_->visual_local_map()->frame(frame_idx)->v_w().cast<DorF>();
         all_new_frames_v_wi.back()->name() = std::string("v_wi") + std::to_string(frame_idx);
     }
 

@@ -149,12 +149,12 @@ bool Backend::AddNewestFrameWithBiasIntoLocalMap() {
     const float dt = newest_frame_imu.imu_preint_block.integrate_time_s();
     new_q_wi = q_wi * newest_frame_imu.imu_preint_block.q_ij();
     new_p_wi = q_wi * newest_frame_imu.imu_preint_block.p_ij() + p_wi +
-        sub_new_frame.v_wc() * dt - 0.5f * options_.kGravityInWordFrame * dt * dt;
-    new_v_wi = q_wi * newest_frame_imu.imu_preint_block.v_ij() + sub_new_frame.v_wc() -
+        sub_new_frame.v_w() * dt - 0.5f * options_.kGravityInWordFrame * dt * dt;
+    new_v_wi = q_wi * newest_frame_imu.imu_preint_block.v_ij() + sub_new_frame.v_w() -
         options_.kGravityInWordFrame * dt;
 
     Utility::ComputeTransformTransform(new_p_wi, new_q_wi, p_ic, q_ic, newest_frame.p_wc(), newest_frame.q_wc());
-    newest_frame.v_wc() = new_v_wi;
+    newest_frame.v_w() = new_v_wi;
 
     return data_manager_->visual_local_map()->SelfCheck();
 }

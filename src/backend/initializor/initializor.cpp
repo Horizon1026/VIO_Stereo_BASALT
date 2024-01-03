@@ -90,11 +90,11 @@ bool Backend::TransformAllStatesToWorldFrameForInitialization(const Vec3 &gravit
         auto frame = data_manager_->visual_local_map()->frame(i);
         const Quat q_c0c = frame->q_wc();
         const Vec3 p_c0c = frame->p_wc();
-        const Vec3 v_c0c = frame->v_wc();
+        const Vec3 v_c0c = frame->v_w();
 
         frame->q_wc() = q_wc0 * q_c0c;
         frame->p_wc() = q_wc0 * p_c0c;
-        frame->v_wc() = q_wc0 * v_c0c;
+        frame->v_w() = q_wc0 * v_c0c;
     }
 
     return true;
