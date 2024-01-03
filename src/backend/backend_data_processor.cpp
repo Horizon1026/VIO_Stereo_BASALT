@@ -143,18 +143,14 @@ bool Backend::AddNewestFrameWithBiasIntoLocalMap() {
     const Quat &q_ic = data_manager_->camera_extrinsics().front().q_ic;
     Utility::ComputeTransformTransformInverse(sub_new_frame.p_wc(), sub_new_frame.q_wc(), p_ic, q_ic, p_wi, q_wi);
 
-    Vec3 new_p_wi = Vec3::Zero();
-    Quat new_q_wi = Quat::Identity();
-    Vec3 new_v_wi = Vec3::Zero();
     const float dt = newest_frame_imu.imu_preint_block.integrate_time_s();
-    new_q_wi = q_wi * newest_frame_imu.imu_preint_block.q_ij();
-    new_p_wi = q_wi * newest_frame_imu.imu_preint_block.p_ij() + p_wi +
+    newest_frame.q_wi() = q_wi * newest_frame_imu.imu_preint_block.q_ij();
+    newest_frame.p_wi() = q_wi * newest_frame_imu.imu_preint_block.p_ij() + p_wi +
         sub_new_frame.v_w() * dt - 0.5f * options_.kGravityInWordFrame * dt * dt;
-    new_v_wi = q_wi * newest_frame_imu.imu_preint_block.v_ij() + sub_new_frame.v_w() -
+    newest_frame.v_w() = q_wi * newest_frame_imu.imu_preint_block.v_ij() + sub_new_frame.v_w() -
         options_.kGravityInWordFrame * dt;
 
-    Utility::ComputeTransformTransform(new_p_wi, new_q_wi, p_ic, q_ic, newest_frame.p_wc(), newest_frame.q_wc());
-    newest_frame.v_w() = new_v_wi;
+    Utility::ComputeTransformTransform(newest_frame.p_wi(), newest_frame.q_wi(), p_ic, q_ic, newest_frame.p_wc(), newest_frame.q_wc());
 
     return data_manager_->visual_local_map()->SelfCheck();
 }

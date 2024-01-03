@@ -26,6 +26,7 @@ bool Backend::RunOnce() {
     if (!states_.is_initialized) {
         TickTock timer;
         if (TryToInitialize()) {
+            ShowTinyInformationOfVisualLocalMap();
             states_.is_initialized = true;
             ReportInfo(GREEN "[Backend] Backend succeed to initialize within " << timer.TockTickInMillisecond() << " ms." RESET_COLOR);
         } else {

@@ -155,6 +155,7 @@ void Backend::ShowTinyInformationOfVisualLocalMap() {
     for (const auto &frame : data_manager_->visual_local_map()->frames()) {
         ReportInfo(" - frame " << frame.id() << " at " << frame.time_stamp_s() << "s, " <<
             " q_wi " << LogQuat(frame.q_wi()) << ", p_wi " << LogVec(frame.p_wi()) <<
+            " q_wc " << LogQuat(frame.q_wc()) << ", p_wc " << LogVec(frame.p_wc()) <<
             ", v_w " << LogVec(frame.v_w()));
     }
     for (const auto &frame : data_manager_->frames_with_bias()) {
