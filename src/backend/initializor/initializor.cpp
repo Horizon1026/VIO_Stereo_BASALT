@@ -96,7 +96,6 @@ bool Backend::TransformAllStatesToWorldFrameForInitialization(const Vec3 &gravit
         frame->q_wc() = q_wc0 * q_c0c;
         frame->p_wc() = q_wc0 * p_c0c;
         frame->v_w() = q_wc0 * v_c0c;
-        Utility::ComputeTransformTransformInverse(frame->p_wc(), frame->q_wc(), p_ic, q_ic, frame->p_wi(), frame->q_wi());
     }
 
     return true;
