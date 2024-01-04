@@ -72,11 +72,10 @@ bool Backend::MarginalizeOldestFrame() {
 
     // [Vertices] Inverse depth of each feature.
     // [Edges] Visual reprojection factor.
-    std::vector<uint32_t> all_features_id;
     std::vector<std::unique_ptr<Vertex<DorF>>> all_features_invdep;
     std::vector<std::unique_ptr<Edge<DorF>>> all_visual_reproj_factors;
-    for (const auto &pair : data_manager_->visual_local_map()->features()) {
-        const auto &feature = pair.second;
+    for (auto &pair : data_manager_->visual_local_map()->features()) {
+        auto &feature = pair.second;
         CONTINUE_IF(feature.observes().size() < 2);
         CONTINUE_IF(feature.first_frame_id() != data_manager_->visual_local_map()->frames().front().id());
 
@@ -92,10 +91,12 @@ bool Backend::MarginalizeOldestFrame() {
         CONTINUE_IF(p_c.z() < kZero);
 
         // Add vertex of feature invdep.
-        all_features_id.emplace_back(feature.id());
         all_features_invdep.emplace_back(std::make_unique<Vertex<DorF>>(1, 1));
         all_features_invdep.back()->param() = TVec1<DorF>(invdep);
         all_features_invdep.back()->name() = std::string("invdep ") + std::to_string(feature.id());
+
+        // Mark these features to be marginalized.
+        feature.status() = FeatureSolvedStatus::kMarginalized;
 
         // Add edges of visual reprojection factor, considering two cameras view one frame.
         const auto &obv_in_ref = feature.observe(min_frame_id);
