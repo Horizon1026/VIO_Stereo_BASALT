@@ -59,7 +59,10 @@ bool Backend::TryToEstimate() {
     for (const auto &pair : data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
         CONTINUE_IF(feature.observes().size() < 2);
-        CONTINUE_IF(feature.status() == FeatureSolvedStatus::kMarginalized);
+        if (feature.status() == FeatureSolvedStatus::kMarginalized) {
+            ReportDebug("kMarginalized");
+            continue;
+        }
 
         // Determine the range of all observations of this feature.
         const uint32_t min_frame_id = feature.first_frame_id();
