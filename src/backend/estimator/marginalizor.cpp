@@ -309,6 +309,8 @@ bool Backend::MarginalizeSubnewFrame() {
     if (states_.prior.is_valid && target_size > 0) {
         states_.prior.hessian.conservativeResize(target_size, target_size);
         states_.prior.bias.conservativeResize(target_size, 1);
+
+        // TODO: prior jacobian_t_inv and residual should be decomposed by hessian and bias.
         states_.prior.jacobian_t_inv.conservativeResize(target_size, target_size);
         states_.prior.residual.conservativeResize(target_size, 1);
     }
