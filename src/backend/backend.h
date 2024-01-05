@@ -135,6 +135,7 @@ public:
     const BackendOptions &options() const { return options_; }
     const std::unique_ptr<Imu> &imu_model() const { return imu_model_; }
     const bool &should_quit() const { return should_quit_; }
+    const BackendStates &states() const { return states_; }
 
 private:
     // Options and status of backend.

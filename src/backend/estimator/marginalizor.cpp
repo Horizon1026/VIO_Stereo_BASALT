@@ -284,7 +284,8 @@ bool Backend::MarginalizeOldestFrame() {
     }
 
     // Debug.
-    ReportDebug("[Backend] Marginalized prior residual squared norm is " << marger.problem()->prior_residual().squaredNorm() <<
+    ReportDebug("[Backend] Marginalized prior residual size is " << states_.prior.residual.rows() <<
+        ", squared norm is " << marger.problem()->prior_residual().squaredNorm() <<
         ", cost of problem is " << marger.cost_of_problem());
     ShowMatrixImage("marg hessian", marger.problem()->hessian());
     ShowMatrixImage("reverse hessian", marger.reverse_hessian());
@@ -304,7 +305,7 @@ bool Backend::MarginalizeSubnewFrame() {
         return true;
     }
 
-    const uint32_t target_size = std::max(states_.prior.hessian.cols() - 15, min_size);
+    const uint32_t target_size = std::max(static_cast<uint32_t>(states_.prior.hessian.cols() - 15), min_size);
     if (states_.prior.is_valid && target_size > 0) {
         states_.prior.hessian.conservativeResize(target_size, target_size);
         states_.prior.bias.conservativeResize(target_size, 1);
