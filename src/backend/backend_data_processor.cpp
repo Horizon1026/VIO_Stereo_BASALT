@@ -91,7 +91,9 @@ bool Backend::TriangulizeAllVisualFeatures() {
         Vec3 p_w = Vec3::Zero();
         if (solver.Triangulate(q_wc_vec, p_wc_vec, norm_xy_vec, p_w)) {
             feature.param() = p_w;
-            feature.status() = FeatureSolvedStatus::kSolved;
+            if (feature.status() != FeatureSolvedStatus::kMarginalized) {
+                feature.status() = FeatureSolvedStatus::kSolved;
+            }
             ++triangulize_num;
         } else {
             feature.status() = FeatureSolvedStatus::kUnsolved;

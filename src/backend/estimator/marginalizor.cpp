@@ -304,17 +304,17 @@ bool Backend::MarginalizeSubnewFrame() {
         return true;
     }
 
-    if (states_.prior.is_valid) {
-        if (states_.prior.hessian.cols() > min_size) {
-            states_.prior.hessian.conservativeResize(min_size, min_size);
-            states_.prior.bias.conservativeResize(min_size, 1);
-            states_.prior.jacobian_t_inv.conservativeResize(min_size, min_size);
-            states_.prior.residual.conservativeResize(min_size, 1);
-        }
+    const uint32_t target_size = std::max(states_.prior.hessian.cols() - 15, min_size);
+    if (states_.prior.is_valid && target_size > 0) {
+        states_.prior.hessian.conservativeResize(target_size, target_size);
+        states_.prior.bias.conservativeResize(target_size, 1);
+        states_.prior.jacobian_t_inv.conservativeResize(target_size, target_size);
+        states_.prior.residual.conservativeResize(target_size, 1);
     }
 
     // Debug.
-    ReportDebug("[Backend] Marginalized prior residual squared norm is " << states_.prior.residual.squaredNorm());
+    ReportDebug("[Backend] Marginalized prior residual size is " << states_.prior.residual.rows() <<
+        ", squared norm is " << states_.prior.residual.squaredNorm());
     ShowMatrixImage("prior", states_.prior.hessian);
 
     return true;
