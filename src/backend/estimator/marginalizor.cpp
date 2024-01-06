@@ -304,14 +304,15 @@ bool Backend::MarginalizeSubnewFrame() {
     ReportInfo("[Bakcend] Backend try to marginalize subnew frame.");
 
     // Discard relative prior information.
-    const uint32_t min_size = 6 * (data_manager_->options().kMaxStoredKeyFrames - data_manager_->options().kMaxStoredNewFrames);
+    const uint32_t min_size = 6 * (data_manager_->options().kMaxStoredKeyFrames - data_manager_->options().kMaxStoredNewFrames) +
+        6 * data_manager_->camera_extrinsics().size();
 
     if (min_size == 0) {
         states_.prior.is_valid = false;
         return true;
     }
 
-    const uint32_t target_size = std::max(static_cast<uint32_t>(states_.prior.hessian.cols() - 15), min_size);
+    const uint32_t target_size = states_.prior.hessian.cols() > 15 ? std::max(static_cast<uint32_t>(states_.prior.hessian.cols() - 15), min_size) : 0;
     ReportInfo(RED "[Backend] Marginalizor discard prior information. [" << states_.prior.hessian.cols() << "]->[" << target_size << "]" RESET_COLOR);
     if (states_.prior.is_valid && target_size > 0) {
         states_.prior.hessian.conservativeResize(target_size, target_size);
