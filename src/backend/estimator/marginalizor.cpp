@@ -306,13 +306,15 @@ bool Backend::MarginalizeSubnewFrame() {
     }
 
     const uint32_t target_size = std::max(static_cast<uint32_t>(states_.prior.hessian.cols() - 15), min_size);
+    ReportDebug(RED "[Backend] Marginalizor discard prior information. [" << states_.prior.hessian.cols() << "]->[" << target_size << "]" RESET_COLOR);
     if (states_.prior.is_valid && target_size > 0) {
         states_.prior.hessian.conservativeResize(target_size, target_size);
         states_.prior.bias.conservativeResize(target_size, 1);
 
-        // TODO: prior jacobian_t_inv and residual should be decomposed by hessian and bias.
-        states_.prior.jacobian_t_inv.conservativeResize(target_size, target_size);
-        states_.prior.residual.conservativeResize(target_size, 1);
+        // Prior jacobian_t_inv and residual should be decomposed by hessian and bias.
+        Marginalizor<DorF> marger;
+        marger.DecomposeHessianAndBias(states_.prior.hessian, states_.prior.bias,
+            states_.prior.jacobian, states_.prior.residual, states_.prior.jacobian_t_inv);
     }
 
     // Debug.
