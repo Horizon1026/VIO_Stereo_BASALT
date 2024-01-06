@@ -238,18 +238,20 @@ bool Backend::MarginalizeOldestFrame() {
     for (auto &edge : all_imu_factors) {
         graph_optimization_problem.AddEdge(edge.get());
     }
-    ReportDebug(RED "[Backend] Marginalizor adds " <<
-        all_cameras_p_ic.size() << " all_cameras_p_ic, " <<
-        all_cameras_q_ic.size() << " all_cameras_q_ic, " <<
-        all_features_invdep.size() << " all_features_invdep, " <<
-        all_frames_p_wi.size() << " all_frames_p_wi, " <<
-        all_frames_q_wi.size() << " all_frames_q_wi, " <<
-        all_new_frames_v_wi.size() << " all_new_frames_v_wi, " <<
-        all_new_frames_ba.size() << " all_new_frames_ba, " <<
-        all_new_frames_bg.size() << " all_new_frames_bg, and " <<
+    if (options_.kReportAllInformation) {
+        ReportInfo(RED "[Backend] Marginalizor adds " <<
+            all_cameras_p_ic.size() << " all_cameras_p_ic, " <<
+            all_cameras_q_ic.size() << " all_cameras_q_ic, " <<
+            all_features_invdep.size() << " all_features_invdep, " <<
+            all_frames_p_wi.size() << " all_frames_p_wi, " <<
+            all_frames_q_wi.size() << " all_frames_q_wi, " <<
+            all_new_frames_v_wi.size() << " all_new_frames_v_wi, " <<
+            all_new_frames_ba.size() << " all_new_frames_ba, " <<
+            all_new_frames_bg.size() << " all_new_frames_bg, and " <<
 
-        all_visual_reproj_factors.size() << " all_visual_reproj_factors, " <<
-        all_imu_factors.size() << " all_imu_factors." RESET_COLOR);
+            all_visual_reproj_factors.size() << " all_visual_reproj_factors, " <<
+            all_imu_factors.size() << " all_imu_factors." RESET_COLOR);
+    }
 
     // Add prior information if valid.
     if (states_.prior.is_valid) {
@@ -273,7 +275,9 @@ bool Backend::MarginalizeOldestFrame() {
     marger.problem() = &graph_optimization_problem;
     marger.options().kSortDirection = SortMargedVerticesDirection::kSortAtBack;
     states_.prior.is_valid = marger.Marginalize(vertices_to_be_marged, states_.prior.is_valid);
-    marger.problem()->VerticesInformation();
+    if (options_.kReportAllInformation) {
+        marger.problem()->VerticesInformation();
+    }
 
     // Store prior information.
     if (states_.prior.is_valid) {
@@ -283,13 +287,15 @@ bool Backend::MarginalizeOldestFrame() {
         states_.prior.residual = marger.problem()->prior_residual();
     }
 
-    // Debug.
-    ReportDebug("[Backend] Marginalized prior residual size is " << states_.prior.residual.rows() <<
+    // Report marginalization result.
+    ReportInfo("[Backend] Marginalized prior residual size is " << states_.prior.residual.rows() <<
         ", squared norm is " << marger.problem()->prior_residual().squaredNorm() <<
         ", cost of problem is " << marger.cost_of_problem());
-    ShowMatrixImage("marg hessian", marger.problem()->hessian());
-    ShowMatrixImage("reverse hessian", marger.reverse_hessian());
-    ShowMatrixImage("prior", marger.problem()->prior_hessian());
+    if (options_.kReportAllInformation) {
+        ShowMatrixImage("marg hessian", marger.problem()->hessian());
+        ShowMatrixImage("reverse hessian", marger.reverse_hessian());
+        ShowMatrixImage("prior", marger.problem()->prior_hessian());
+    }
 
     return true;
 }
@@ -306,7 +312,7 @@ bool Backend::MarginalizeSubnewFrame() {
     }
 
     const uint32_t target_size = std::max(static_cast<uint32_t>(states_.prior.hessian.cols() - 15), min_size);
-    ReportDebug(RED "[Backend] Marginalizor discard prior information. [" << states_.prior.hessian.cols() << "]->[" << target_size << "]" RESET_COLOR);
+    ReportInfo(RED "[Backend] Marginalizor discard prior information. [" << states_.prior.hessian.cols() << "]->[" << target_size << "]" RESET_COLOR);
     if (states_.prior.is_valid && target_size > 0) {
         states_.prior.hessian.conservativeResize(target_size, target_size);
         states_.prior.bias.conservativeResize(target_size, 1);
@@ -317,10 +323,12 @@ bool Backend::MarginalizeSubnewFrame() {
             states_.prior.jacobian, states_.prior.residual, states_.prior.jacobian_t_inv);
     }
 
-    // Debug.
-    ReportDebug("[Backend] Marginalized prior residual size is " << states_.prior.residual.rows() <<
+    // Report marginalization result.
+    ReportInfo("[Backend] Marginalized prior residual size is " << states_.prior.residual.rows() <<
         ", squared norm is " << states_.prior.residual.squaredNorm());
-    ShowMatrixImage("prior", states_.prior.hessian);
+    if (options_.kReportAllInformation) {
+        ShowMatrixImage("prior", states_.prior.hessian);
+    }
 
     return true;
 }

@@ -50,6 +50,8 @@ bool Backend::TryToEstimate() {
         all_frames_q_wi.back()->param() << q_wi.w(), q_wi.x(), q_wi.y(), q_wi.z();
         all_frames_q_wi.back()->name() = std::string("q_wi") + std::to_string(frame.id());
     }
+    all_frames_p_wi.front()->SetFixed(true);
+    all_frames_q_wi.front()->SetFixed(true);
 
     // [Vertices] Inverse depth of each feature.
     // [Edges] Visual reprojection factor.
@@ -224,18 +226,21 @@ bool Backend::TryToEstimate() {
     for (auto &edge : all_imu_factors) {
         graph_optimization_problem.AddEdge(edge.get());
     }
-    ReportDebug(YELLOW "[Backend] Estimator adds " <<
-        all_cameras_p_ic.size() << " all_cameras_p_ic, " <<
-        all_cameras_q_ic.size() << " all_cameras_q_ic, " <<
-        all_features_invdep.size() << " all_features_invdep, " <<
-        all_frames_p_wi.size() << " all_frames_p_wi, " <<
-        all_frames_q_wi.size() << " all_frames_q_wi, " <<
-        all_new_frames_v_wi.size() << " all_new_frames_v_wi, " <<
-        all_new_frames_ba.size() << " all_new_frames_ba, " <<
-        all_new_frames_bg.size() << " all_new_frames_bg, and " <<
 
-        all_visual_reproj_factors.size() << " all_visual_reproj_factors, " <<
-        all_imu_factors.size() << " all_imu_factors." RESET_COLOR);
+    if (options_.kReportAllInformation) {
+        ReportInfo(YELLOW "[Backend] Estimator adds " <<
+            all_cameras_p_ic.size() << " all_cameras_p_ic, " <<
+            all_cameras_q_ic.size() << " all_cameras_q_ic, " <<
+            all_features_invdep.size() << " all_features_invdep, " <<
+            all_frames_p_wi.size() << " all_frames_p_wi, " <<
+            all_frames_q_wi.size() << " all_frames_q_wi, " <<
+            all_new_frames_v_wi.size() << " all_new_frames_v_wi, " <<
+            all_new_frames_ba.size() << " all_new_frames_ba, " <<
+            all_new_frames_bg.size() << " all_new_frames_bg, and " <<
+
+            all_visual_reproj_factors.size() << " all_visual_reproj_factors, " <<
+            all_imu_factors.size() << " all_imu_factors." RESET_COLOR);
+    }
 
     // Add prior information if valid.
     if (states_.prior.is_valid) {
@@ -244,19 +249,20 @@ bool Backend::TryToEstimate() {
         graph_optimization_problem.prior_jacobian_t_inv() = states_.prior.jacobian_t_inv;
         graph_optimization_problem.prior_residual() = states_.prior.residual;
 
-        // Debug.
-        ReportDebug("[Backend] Before estimation, prior residual squared norm is " << graph_optimization_problem.prior_residual().squaredNorm());
+        ReportInfo("[Backend] Before estimation, prior residual squared norm is " << graph_optimization_problem.prior_residual().squaredNorm());
     }
 
     // Construct solver to solve this problem.
     SolverLm<DorF> solver;
-    solver.options().kEnableReportEachIteration = true;
+    solver.options().kEnableReportEachIteration = options_.kReportAllInformation;
     solver.problem() = &graph_optimization_problem;
     solver.Solve(states_.prior.is_valid);
 
-    // Debug.
-    solver.problem()->VerticesInformation();
-    ShowMatrixImage("solve hessian", solver.problem()->hessian());
+    // Show all vertices and incremental function in optimization problem.
+    if (options_.kReportAllInformation) {
+        solver.problem()->VerticesInformation();
+        ShowMatrixImage("solve hessian", solver.problem()->hessian());
+    }
 
     // Update all camera extrinsics.
     for (uint32_t i = 0; i < all_cameras_p_ic.size(); ++i) {
@@ -322,9 +328,7 @@ bool Backend::TryToEstimate() {
         states_.prior.jacobian_t_inv = solver.problem()->prior_jacobian_t_inv();
         states_.prior.residual = solver.problem()->prior_residual();
 
-        // Debug.
-        ReportDebug("[Backend] After estimation, prior residual squared norm is " << solver.problem()->prior_residual().squaredNorm());
-        // should_quit_ = true;
+        ReportInfo("[Backend] After estimation, prior residual squared norm is " << solver.problem()->prior_residual().squaredNorm());
     }
 
     return true;

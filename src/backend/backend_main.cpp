@@ -5,6 +5,8 @@
 namespace VIO {
 
 bool Backend::RunOnce() {
+    ReportInfo(MAGENTA "[Backend] Backend is triggerred to run once." RESET_COLOR);
+
     if (data_manager_ == nullptr) {
         ReportError("[Backend] Backend cannot link with data manager.");
         return false;
@@ -48,8 +50,10 @@ bool Backend::RunOnce() {
             ReportInfo(GREEN "[Backend] Backend succeed to estimate states within " << timer.TockTickInMillisecond() << " ms." RESET_COLOR);
         }
 
-        // Debug.
-        ShowTinyInformationOfVisualLocalMap();
+        // Show information of visual local map if neccessary.
+        if (options_.kReportAllInformation) {
+            ShowTinyInformationOfVisualLocalMap();
+        }
 
         // Decide marginalization type.
         if (data_manager_->visual_local_map()->frames().size() >= data_manager_->options().kMaxStoredKeyFrames) {
