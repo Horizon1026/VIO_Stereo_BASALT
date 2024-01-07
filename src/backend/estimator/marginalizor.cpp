@@ -96,7 +96,7 @@ bool Backend::MarginalizeOldestFrame() {
         all_features_invdep.back()->name() = std::string("invdep ") + std::to_string(feature.id());
 
         // Mark these features to be marginalized.
-        feature.status() = FeatureSolvedStatus::kMarginalized;
+        // feature.status() = FeatureSolvedStatus::kMarginalized;
 
         // Add edges of visual reprojection factor, considering two cameras view one frame.
         const auto &obv_in_ref = feature.observe(min_frame_id);

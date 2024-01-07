@@ -79,8 +79,22 @@ bool Backend::RunOnce() {
     // Control the dimension of local map.
     switch (states_.marginalize_type) {
         case BackendMarginalizeType::kMarginalizeOldestFrame: {
+            // Remove frames which is marginalized.
             const auto oldest_frame_id = data_manager_->visual_local_map()->frames().front().id();
             data_manager_->visual_local_map()->RemoveFrame(oldest_frame_id);
+
+            // Remove features which is marginalized.
+            std::vector<uint32_t> features_id;
+            for (const auto &pair : data_manager_->visual_local_map()->features()) {
+                const auto &feature = pair.second;
+                if (feature.status() == FeatureSolvedStatus::kMarginalized) {
+                    features_id.emplace_back(feature.id());
+                }
+            }
+            for (const auto &id : features_id) {
+                data_manager_->visual_local_map()->RemoveFeature(id);
+            }
+
             RETURN_FALSE_IF(!data_manager_->visual_local_map()->SelfCheck());
             break;
         }
