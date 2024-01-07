@@ -75,7 +75,7 @@ bool Vio::ConfigComponentOfDataLoader() {
 
     data_loader_->options().kEnableRecordBinaryCurveLog = options_.data_loader.enable_recording_curve_binlog;
     data_loader_->options().kEnableRecordRawData = options_.data_loader.enable_recording_raw_data_binlog;
-    RETURN_FALSE_IF_FALSE(data_loader_->Initialize(options_.log_file_root_name + options_.data_loader.log_file_name));
+    RETURN_FALSE_IF_FALSE(data_loader_->Configuration(options_.log_file_root_name + options_.data_loader.log_file_name));
 
     data_loader_->options().kMaxSizeOfImuBuffer = options_.data_loader.max_size_of_imu_buffer;
     data_loader_->options().kMaxSizeOfImageBuffer = options_.data_loader.max_size_of_image_buffer;
@@ -124,11 +124,13 @@ bool Vio::ConfigComponentOfFrontend() {
 bool Vio::ConfigComponentOfBackend() {
     // Config backend.
     backend_ = std::make_unique<Backend>();
-    backend_->options().kEnableRecordBinaryCurveLog = options_.backend.enable_recording_curve_binlog;
     backend_->options().kMethodIndexToEstimateGyroBiasForInitialization = options_.backend.method_index_to_estimate_gyro_bias_for_initialization;
     backend_->options().kGravityInWordFrame = options_.backend.gravity_w;
     backend_->options().kMaxValidFeatureDepthInMeter = options_.backend.max_valid_feature_depth_in_meter;
     backend_->options().kMinValidFeatureDepthInMeter = options_.backend.min_valid_feature_depth_in_meter;
+
+    backend_->options().kEnableRecordBinaryCurveLog = options_.backend.enable_recording_curve_binlog;
+    RETURN_FALSE_IF_FALSE(backend_->Configuration(options_.log_file_root_name + options_.backend.log_file_name));
 
     // Config imu model.
     backend_->imu_model() = std::make_unique<Imu>();

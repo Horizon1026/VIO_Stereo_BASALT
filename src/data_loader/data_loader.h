@@ -72,7 +72,7 @@ public:
     ~DataLoader() = default;
 
     void Clear();
-    bool Initialize(const std::string &log_file_name);
+    bool Configuration(const std::string &log_file_name);
     void RegisterLogPackages();
 
     // Push measurements into dataloader.

@@ -4,6 +4,21 @@
 
 namespace VIO {
 
+bool Backend::Configuration(const std::string &log_file_name) {
+    if (options_.kEnableRecordBinaryCurveLog) {
+        if (!logger_.CreateLogFile(log_file_name)) {
+            ReportError("[Backend] Failed to create log file.");
+            options_.kEnableRecordBinaryCurveLog = false;
+            return false;
+        }
+
+        RegisterLogPackages();
+        logger_.PrepareForRecording();
+    }
+
+    return true;
+}
+
 bool Backend::RunOnce() {
     ReportInfo(MAGENTA "[Backend] Backend is triggerred to run once." RESET_COLOR);
 
@@ -34,7 +49,6 @@ bool Backend::RunOnce() {
         } else {
             ResetToReintialize();
             ReportWarn("[Backend] Backend failed to initialize. All states will be reset for reinitialization.");
-            return true;
         }
     }
 
@@ -77,43 +91,11 @@ bool Backend::RunOnce() {
     }
 
     // Control the dimension of local map.
-    switch (states_.marginalize_type) {
-        case BackendMarginalizeType::kMarginalizeOldestFrame: {
-            // Remove frames which is marginalized.
-            const auto oldest_frame_id = data_manager_->visual_local_map()->frames().front().id();
-            data_manager_->visual_local_map()->RemoveFrame(oldest_frame_id);
+    RETURN_FALSE_IF(!ControlLocalMapDimension());
 
-            // Remove features which is marginalized.
-            std::vector<uint32_t> features_id;
-            for (const auto &pair : data_manager_->visual_local_map()->features()) {
-                const auto &feature = pair.second;
-                if (feature.status() == FeatureSolvedStatus::kMarginalized) {
-                    features_id.emplace_back(feature.id());
-                }
-            }
-            for (const auto &id : features_id) {
-                data_manager_->visual_local_map()->RemoveFeature(id);
-            }
-
-            RETURN_FALSE_IF(!data_manager_->visual_local_map()->SelfCheck());
-            break;
-        }
-        case BackendMarginalizeType::kMarginalizeSubnewFrame: {
-            const auto subnew_frame_id = data_manager_->visual_local_map()->frames().back().id() -
-                data_manager_->options().kMaxStoredNewFrames + 1;
-            data_manager_->visual_local_map()->RemoveFrame(subnew_frame_id);
-            RETURN_FALSE_IF(!data_manager_->visual_local_map()->SelfCheck());
-            break;
-        }
-        default:
-        case BackendMarginalizeType::kNotMarginalize: {
-
-            break;
-        }
-    }
-    if (data_manager_->frames_with_bias().size() >= data_manager_->options().kMaxStoredNewFrames) {
-        data_manager_->frames_with_bias().pop_front();
-    }
+    // Update states and record log.
+    UpdateBackendStates();
+    RecordBackendStatesLog();
 
     return true;
 }

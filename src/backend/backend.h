@@ -26,13 +26,6 @@ struct BackendOptions {
     bool kReportAllInformation = false;
 };
 
-/* Packages of log to be recorded. */
-#pragma pack(1)
-struct BackendLog {
-    uint8_t is_initialized = 0;
-};
-#pragma pack()
-
 /* Status of Backend. */
 enum class BackendMarginalizeType : uint8_t {
     kNotMarginalize = 0,
@@ -69,6 +62,37 @@ struct BackendStates {
     } motion;
 };
 
+/* Packages of log to be recorded. */
+#pragma pack(1)
+struct BackendLog {
+    uint8_t is_initialized = 0;
+
+    float time_stamp_s = 0.0f;
+    float p_wi_x = 0.0f;
+    float p_wi_y = 0.0f;
+    float p_wi_z = 0.0f;
+    float q_wi_w = 0.0f;
+    float q_wi_x = 0.0f;
+    float q_wi_y = 0.0f;
+    float q_wi_z = 0.0f;
+    float q_wi_pitch = 0.0f;
+    float q_wi_roll = 0.0f;
+    float q_wi_yaw = 0.0f;
+    float v_wi_x = 0.0f;
+    float v_wi_y = 0.0f;
+    float v_wi_z = 0.0f;
+    float bias_a_x = 0.0f;
+    float bias_a_y = 0.0f;
+    float bias_a_z = 0.0f;
+    float bias_g_x = 0.0f;
+    float bias_g_y = 0.0f;
+    float bias_g_z = 0.0f;
+
+    uint8_t marginalize_type = 0;
+    float prior_residual = 0.0f;
+};
+#pragma pack()
+
 /* Class Backend Declaration. */
 class Backend final {
 
@@ -80,6 +104,10 @@ public:
     bool RunOnce();
     void Reset();
     void ResetToReintialize();
+    bool Configuration(const std::string &log_file_name);
+
+    // Backend log recorder.
+    void RegisterLogPackages();
 
     // Backend initializor.
     bool TryToInitialize();
@@ -117,6 +145,9 @@ public:
     // Backend data processor.
     void RecomputeImuPreintegration();
     bool TriangulizeAllVisualFeatures();
+    bool ControlLocalMapDimension();
+    void UpdateBackendStates();
+    void RecordBackendStatesLog();
 
     // Backend visualizor.
     void ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id, const uint32_t cur_frame_id, const bool use_rectify = false);

@@ -15,7 +15,7 @@ void DataLoader::Clear() {
     right_image_buffer_.clear();
 }
 
-bool DataLoader::Initialize(const std::string &log_file_name) {
+bool DataLoader::Configuration(const std::string &log_file_name) {
     // Register packages for log file.
     if (options_.kEnableRecordBinaryCurveLog) {
         if (!logger_.CreateLogFile(log_file_name)) {

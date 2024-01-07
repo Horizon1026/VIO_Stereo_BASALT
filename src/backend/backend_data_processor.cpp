@@ -156,4 +156,78 @@ bool Backend::AddNewestFrameWithBiasIntoLocalMap() {
     return data_manager_->visual_local_map()->SelfCheck();
 }
 
+bool Backend::ControlLocalMapDimension() {
+    RETURN_TRUE_IF(!states_.is_initialized);
+
+    switch (states_.marginalize_type) {
+        case BackendMarginalizeType::kMarginalizeOldestFrame: {
+            // Remove frames which is marginalized.
+            const auto oldest_frame_id = data_manager_->visual_local_map()->frames().front().id();
+            data_manager_->visual_local_map()->RemoveFrame(oldest_frame_id);
+
+            // Remove features which is marginalized.
+            std::vector<uint32_t> features_id;
+            for (const auto &pair : data_manager_->visual_local_map()->features()) {
+                const auto &feature = pair.second;
+                if (feature.status() == FeatureSolvedStatus::kMarginalized) {
+                    features_id.emplace_back(feature.id());
+                }
+            }
+            for (const auto &id : features_id) {
+                data_manager_->visual_local_map()->RemoveFeature(id);
+            }
+
+            RETURN_FALSE_IF(!data_manager_->visual_local_map()->SelfCheck());
+            break;
+        }
+        case BackendMarginalizeType::kMarginalizeSubnewFrame: {
+            const auto subnew_frame_id = data_manager_->visual_local_map()->frames().back().id() -
+                data_manager_->options().kMaxStoredNewFrames + 1;
+            data_manager_->visual_local_map()->RemoveFrame(subnew_frame_id);
+            RETURN_FALSE_IF(!data_manager_->visual_local_map()->SelfCheck());
+            break;
+        }
+        default:
+        case BackendMarginalizeType::kNotMarginalize: {
+
+            break;
+        }
+    }
+    if (data_manager_->frames_with_bias().size() >= data_manager_->options().kMaxStoredNewFrames) {
+        data_manager_->frames_with_bias().pop_front();
+    }
+
+    return true;
+}
+
+void Backend::UpdateBackendStates() {
+    if (data_manager_->frames_with_bias().empty()) {
+        states_.motion.time_stamp_s = 0.0f;
+    } else {
+        states_.motion.time_stamp_s = data_manager_->frames_with_bias().back().time_stamp_s;
+    }
+
+    if (!states_.is_initialized) {
+        states_.prior.is_valid = false;
+
+        states_.motion.p_wi.setZero();
+        states_.motion.q_wi.setIdentity();
+        states_.motion.v_wi.setZero();
+        states_.motion.ba.setZero();
+        states_.motion.bg.setZero();
+        return;
+    }
+
+    // If backend is initialized, update states with visual local map.
+    const auto &newest_frame = data_manager_->visual_local_map()->frames().back();
+    const auto &newest_frame_with_bias = data_manager_->frames_with_bias().back();
+    Utility::ComputeTransformTransformInverse(newest_frame.p_wc(), newest_frame.q_wc(),
+        data_manager_->camera_extrinsics().front().p_ic,
+        data_manager_->camera_extrinsics().front().q_ic,
+        states_.motion.p_wi, states_.motion.q_wi);
+    states_.motion.v_wi = newest_frame.v_w();
+    states_.motion.ba = newest_frame_with_bias.imu_preint_block.bias_accel();
+    states_.motion.bg = newest_frame_with_bias.imu_preint_block.bias_gyro();
+}
+
 }
