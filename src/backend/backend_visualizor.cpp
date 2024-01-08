@@ -89,6 +89,7 @@ void Backend::ShowMatrixImage(const std::string &title, const TMat<DorF> &matrix
 void Backend::ShowLocalMapFramesAndFeatures() {
     std::vector<std::string> camera_name = {"left", "right"};
     for (auto &frame : data_manager_->visual_local_map()->frames()) {
+        // Define i to be camera id. If stereo, i can be 0 and 1.
         for (uint32_t i = 0; i < frame.raw_images().size(); ++i) {
             GrayImage gray_image(frame.raw_images()[i]);
             RgbImage rgb_image;
@@ -100,10 +101,24 @@ void Backend::ShowLocalMapFramesAndFeatures() {
 
             for (auto &pair : frame.features()) {
                 auto &feature = pair.second;
-                if (feature->observes().size() >= i + 1) {
+                auto &observe = feature->observe(frame.id());
+                if (observe.size() >= i + 1) {
                     // Draw feature in rgb image.
-                    const Vec2 pixel_uv = feature->observe(frame.id())[i].raw_pixel_uv;
-                    const RgbPixel pixel_color = RgbPixel{.r = 255, .g = 255, .b = 0};
+                    const Vec2 pixel_uv = observe[i].raw_pixel_uv;
+                    RgbPixel pixel_color = RgbPixel{.r = 255, .g = 255, .b = 0};
+                    switch (feature->status()) {
+                        case FeatureSolvedStatus::kSolved:
+                            pixel_color = RgbPixel{.r = 0, .g = 255, .b = 0};
+                            break;
+                        case FeatureSolvedStatus::kMarginalized:
+                            pixel_color = RgbPixel{.r = 0, .g = 0, .b = 255};
+                            break;
+                        default:
+                        case FeatureSolvedStatus::kUnsolved:
+                            pixel_color = RgbPixel{.r = 255, .g = 0, .b = 0};
+                            break;
+                    }
+
                     Visualizor::DrawSolidCircle(rgb_image, pixel_uv.x(), pixel_uv.y(), 3, pixel_color);
                     Visualizor::DrawString(rgb_image, std::to_string(feature->id()), pixel_uv.x(), pixel_uv.y(), pixel_color);
                 }
