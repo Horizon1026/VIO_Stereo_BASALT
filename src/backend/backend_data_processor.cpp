@@ -121,9 +121,9 @@ bool Backend::AddNewestFrameWithBiasIntoLocalMap() {
     newest_frame_imu.imu_preint_block.bias_gyro() = sub_new_frame_with_imu.imu_preint_block.bias_gyro();
     newest_frame_imu.imu_preint_block.bias_accel() = sub_new_frame_with_imu.imu_preint_block.bias_accel();
     newest_frame_imu.imu_preint_block.SetImuNoiseSigma(imu_model_->options().kAccelNoise,
-                                                        imu_model_->options().kGyroNoise,
-                                                        imu_model_->options().kAccelRandomWalk,
-                                                        imu_model_->options().kGyroRandomWalk);
+                                                       imu_model_->options().kGyroNoise,
+                                                       imu_model_->options().kAccelRandomWalk,
+                                                       imu_model_->options().kGyroRandomWalk);
     const int32_t max_idx = static_cast<int32_t>(newest_frame_imu.packed_measure->imus.size());
     for (int32_t i = 1; i < max_idx; ++i) {
         newest_frame_imu.imu_preint_block.Propagate(*newest_frame_imu.packed_measure->imus[i - 1], *newest_frame_imu.packed_measure->imus[i]);
@@ -132,10 +132,20 @@ bool Backend::AddNewestFrameWithBiasIntoLocalMap() {
     // Add new frame into local map.
     const auto &sub_new_frame = data_manager_->visual_local_map()->frames().back();
     const int32_t frame_id = data_manager_->visual_local_map()->frames().back().id() + 1;
+    std::vector<MatImg> raw_images;
+    if (options_.kEnableLocalMapStoreRawImages && newest_frame_imu.packed_measure != nullptr) {
+        if (newest_frame_imu.packed_measure->left_image != nullptr) {
+            raw_images.emplace_back(newest_frame_imu.packed_measure->left_image->image);
+        }
+        if (newest_frame_imu.packed_measure->right_image != nullptr) {
+            raw_images.emplace_back(newest_frame_imu.packed_measure->right_image->image);
+        }
+    }
     data_manager_->visual_local_map()->AddNewFrameWithFeatures(newest_frame_imu.visual_measure->features_id,
-                                                                newest_frame_imu.visual_measure->observes_per_frame,
-                                                                newest_frame_imu.time_stamp_s,
-                                                                frame_id);
+                                                               newest_frame_imu.visual_measure->observes_per_frame,
+                                                               newest_frame_imu.time_stamp_s,
+                                                               frame_id,
+                                                               raw_images);
     auto &newest_frame = data_manager_->visual_local_map()->frames().back();
 
     Vec3 p_wi = Vec3::Zero();

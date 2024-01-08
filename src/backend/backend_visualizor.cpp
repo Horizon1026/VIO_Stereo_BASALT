@@ -1,5 +1,6 @@
 #include "backend.h"
 #include "log_report.h"
+#include "slam_memory.h"
 #include "math_kinematics.h"
 #include "visualizor.h"
 #include "visualizor_3d.h"
@@ -85,7 +86,35 @@ void Backend::ShowMatrixImage(const std::string &title, const TMat<DorF> &matrix
     Visualizor::WaitKey(1);
 }
 
-void Backend::ShowLocalMapWithFrames(const int32_t delay_ms) {
+void Backend::ShowLocalMapFramesAndFeatures() {
+    std::vector<std::string> camera_name = {"left", "right"};
+    for (auto &frame : data_manager_->visual_local_map()->frames()) {
+        for (uint32_t i = 0; i < frame.raw_images().size(); ++i) {
+            GrayImage gray_image(frame.raw_images()[i]);
+            RgbImage rgb_image;
+
+            // Convert gray image to rgb image.
+            uint8_t *rgb_buf = (uint8_t *)SlamMemory::Malloc(gray_image.rows() * gray_image.cols() * 3 * sizeof(uint8_t));
+            rgb_image.SetImage(rgb_buf, gray_image.rows(), gray_image.cols(), true);
+            Visualizor::ConvertUint8ToRgb(gray_image.data(), rgb_image.data(), gray_image.rows() * gray_image.cols());
+
+            for (auto &pair : frame.features()) {
+                auto &feature = pair.second;
+                if (feature->observes().size() >= i + 1) {
+                    // Draw feature in rgb image.
+                    const Vec2 pixel_uv = feature->observe(frame.id())[i].raw_pixel_uv;
+                    const RgbPixel pixel_color = RgbPixel{.r = 255, .g = 255, .b = 0};
+                    Visualizor::DrawSolidCircle(rgb_image, pixel_uv.x(), pixel_uv.y(), 3, pixel_color);
+                    Visualizor::DrawString(rgb_image, std::to_string(feature->id()), pixel_uv.x(), pixel_uv.y(), pixel_color);
+                }
+            }
+            Visualizor::ShowImage(std::string("frame ") + std::to_string(frame.id()) + std::string(" ") + camera_name[i], rgb_image);
+        }
+    }
+    Visualizor::WaitKey(1);
+}
+
+void Backend::ShowLocalMapInWorldFrame(const int32_t delay_ms) {
     Visualizor3D::Clear();
 
     // Add word frame.

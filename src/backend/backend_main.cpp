@@ -64,9 +64,11 @@ bool Backend::RunOnce() {
             ReportInfo(GREEN "[Backend] Backend succeed to estimate states within " << timer.TockTickInMillisecond() << " ms." RESET_COLOR);
         }
 
-        // Show information of visual local map if neccessary.
         if (options_.kReportAllInformation) {
+            // Show information of visual local map if neccessary.
             ShowTinyInformationOfVisualLocalMap();
+            // Show all frames and features in local map.
+            ShowLocalMapFramesAndFeatures();
         }
 
         // Decide marginalization type.

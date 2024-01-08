@@ -51,10 +51,22 @@ bool Backend::ConvertNewFramesToCovisibleGraphForInitialization() {
     int32_t frame_id = 1;
     for (const auto &frame : data_manager_->frames_with_bias()) {
         RETURN_FALSE_IF(frame.visual_measure == nullptr);
+
+        std::vector<MatImg> raw_images;
+        if (options_.kEnableLocalMapStoreRawImages && frame.packed_measure != nullptr) {
+            if (frame.packed_measure->left_image != nullptr) {
+                raw_images.emplace_back(frame.packed_measure->left_image->image);
+            }
+            if (frame.packed_measure->right_image != nullptr) {
+                raw_images.emplace_back(frame.packed_measure->right_image->image);
+            }
+        }
+
         local_map_ptr->AddNewFrameWithFeatures(frame.visual_measure->features_id,
                                                frame.visual_measure->observes_per_frame,
                                                frame.time_stamp_s,
-                                               frame_id);
+                                               frame_id,
+                                               raw_images);
         ++frame_id;
     }
     RETURN_FALSE_IF(!local_map_ptr->SelfCheck());

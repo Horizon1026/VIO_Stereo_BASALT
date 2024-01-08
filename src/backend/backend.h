@@ -23,7 +23,8 @@ struct BackendOptions {
     Vec3 kGravityInWordFrame = Vec3(0.0f, 0.0f, 9.8f);
     float kMaxValidFeatureDepthInMeter = 50.0f;
     float kMinValidFeatureDepthInMeter = 0.1f;
-    bool kReportAllInformation = false;
+    bool kReportAllInformation = true;
+    bool kEnableLocalMapStoreRawImages = true;
 };
 
 /* Status of Backend. */
@@ -151,7 +152,8 @@ public:
 
     // Backend visualizor.
     void ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id, const uint32_t cur_frame_id, const bool use_rectify = false);
-    void ShowLocalMapWithFrames(const int32_t delay_ms);
+    void ShowLocalMapFramesAndFeatures();
+    void ShowLocalMapInWorldFrame(const int32_t delay_ms);
     void ShowMatrixImage(const std::string &title, const TMat<DorF> &matrix);
     void ShowSimpleInformationOfVisualLocalMap();
     void ShowTinyInformationOfVisualLocalMap();
