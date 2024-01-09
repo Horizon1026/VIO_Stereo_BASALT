@@ -179,7 +179,7 @@ void Backend::ShowAllFramesWithBias() {
             }
 
             // Draw image to show.
-            Visualizor::ShowImage(std::string("frame with bias of ") + camera_name[0] + std::string(" at ") +
+            Visualizor::ShowImage(std::string("frame with bias of ") + camera_name[1] + std::string(" at ") +
                 std::to_string(frame_with_bias.time_stamp_s) + std::string("s"), rgb_image);
         }
     }

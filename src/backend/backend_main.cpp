@@ -68,7 +68,7 @@ bool Backend::RunOnce() {
             // Show information of visual local map if neccessary.
             ShowTinyInformationOfVisualLocalMap();
             // Show all frames and features in local map.
-            ShowLocalMapFramesAndFeatures();
+            // ShowLocalMapFramesAndFeatures();
             // Show all frames with bias.
             ShowAllFramesWithBias();
         }
