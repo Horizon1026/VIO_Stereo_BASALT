@@ -69,6 +69,8 @@ bool Backend::RunOnce() {
             ShowTinyInformationOfVisualLocalMap();
             // Show all frames and features in local map.
             ShowLocalMapFramesAndFeatures();
+            // Show all frames with bias.
+            ShowAllFramesWithBias();
         }
 
         // Decide marginalization type.
