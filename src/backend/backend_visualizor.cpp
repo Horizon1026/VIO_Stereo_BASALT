@@ -171,6 +171,7 @@ void Backend::ShowAllFramesWithBias() {
 
             // Draw all observed features in this frame and this camera image.
             for (uint32_t i = 0; i < frame_with_bias.visual_measure->features_id.size(); ++i) {
+                CONTINUE_IF(frame_with_bias.visual_measure->observes_per_frame[i].size() < 2);
                 const Vec2 pixel_uv = frame_with_bias.visual_measure->observes_per_frame[i][1].raw_pixel_uv;
                 const RgbPixel pixel_color = RgbPixel{.r = 0, .g = 255, .b = 255};
                 Visualizor::DrawSolidCircle(rgb_image, pixel_uv.x(), pixel_uv.y(), 3, pixel_color);
