@@ -92,6 +92,7 @@ void Backend::ShowLocalMapFramesAndFeatures() {
 
     for (auto &frame : data_manager_->visual_local_map()->frames()) {
         // If stereo, camera id can be 0 and 1.
+        RETURN_IF(frame.raw_images().size() > data_manager_->camera_extrinsics().size());
         for (uint32_t camera_id = 0; camera_id < frame.raw_images().size(); ++camera_id) {
             // Convert gray image to rgb image.
             GrayImage gray_image(frame.raw_images()[camera_id]);
@@ -105,12 +106,20 @@ void Backend::ShowLocalMapFramesAndFeatures() {
                 auto &feature = pair.second;
                 auto &observe = feature->observe(frame.id());
                 if (observe.size() > camera_id) {
+                    CONTINUE_IF(observe[camera_id].id != camera_id);
+
                     // Draw feature in rgb image.
                     const Vec2 pixel_uv = observe[camera_id].raw_pixel_uv;
                     RgbPixel pixel_color = RgbPixel{.r = 255, .g = 255, .b = 0};
                     switch (feature->status()) {
                         case FeatureSolvedStatus::kSolved:
-                            pixel_color = RgbPixel{.r = 0, .g = 255, .b = 0};
+                            if (feature->observes().size() > 1) {
+                                // If this feature is observed in different frame.
+                                pixel_color = RgbPixel{.r = 0, .g = 255, .b = 0};
+                            } else {
+                                // If this feature is only observed in one frame but has stereo view.
+                                pixel_color = RgbPixel{.r = 255, .g = 255, .b = 0};
+                            }
                             break;
                         case FeatureSolvedStatus::kMarginalized:
                             pixel_color = RgbPixel{.r = 0, .g = 0, .b = 255};
@@ -125,6 +134,7 @@ void Backend::ShowLocalMapFramesAndFeatures() {
                     Visualizor::DrawString(rgb_image, std::to_string(feature->id()), pixel_uv.x(), pixel_uv.y(), pixel_color);
                 }
             }
+
             Visualizor::ShowImage(std::string("frame ") + std::to_string(frame.id()) + std::string(" ") + camera_name[camera_id] +
                 std::string(" at ") + std::to_string(frame.time_stamp_s()) + std::string("s"), rgb_image);
         }

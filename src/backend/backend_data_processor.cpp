@@ -38,6 +38,8 @@ bool Backend::TriangulizeAllVisualFeatures() {
     int32_t triangulize_num = 0;
     for (auto &pair : data_manager_->visual_local_map()->features()) {
         auto &feature = pair.second;
+        CONTINUE_IF(feature.status() == FeatureSolvedStatus::kMarginalized);
+
         q_wc_vec.clear();
         p_wc_vec.clear();
         norm_xy_vec.clear();
@@ -91,9 +93,7 @@ bool Backend::TriangulizeAllVisualFeatures() {
         Vec3 p_w = Vec3::Zero();
         if (solver.Triangulate(q_wc_vec, p_wc_vec, norm_xy_vec, p_w)) {
             feature.param() = p_w;
-            if (feature.status() != FeatureSolvedStatus::kMarginalized) {
-                feature.status() = FeatureSolvedStatus::kSolved;
-            }
+            feature.status() = FeatureSolvedStatus::kSolved;
             ++triangulize_num;
         } else {
             feature.status() = FeatureSolvedStatus::kUnsolved;

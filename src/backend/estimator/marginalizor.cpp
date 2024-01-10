@@ -238,7 +238,7 @@ bool Backend::MarginalizeOldestFrame() {
     for (auto &edge : all_imu_factors) {
         graph_optimization_problem.AddEdge(edge.get());
     }
-    if (options_.kReportAllInformation) {
+    if (options_.kEnableReportAllInformation) {
         ReportInfo(RED "[Backend] Marginalizor adds " <<
             all_cameras_p_ic.size() << " all_cameras_p_ic, " <<
             all_cameras_q_ic.size() << " all_cameras_q_ic, " <<
@@ -275,7 +275,7 @@ bool Backend::MarginalizeOldestFrame() {
     marger.problem() = &graph_optimization_problem;
     marger.options().kSortDirection = SortMargedVerticesDirection::kSortAtBack;
     states_.prior.is_valid = marger.Marginalize(vertices_to_be_marged, states_.prior.is_valid);
-    if (options_.kReportAllInformation) {
+    if (options_.kEnableReportAllInformation) {
         marger.problem()->VerticesInformation();
     }
 
@@ -291,7 +291,7 @@ bool Backend::MarginalizeOldestFrame() {
     ReportInfo("[Backend] Marginalized prior residual size is " << states_.prior.residual.rows() <<
         ", squared norm is " << marger.problem()->prior_residual().squaredNorm() <<
         ", cost of problem is " << marger.cost_of_problem());
-    if (options_.kReportAllInformation) {
+    if (options_.kEnableReportAllInformation) {
         ShowMatrixImage("marg hessian", marger.problem()->hessian());
         ShowMatrixImage("reverse hessian", marger.reverse_hessian());
         ShowMatrixImage("prior", marger.problem()->prior_hessian());
@@ -311,6 +311,7 @@ bool Backend::MarginalizeSubnewFrame() {
         states_.prior.is_valid = false;
         return true;
     }
+    RETURN_TRUE_IF_FALSE(states_.prior.is_valid);
 
     const uint32_t target_size = states_.prior.hessian.cols() > 15 ? std::max(static_cast<uint32_t>(states_.prior.hessian.cols() - 15), min_size) : 0;
     ReportInfo(RED "[Backend] Marginalizor discard prior information. [" << states_.prior.hessian.cols() << "]->[" << target_size << "]" RESET_COLOR);
@@ -327,7 +328,7 @@ bool Backend::MarginalizeSubnewFrame() {
     // Report marginalization result.
     ReportInfo("[Backend] Marginalized prior residual size is " << states_.prior.residual.rows() <<
         ", squared norm is " << states_.prior.residual.squaredNorm());
-    if (options_.kReportAllInformation) {
+    if (options_.kEnableReportAllInformation) {
         ShowMatrixImage("prior", states_.prior.hessian);
     }
 

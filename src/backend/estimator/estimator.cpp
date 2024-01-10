@@ -227,7 +227,7 @@ bool Backend::TryToEstimate() {
         graph_optimization_problem.AddEdge(edge.get());
     }
 
-    if (options_.kReportAllInformation) {
+    if (options_.kEnableReportAllInformation) {
         ReportInfo(YELLOW "[Backend] Estimator adds " <<
             all_cameras_p_ic.size() << " all_cameras_p_ic, " <<
             all_cameras_q_ic.size() << " all_cameras_q_ic, " <<
@@ -254,12 +254,12 @@ bool Backend::TryToEstimate() {
 
     // Construct solver to solve this problem.
     SolverLm<DorF> solver;
-    solver.options().kEnableReportEachIteration = options_.kReportAllInformation;
+    solver.options().kEnableReportEachIteration = options_.kEnableReportAllInformation;
     solver.problem() = &graph_optimization_problem;
     solver.Solve(states_.prior.is_valid);
 
     // Show all vertices and incremental function in optimization problem.
-    if (options_.kReportAllInformation) {
+    if (options_.kEnableReportAllInformation) {
         solver.problem()->VerticesInformation();
         ShowMatrixImage("solve hessian", solver.problem()->hessian());
     }
@@ -289,6 +289,7 @@ bool Backend::TryToEstimate() {
     }
 
     // Update all feature position in local map.
+    uint32_t solved_features_num = 0;
     for (uint32_t i = 0; i < all_features_invdep.size(); ++i) {
         auto feature_ptr = data_manager_->visual_local_map()->feature(all_features_id[i]);
         auto frame_ptr = data_manager_->visual_local_map()->frame(feature_ptr->first_frame_id());
@@ -298,10 +299,12 @@ bool Backend::TryToEstimate() {
 
         if (p_c.z() > options_.kMinValidFeatureDepthInMeter && p_c.z() < options_.kMaxValidFeatureDepthInMeter) {
             feature_ptr->status() = FeatureSolvedStatus::kSolved;
+            ++solved_features_num;
         } else {
             feature_ptr->status() = FeatureSolvedStatus::kUnsolved;
         }
     }
+    ReportInfo("[Backend] Number of solved features is " << solved_features_num << ".");
 
     // Update imu preintegration.
     uint32_t idx = 0;
