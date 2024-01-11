@@ -50,8 +50,8 @@ bool Backend::TryToEstimate() {
         all_frames_q_wi.back()->param() << q_wi.w(), q_wi.x(), q_wi.y(), q_wi.z();
         all_frames_q_wi.back()->name() = std::string("q_wi") + std::to_string(frame.id());
     }
-    all_frames_p_wi.front()->SetFixed(true);
-    all_frames_q_wi.front()->SetFixed(true);
+    // all_frames_p_wi.front()->SetFixed(true);
+    // all_frames_q_wi.front()->SetFixed(true);
 
     // [Vertices] Inverse depth of each feature.
     // [Edges] Visual reprojection factor.
@@ -60,7 +60,8 @@ bool Backend::TryToEstimate() {
     std::vector<std::unique_ptr<Edge<DorF>>> all_visual_reproj_factors;
     for (const auto &pair : data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
-        CONTINUE_IF(feature.observes().size() < 2);
+        CONTINUE_IF(feature.observes().empty());
+        CONTINUE_IF(feature.observes().size() < 1 && feature.observes().front().size() < 1);
         CONTINUE_IF(feature.status() == FeatureSolvedStatus::kMarginalized);
 
         // Determine the range of all observations of this feature.
@@ -72,7 +73,6 @@ bool Backend::TryToEstimate() {
         const auto &frame = data_manager_->visual_local_map()->frame(feature.first_frame_id());
         const Vec3 p_c = frame->q_wc().inverse() * (feature.param() - frame->p_wc());
         const float invdep = 1.0f / p_c.z();
-        CONTINUE_IF(std::isnan(invdep) || std::isinf(invdep));
 
         // Add vertex of feature invdep.
         all_features_id.emplace_back(feature.id());
@@ -289,22 +289,7 @@ bool Backend::TryToEstimate() {
     }
 
     // Update all feature position in local map.
-    uint32_t solved_features_num = 0;
-    for (uint32_t i = 0; i < all_features_invdep.size(); ++i) {
-        auto feature_ptr = data_manager_->visual_local_map()->feature(all_features_id[i]);
-        auto frame_ptr = data_manager_->visual_local_map()->frame(feature_ptr->first_frame_id());
-        auto &observe = feature_ptr->observe(feature_ptr->first_frame_id());
-        const Vec3 p_c = Vec3(observe[0].rectified_norm_xy.x(), observe[0].rectified_norm_xy.y(), 1) / all_features_invdep[i]->param()(0);
-        feature_ptr->param() = frame_ptr->q_wc() * p_c + frame_ptr->p_wc();
-
-        if (p_c.z() > options_.kMinValidFeatureDepthInMeter && p_c.z() < options_.kMaxValidFeatureDepthInMeter) {
-            feature_ptr->status() = FeatureSolvedStatus::kSolved;
-            ++solved_features_num;
-        } else {
-            feature_ptr->status() = FeatureSolvedStatus::kUnsolved;
-        }
-    }
-    ReportInfo("[Backend] Number of solved features is " << solved_features_num << ".");
+    RETURN_FALSE_IF_FALSE(TriangulizeAllVisualFeatures());
 
     // Update imu preintegration.
     uint32_t idx = 0;

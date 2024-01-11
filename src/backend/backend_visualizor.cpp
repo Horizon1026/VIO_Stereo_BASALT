@@ -36,23 +36,9 @@ void Backend::ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id,
         }
     }
 
-    // Create gray image of ref image.
-    uint32_t min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
-    auto ref_frame_iter = data_manager_->frames_with_bias().begin();
-    while (min_frames_idx < ref_frame_id) {
-        ++ref_frame_iter;
-        ++min_frames_idx;
-    }
-    const GrayImage ref_image(ref_frame_iter->packed_measure->left_image->image);
-
-    // Create gray image of cur image.
-    min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
-    auto cur_frame_iter = data_manager_->frames_with_bias().begin();
-    while (min_frames_idx < cur_frame_id) {
-        ++cur_frame_iter;
-        ++min_frames_idx;
-    }
-    const GrayImage cur_image(cur_frame_iter->packed_measure->left_image->image);
+    // Create gray image of ref and cur image.
+    const GrayImage ref_image(data_manager_->visual_local_map()->frame(ref_frame_id)->raw_images()[0]);
+    const GrayImage cur_image(data_manager_->visual_local_map()->frame(cur_frame_id)->raw_images()[0]);
 
     const std::vector<uint8_t> tracked_status(ref_pixel_uv.size(), 1);
     if (use_rectify) {
@@ -212,6 +198,9 @@ void Backend::ShowLocalMapInWorldFrame(const int32_t delay_ms) {
         .scale = 1.0f,
     });
 
+    RETURN_IF(data_manager_->visual_local_map()->features().empty());
+    RETURN_IF(data_manager_->visual_local_map()->frames().empty());
+
     // Add all features in locap map.
     for (const auto &pair : data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
@@ -252,6 +241,11 @@ void Backend::ShowLocalMapInWorldFrame(const int32_t delay_ms) {
             Visualizor3D::poses().emplace_back(PoseType{ .p_wb = p_wc, .q_wb = q_wc, .scale = 0.01f });
         }
     }
+
+    // Set visualizor camera view by newest frame.
+    const Vec3 p_c = Vec3(0, 0, 1);
+    const Vec3 p_w = Visualizor3D::camera_view().q_wc * p_c + Visualizor3D::camera_view().p_wc;
+    Visualizor3D::camera_view().p_wc = data_manager_->visual_local_map()->frames().back().p_wc() - p_w + Visualizor3D::camera_view().p_wc;
 
     while (!Visualizor3D::ShouldQuit()) {
         Visualizor3D::Refresh("Visualizor 3D", delay_ms);

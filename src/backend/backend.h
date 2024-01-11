@@ -21,7 +21,7 @@ struct BackendOptions {
     bool kEnableRecordBinaryCurveLog = true;
     uint32_t kMethodIndexToEstimateGyroBiasForInitialization = 1;
     Vec3 kGravityInWordFrame = Vec3(0.0f, 0.0f, 9.8f);
-    float kMaxValidFeatureDepthInMeter = 50.0f;
+    float kMaxValidFeatureDepthInMeter = 100.0f;
     float kMinValidFeatureDepthInMeter = 0.1f;
     bool kEnableReportAllInformation = true;
     bool kEnableLocalMapStoreRawImages = true;

@@ -70,7 +70,7 @@ bool Backend::RunOnce() {
             // Show all frames and features in local map.
             ShowLocalMapFramesAndFeatures();
             // Show all frames with bias.
-            ShowAllFramesWithBias();
+            // ShowAllFramesWithBias();
         }
 
         // Decide marginalization type.

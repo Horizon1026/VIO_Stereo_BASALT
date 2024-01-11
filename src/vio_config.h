@@ -59,10 +59,10 @@ struct VioOptionsOfBackend {
     uint32_t method_index_to_estimate_gyro_bias_for_initialization = 3;
 
     Vec3 gravity_w = Vec3(0.0f, 0.0f, 9.8f);
-    float max_valid_feature_depth_in_meter = 120.0f;
+    float max_valid_feature_depth_in_meter = 50.0f;
     float min_valid_feature_depth_in_meter = 0.05f;
 
-    bool enable_report_all_information = true;
+    bool enable_report_all_information = false;
     bool enable_local_map_store_raw_images = true;
 
     bool enable_recording_curve_binlog = true;
