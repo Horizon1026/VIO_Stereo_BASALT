@@ -130,6 +130,10 @@ void Backend::ShowLocalMapFramesAndFeatures() {
                             break;
                     }
 
+                    if (feature->observes().size() == 1 && feature->observes().front().size() == 1) {
+                        pixel_color = RgbPixel{.r = 0, .g = 0, .b = 0};
+                    }
+
                     Visualizor::DrawSolidCircle(rgb_image, pixel_uv.x(), pixel_uv.y(), 3, pixel_color);
                     Visualizor::DrawString(rgb_image, std::to_string(feature->id()), pixel_uv.x(), pixel_uv.y(), pixel_color);
                 }
