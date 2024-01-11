@@ -72,7 +72,7 @@ bool Backend::TryToEstimate() {
         const auto &frame = data_manager_->visual_local_map()->frame(feature.first_frame_id());
         const Vec3 p_c = frame->q_wc().inverse() * (feature.param() - frame->p_wc());
         const float invdep = 1.0f / p_c.z();
-        CONTINUE_IF(p_c.z() < kZero);
+        CONTINUE_IF(std::isnan(invdep) || std::isinf(invdep));
 
         // Add vertex of feature invdep.
         all_features_id.emplace_back(feature.id());

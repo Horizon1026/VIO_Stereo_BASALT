@@ -27,8 +27,8 @@ struct VioOptionsOfImu {
 
 struct VioOptionsOfFeatureDetector {
     int32_t min_valid_feature_distance = 30;
-    int32_t grid_filter_rows = 10;
-    int32_t grid_filter_cols = 10;
+    int32_t grid_filter_rows = 12;
+    int32_t grid_filter_cols = 12;
 };
 
 struct VioOptionsOfFeatureTracker {
@@ -42,8 +42,8 @@ struct VioOptionsOfFrontend {
     uint32_t image_cols = 0;
     bool enable_drawing_track_result = true;
     bool select_keyframe = true;
-    uint32_t max_feature_number = 100;
-    uint32_t min_feature_number = 50;
+    uint32_t max_feature_number = 144;
+    uint32_t min_feature_number = 60;
     VioOptionsOfFeatureDetector feature_detector;
     VioOptionsOfFeatureTracker feature_tracker;
     bool enable_recording_curve_binlog = true;
@@ -59,8 +59,8 @@ struct VioOptionsOfBackend {
     uint32_t method_index_to_estimate_gyro_bias_for_initialization = 3;
 
     Vec3 gravity_w = Vec3(0.0f, 0.0f, 9.8f);
-    float max_valid_feature_depth_in_meter = 100.0f;
-    float min_valid_feature_depth_in_meter = 0.1f;
+    float max_valid_feature_depth_in_meter = 120.0f;
+    float min_valid_feature_depth_in_meter = 0.05f;
 
     bool enable_report_all_information = true;
     bool enable_local_map_store_raw_images = true;
