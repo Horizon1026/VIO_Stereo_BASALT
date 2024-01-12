@@ -72,7 +72,7 @@ bool Backend::TryToEstimate() {
         // Compute inverse depth by p_w of this feature.
         const auto &frame = data_manager_->visual_local_map()->frame(feature.first_frame_id());
         const Vec3 p_c = frame->q_wc().inverse() * (feature.param() - frame->p_wc());
-        const float invdep = 1.0f / p_c.z();
+        const float invdep = p_c.z() < options_.kMinValidFeatureDepthInMeter ? 1.0f / options_.kDefaultFeatureDepthInMeter : 1.0f / p_c.z();
 
         // Add vertex of feature invdep.
         all_features_id.emplace_back(feature.id());
@@ -289,7 +289,23 @@ bool Backend::TryToEstimate() {
     }
 
     // Update all feature position in local map.
-    RETURN_FALSE_IF_FALSE(TriangulizeAllVisualFeatures());
+    for (uint32_t i = 0; i < all_features_id.size(); ++i) {
+        auto feature_ptr = data_manager_->visual_local_map()->feature(all_features_id[i]);
+        const auto &frame_ptr = data_manager_->visual_local_map()->frame(feature_ptr->first_frame_id());
+        const auto &norm_xy = feature_ptr->observes().front()[0].rectified_norm_xy;
+
+        const float invdep = all_features_invdep[i]->param()(0);
+        Vec3 p_c = Vec3(norm_xy.x(), norm_xy.y(), 1.0f) / invdep;
+        if (std::isnan(p_c.z()) || std::isinf(p_c.z()) || p_c.z() < options_.kMinValidFeatureDepthInMeter) {
+            p_c = Vec3(norm_xy.x(), norm_xy.y(), 1.0f) * options_.kDefaultFeatureDepthInMeter;
+            feature_ptr->status() = FeatureSolvedStatus::kUnsolved;
+        } else if (p_c.z() > options_.kMaxValidFeatureDepthInMeter) {
+            feature_ptr->status() = FeatureSolvedStatus::kUnsolved;
+        } else {
+            feature_ptr->status() = FeatureSolvedStatus::kSolved;
+        }
+        feature_ptr->param() = frame_ptr->q_wc() * p_c + frame_ptr->p_wc();
+    }
 
     // Update imu preintegration.
     uint32_t idx = 0;

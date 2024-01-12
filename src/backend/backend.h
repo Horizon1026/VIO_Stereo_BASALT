@@ -20,10 +20,11 @@ using DorF = float;
 struct BackendOptions {
     bool kEnableRecordBinaryCurveLog = true;
     uint32_t kMethodIndexToEstimateGyroBiasForInitialization = 1;
-    Vec3 kGravityInWordFrame = Vec3(0.0f, 0.0f, 9.8f);
-    float kMaxValidFeatureDepthInMeter = 100.0f;
-    float kMinValidFeatureDepthInMeter = 0.1f;
-    bool kEnableReportAllInformation = true;
+    Vec3 kGravityInWordFrame = Vec3(0.0f, 0.0f, 0.0f);
+    float kMaxValidFeatureDepthInMeter = 0.0f;
+    float kMinValidFeatureDepthInMeter = 0.0f;
+    float kDefaultFeatureDepthInMeter = 0.0f;
+    bool kEnableReportAllInformation = false;
     bool kEnableLocalMapStoreRawImages = true;
 };
 

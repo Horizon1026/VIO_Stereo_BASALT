@@ -21,7 +21,6 @@ bool Backend::Configuration(const std::string &log_file_name) {
 
 bool Backend::RunOnce() {
     ReportInfo(MAGENTA "[Backend] Backend is triggerred to run once." RESET_COLOR);
-
     if (data_manager_ == nullptr) {
         ReportError("[Backend] Backend cannot link with data manager.");
         return false;

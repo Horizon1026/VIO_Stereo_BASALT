@@ -128,6 +128,7 @@ bool Vio::ConfigComponentOfBackend() {
     backend_->options().kGravityInWordFrame = options_.backend.gravity_w;
     backend_->options().kMaxValidFeatureDepthInMeter = options_.backend.max_valid_feature_depth_in_meter;
     backend_->options().kMinValidFeatureDepthInMeter = options_.backend.min_valid_feature_depth_in_meter;
+    backend_->options().kDefaultFeatureDepthInMeter = options_.backend.default_feature_depth_in_meter;
 
     backend_->options().kEnableReportAllInformation = options_.backend.enable_report_all_information;
     backend_->options().kEnableLocalMapStoreRawImages = options_.backend.enable_local_map_store_raw_images;
