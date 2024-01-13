@@ -378,7 +378,7 @@ bool Backend::TryToEstimate() {
 }
 
 TMat2<DorF> Backend::GetVisualObserveInformationMatrix() {
-    const auto &camera_model = visual_frontend_->camera_model();
+    const auto &camera_model = visual_frontend_->camera_models().front();
     const DorF residual_in_pixel = 1.0;
     const TVec2<DorF> visual_observe_info_vec = TVec2<DorF>(camera_model->fx() * camera_model->fx(),
         camera_model->fy() * camera_model->fy()) / residual_in_pixel;

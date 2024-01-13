@@ -24,9 +24,9 @@ void Backend::ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id,
     if (use_rectify) {
         Vec2 rectify_pixel_uv;
         for (const auto &feature_ptr : covisible_features) {
-            visual_frontend_->camera_model()->LiftFromNormalizedPlaneToImagePlane(feature_ptr->observe(ref_frame_id)[0].rectified_norm_xy, rectify_pixel_uv);
+            visual_frontend_->camera_models()[0]->LiftFromNormalizedPlaneToImagePlane(feature_ptr->observe(ref_frame_id)[0].rectified_norm_xy, rectify_pixel_uv);
             ref_pixel_uv.emplace_back(rectify_pixel_uv);
-            visual_frontend_->camera_model()->LiftFromNormalizedPlaneToImagePlane(feature_ptr->observe(cur_frame_id)[0].rectified_norm_xy, rectify_pixel_uv);
+            visual_frontend_->camera_models()[0]->LiftFromNormalizedPlaneToImagePlane(feature_ptr->observe(cur_frame_id)[0].rectified_norm_xy, rectify_pixel_uv);
             cur_pixel_uv.emplace_back(rectify_pixel_uv);
         }
     } else {
@@ -49,8 +49,8 @@ void Backend::ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id,
         cur_mat_image.resize(ref_image.rows(), ref_image.cols());
         GrayImage ref_rectify_image(ref_mat_image);
         GrayImage cur_rectify_image(cur_mat_image);
-        visual_frontend_->camera_model()->CorrectDistortedImage(ref_image, ref_rectify_image);
-        visual_frontend_->camera_model()->CorrectDistortedImage(cur_image, cur_rectify_image);
+        visual_frontend_->camera_models()[0]->CorrectDistortedImage(ref_image, ref_rectify_image);
+        visual_frontend_->camera_models()[0]->CorrectDistortedImage(cur_image, cur_rectify_image);
 
         Visualizor::ShowImageWithTrackedFeatures("ref and cur rectify image", ref_rectify_image, cur_rectify_image,
             ref_pixel_uv, cur_pixel_uv, tracked_status);

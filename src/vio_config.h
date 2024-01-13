@@ -7,15 +7,15 @@
 namespace VIO {
 
 struct VioOptionsOfCamera {
-    float fx = 458.654f;
-    float fy = 457.296f;
-    float cx = 752.0f / 2.0f;
-    float cy = 240.0f;
-    float k1 = -0.28340811f;
-    float k2 = 0.07395907f;
+    float fx = 0.0f;
+    float fy = 0.0f;
+    float cx = 0.0f;
+    float cy = 0.0f;
+    float k1 = 0.0f;
+    float k2 = 0.0f;
     float k3 = 0.0f;
-    float p1 = 0.00019359f;
-    float p2 = 1.76187114e-05f;
+    float p1 = 0.0f;
+    float p2 = 0.0f;
 };
 
 struct VioOptionsOfImu {
@@ -92,7 +92,7 @@ struct VioOptions {
     std::string log_file_root_name = "../output/";
     float max_tolerence_time_s_for_no_data = 2.0f;
     float heart_beat_period_time_s = 1.0f;
-    VioOptionsOfCamera camera;
+    std::vector<VioOptionsOfCamera> cameras;
     VioOptionsOfImu imu;
     VioOptionsOfFrontend frontend;
     VioOptionsOfBackend backend;

@@ -172,6 +172,34 @@ int main(int argc, char **argv) {
     vio.options().data_manager.all_R_ic.emplace_back(R_i_cr);
     vio.options().data_manager.all_t_ic.emplace_back(p_i_cr);
 
+    // Fill left camera intrinsics.
+    const VIO::VioOptionsOfCamera left_camera_intrinsics {
+        .fx = 458.654f,
+        .fy = 457.296f,
+        .cx = 367.215f,
+        .cy = 248.375f,
+        .k1 = -0.28340811f,
+        .k2 = 0.07395907f,
+        .k3 = 0.0f,
+        .p1 = 0.00019359f,
+        .p2 = 1.76187114e-05f,
+    };
+    vio.options().cameras.emplace_back(left_camera_intrinsics);
+
+    // Fill right camera intrinsics.
+    const VIO::VioOptionsOfCamera right_camera_intrinsics {
+        .fx = 457.587f,
+        .fy = 456.134f,
+        .cx = 379.999,
+        .cy = 255.238,
+        .k1 = -0.28368365f,
+        .k2 = 0.07451284f,
+        .k3 = 0.0f,
+        .p1 = -0.00010473f,
+        .p2 = -3.55590700e-05f,
+    };
+    vio.options().cameras.emplace_back(right_camera_intrinsics);
+
     // Config vio.
     vio.ConfigAllComponents();
 

@@ -99,11 +99,14 @@ bool Vio::ConfigComponentOfFrontend() {
     RETURN_FALSE_IF_FALSE(frontend_->Initialize(options_.log_file_root_name + options_.frontend.log_file_name));
 
     // Config camera model.
-    frontend_->camera_model() = std::make_unique<CameraType>();
-    frontend_->camera_model()->SetIntrinsicParameter(
-        options_.camera.fx, options_.camera.fy, options_.camera.cx, options_.camera.cy);
-    frontend_->camera_model()->SetDistortionParameter(std::vector<float>{
-        options_.camera.k1, options_.camera.k2, options_.camera.k3, options_.camera.p1, options_.camera.p2});
+    frontend_->camera_models().clear();
+    for (const auto &camera_options : options_.cameras) {
+        frontend_->camera_models().emplace_back(std::make_unique<CameraType>());
+        frontend_->camera_models().back()->SetIntrinsicParameter(
+            camera_options.fx, camera_options.fy, camera_options.cx, camera_options.cy);
+        frontend_->camera_models().back()->SetDistortionParameter(std::vector<float>{
+            camera_options.k1, camera_options.k2, camera_options.k3, camera_options.p1, camera_options.p2});
+    }
 
     // Config feature detector.
     frontend_->feature_detector() = std::make_unique<FeatureType>();
