@@ -91,9 +91,11 @@ bool Backend::TryToEstimate() {
     std::vector<std::unique_ptr<Edge<DorF>>> all_visual_reproj_factors;
     for (const auto &pair : data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
-        CONTINUE_IF(feature.observes().empty());
+
+        // Select features which has at least two observations.
         CONTINUE_IF(feature.observes().size() < 1 && feature.observes().front().size() < 1);
-        CONTINUE_IF(feature.status() == FeatureSolvedStatus::kMarginalized);
+        // Select features which is triangulized successfully.
+        CONTINUE_IF(feature.status() != FeatureSolvedStatus::kSolved);
 
         // Determine the range of all observations of this feature.
         const uint32_t min_frame_id = feature.first_frame_id();

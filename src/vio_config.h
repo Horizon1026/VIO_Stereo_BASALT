@@ -26,7 +26,7 @@ struct VioOptionsOfImu {
 };
 
 struct VioOptionsOfFeatureDetector {
-    int32_t min_valid_feature_distance = 30;
+    int32_t min_valid_feature_distance = 25;
     int32_t grid_filter_rows = 12;
     int32_t grid_filter_cols = 12;
 };
@@ -63,7 +63,7 @@ struct VioOptionsOfBackend {
     float min_valid_feature_depth_in_meter = 0.05f;
     float default_feature_depth_in_meter = 1.0f;
 
-    bool enable_report_all_information = true;
+    bool enable_report_all_information = false;
     bool enable_local_map_store_raw_images = true;
 
     bool enable_recording_curve_binlog = true;
