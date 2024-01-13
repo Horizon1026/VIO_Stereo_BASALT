@@ -234,10 +234,13 @@ void Backend::ShowLocalMapInWorldFrame(const int32_t delay_ms) {
         p_wi0 = p_wi;
         is_p_wi0_valid = true;
 
-        // Add all camera frames in local map.
-        for (const auto &extrinsic : data_manager_->camera_extrinsics()) {
-            Utility::ComputeTransformTransform(p_wi, q_wi, extrinsic.p_ic, extrinsic.q_ic, p_wc, q_wc);
-            Visualizor3D::poses().emplace_back(PoseType{ .p_wb = p_wc, .q_wb = q_wc, .scale = 0.01f });
+        // Add camera frames in local map for newest frame.
+        if (frame.id() == data_manager_->visual_local_map()->frames().back().id()) {
+            Visualizor3D::poses().back().scale = 0.1f;
+            for (const auto &extrinsic : data_manager_->camera_extrinsics()) {
+                Utility::ComputeTransformTransform(p_wi, q_wi, extrinsic.p_ic, extrinsic.q_ic, p_wc, q_wc);
+                Visualizor3D::poses().emplace_back(PoseType{ .p_wb = p_wc, .q_wb = q_wc, .scale = 0.01f });
+            }
         }
     }
 

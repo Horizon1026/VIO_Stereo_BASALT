@@ -43,7 +43,7 @@ struct VioOptionsOfFrontend {
     bool enable_drawing_track_result = true;
     bool select_keyframe = true;
     uint32_t max_feature_number = 121;
-    uint32_t min_feature_number = 50;
+    uint32_t min_feature_number = 60;
     VioOptionsOfFeatureDetector feature_detector;
     VioOptionsOfFeatureTracker feature_tracker;
     bool enable_recording_curve_binlog = true;
@@ -79,7 +79,7 @@ struct VioOptionsOfDataLoader {
 };
 
 struct VioOptionsOfDataManager {
-    uint32_t max_num_of_stored_keyframes = 6;
+    uint32_t max_num_of_stored_keyframes = 8;
     uint32_t max_num_of_stored_new_frames = 3;
     bool enable_recording_curve_binlog = true;
     std::string log_file_name = "data_manager.binlog";

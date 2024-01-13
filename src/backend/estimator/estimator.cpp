@@ -130,7 +130,7 @@ bool Backend::TryToEstimate() {
             visual_reproj_factor->SetVertex(all_cameras_q_ic[i].get(), 4);
             visual_reproj_factor->observation() = observe_vector.cast<DorF>();
             visual_reproj_factor->information() = visual_info_matrix;
-            visual_reproj_factor->kernel() = std::make_unique<KernelHuber<DorF>>(static_cast<DorF>(0.1));
+            visual_reproj_factor->kernel() = std::make_unique<KernelHuber<DorF>>(static_cast<DorF>(1.0));
             visual_reproj_factor->name() = std::string("one frame two cameras");
             RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
         }
@@ -152,7 +152,7 @@ bool Backend::TryToEstimate() {
             visual_reproj_factor->SetVertex(all_cameras_q_ic[0].get(), 6);
             visual_reproj_factor->observation() = observe_vector.cast<DorF>();
             visual_reproj_factor->information() = visual_info_matrix;
-            visual_reproj_factor->kernel() = std::make_unique<KernelHuber<DorF>>(static_cast<DorF>(0.1));
+            visual_reproj_factor->kernel() = std::make_unique<KernelHuber<DorF>>(static_cast<DorF>(1.0));
             visual_reproj_factor->name() = std::string("two frames one camera");
             RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
 
@@ -173,7 +173,7 @@ bool Backend::TryToEstimate() {
                 visual_reproj_factor->SetVertex(all_cameras_q_ic[i].get(), 8);
                 visual_reproj_factor->observation() = observe_vector.cast<DorF>();
                 visual_reproj_factor->information() = visual_info_matrix;
-                visual_reproj_factor->kernel() = std::make_unique<KernelHuber<DorF>>(static_cast<DorF>(0.1));
+                visual_reproj_factor->kernel() = std::make_unique<KernelHuber<DorF>>(static_cast<DorF>(1.0));
                 visual_reproj_factor->name() = std::string("two frames two cameras");
                 RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
             }
