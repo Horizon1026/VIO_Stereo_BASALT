@@ -358,6 +358,7 @@ bool Backend::MarginalizeSubnewFrame() {
         Marginalizor<DorF> marger;
         // Prior information of frame to be discarded shoule be directly discarded.
         marger.DiscardPriorInformation(states_.prior.hessian, states_.prior.bias, min_size, 15);
+        // marger.Marginalize(states_.prior.hessian, states_.prior.bias, min_size, 15);
 
         // Prior jacobian_t_inv and residual should be decomposed by hessian and bias.
         marger.DecomposeHessianAndBias(states_.prior.hessian, states_.prior.bias,

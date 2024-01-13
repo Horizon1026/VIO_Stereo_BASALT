@@ -207,6 +207,19 @@ bool Backend::ControlLocalMapDimension() {
         data_manager_->frames_with_bias().pop_front();
     }
 
+    // Delete features which is marginalized.
+    // std::vector<uint32_t> all_features_id;
+    // for (const auto &pair : data_manager_->visual_local_map()->features()) {
+    //     const auto &feature = pair.second;
+    //     if (feature.status() == FeatureSolvedStatus::kMarginalized) {
+    //         all_features_id.emplace_back(feature.id());
+    //     }
+    // }
+    // for (const auto &id : all_features_id) {
+    //     data_manager_->visual_local_map()->RemoveFeature(id);
+    // }
+    // RETURN_FALSE_IF(!data_manager_->visual_local_map()->SelfCheck());
+
     return true;
 }
 
