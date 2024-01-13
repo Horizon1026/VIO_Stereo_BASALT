@@ -27,8 +27,8 @@ struct VioOptionsOfImu {
 
 struct VioOptionsOfFeatureDetector {
     int32_t min_valid_feature_distance = 25;
-    int32_t grid_filter_rows = 12;
-    int32_t grid_filter_cols = 12;
+    int32_t grid_filter_rows = 11;
+    int32_t grid_filter_cols = 11;
 };
 
 struct VioOptionsOfFeatureTracker {
@@ -42,8 +42,8 @@ struct VioOptionsOfFrontend {
     uint32_t image_cols = 0;
     bool enable_drawing_track_result = true;
     bool select_keyframe = true;
-    uint32_t max_feature_number = 144;
-    uint32_t min_feature_number = 60;
+    uint32_t max_feature_number = 121;
+    uint32_t min_feature_number = 50;
     VioOptionsOfFeatureDetector feature_detector;
     VioOptionsOfFeatureTracker feature_tracker;
     bool enable_recording_curve_binlog = true;
