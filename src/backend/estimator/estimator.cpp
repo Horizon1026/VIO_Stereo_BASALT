@@ -1,5 +1,5 @@
 #include "backend.h"
-#include "visual_edges.h"
+#include "general_edges.h"
 #include "inertial_edges.h"
 #include "visual_inertial_edges.h"
 
@@ -24,11 +24,9 @@ bool Backend::TryToEstimate() {
         all_cameras_p_ic.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
         all_cameras_p_ic.back()->param() = extrinsic.p_ic.cast<DorF>();
         all_cameras_p_ic.back()->name() = std::string("p_ic");
-        all_cameras_p_ic.back()->SetFixed(true);
         all_cameras_q_ic.emplace_back(std::make_unique<VertexQuat<DorF>>(4, 3));
         all_cameras_q_ic.back()->param() << extrinsic.q_ic.w(), extrinsic.q_ic.x(), extrinsic.q_ic.y(), extrinsic.q_ic.z();
         all_cameras_q_ic.back()->name() = std::string("q_ic");
-        all_cameras_q_ic.back()->SetFixed(true);
     }
 
     // [Vertices] Camera pose of each frame.
@@ -50,8 +48,41 @@ bool Backend::TryToEstimate() {
         all_frames_q_wi.back()->param() << q_wi.w(), q_wi.x(), q_wi.y(), q_wi.z();
         all_frames_q_wi.back()->name() = std::string("q_wi") + std::to_string(frame.id());
     }
-    // all_frames_p_wi.front()->SetFixed(true);
-    // all_frames_q_wi.front()->SetFixed(true);
+
+    // [Edges] Camera pose prior factor.
+    // [Edges] Camera extrinsic prior factor.
+    std::vector<std::unique_ptr<Edge<DorF>>> all_prior_factors;
+    if (!states_.prior.is_valid) {
+        all_prior_factors.emplace_back(std::make_unique<EdgePriorPose<DorF>>());
+        auto &prior_factor = all_prior_factors.back();
+        prior_factor->SetVertex(all_frames_p_wi.front().get(), 0);
+        prior_factor->SetVertex(all_frames_q_wi.front().get(), 1);
+
+        TMat<DorF> obv = TVec7<DorF>::Zero();
+        obv.block(0, 0, 3, 1) = all_frames_p_wi.front()->param();
+        obv.block(3, 0, 4, 1) = all_frames_q_wi.front()->param();
+        prior_factor->observation() = obv;
+
+        prior_factor->information() = TMat6<DorF>::Identity() * 1e6;
+        prior_factor->name() = std::string("prior pose");
+        RETURN_FALSE_IF(!prior_factor->SelfCheck());
+
+        for (uint32_t i = 0; i < all_cameras_p_ic.size(); ++i) {
+            all_prior_factors.emplace_back(std::make_unique<EdgePriorPose<DorF>>());
+            auto &prior_factor = all_prior_factors.back();
+            prior_factor->SetVertex(all_cameras_p_ic[i].get(), 0);
+            prior_factor->SetVertex(all_cameras_q_ic[i].get(), 1);
+
+            TMat<DorF> obv = TVec7<DorF>::Zero();
+            obv.block(0, 0, 3, 1) = all_cameras_p_ic[i]->param();
+            obv.block(3, 0, 4, 1) = all_cameras_q_ic[i]->param();
+            prior_factor->observation() = obv;
+
+            prior_factor->information() = TMat6<DorF>::Identity() * 1e6;
+            prior_factor->name() = std::string("prior extrinsic ") + std::to_string(i);
+            RETURN_FALSE_IF(!prior_factor->SelfCheck());
+        }
+    }
 
     // [Vertices] Inverse depth of each feature.
     // [Edges] Visual reprojection factor.
@@ -220,13 +251,15 @@ bool Backend::TryToEstimate() {
     for (auto &vertex : all_features_invdep) {
         graph_optimization_problem.AddVertex(vertex.get(), false);
     }
+    for (auto &edge : all_prior_factors) {
+        graph_optimization_problem.AddEdge(edge.get());
+    }
     for (auto &edge : all_visual_reproj_factors) {
         graph_optimization_problem.AddEdge(edge.get());
     }
     for (auto &edge : all_imu_factors) {
         graph_optimization_problem.AddEdge(edge.get());
     }
-
     if (options_.kEnableReportAllInformation) {
         ReportInfo(YELLOW "[Backend] Estimator adds " <<
             all_cameras_p_ic.size() << " all_cameras_p_ic, " <<
@@ -238,6 +271,7 @@ bool Backend::TryToEstimate() {
             all_new_frames_ba.size() << " all_new_frames_ba, " <<
             all_new_frames_bg.size() << " all_new_frames_bg, and " <<
 
+            all_prior_factors.size() << " all_prior_factors, " <<
             all_visual_reproj_factors.size() << " all_visual_reproj_factors, " <<
             all_imu_factors.size() << " all_imu_factors." RESET_COLOR);
     }
@@ -289,6 +323,7 @@ bool Backend::TryToEstimate() {
     }
 
     // Update all feature position in local map.
+    uint32_t solved_feature_cnt = 0;
     for (uint32_t i = 0; i < all_features_id.size(); ++i) {
         auto feature_ptr = data_manager_->visual_local_map()->feature(all_features_id[i]);
         const auto &frame_ptr = data_manager_->visual_local_map()->frame(feature_ptr->first_frame_id());
@@ -303,9 +338,11 @@ bool Backend::TryToEstimate() {
             feature_ptr->status() = FeatureSolvedStatus::kUnsolved;
         } else {
             feature_ptr->status() = FeatureSolvedStatus::kSolved;
+            ++solved_feature_cnt;
         }
         feature_ptr->param() = frame_ptr->q_wc() * p_c + frame_ptr->p_wc();
     }
+    ReportInfo("[Backend] " << solved_feature_cnt << "/" << all_features_id.size() << " features are solved in optimization.");
 
     // Update imu preintegration.
     uint32_t idx = 0;

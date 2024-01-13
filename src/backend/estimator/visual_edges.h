@@ -7,10 +7,6 @@
 #include "vertex.h"
 #include "vertex_quaternion.h"
 #include "edge.h"
-#include "kernel.h"
-#include "kernel_huber.h"
-#include "kernel_cauchy.h"
-#include "kernel_tukey.h"
 
 namespace VIO {
 

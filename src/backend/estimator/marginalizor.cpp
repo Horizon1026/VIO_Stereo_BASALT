@@ -1,5 +1,5 @@
 #include "backend.h"
-#include "visual_edges.h"
+#include "general_edges.h"
 #include "inertial_edges.h"
 #include "visual_inertial_edges.h"
 
@@ -68,6 +68,41 @@ bool Backend::MarginalizeOldestFrame() {
         all_frames_q_wi.emplace_back(std::make_unique<VertexQuat<DorF>>(4, 3));
         all_frames_q_wi.back()->param() << q_wi.w(), q_wi.x(), q_wi.y(), q_wi.z();
         all_frames_q_wi.back()->name() = std::string("q_wi") + std::to_string(frame.id());
+    }
+
+    // [Edges] Camera pose prior factor.
+    // [Edges] Camera extrinsic prior factor.
+    std::vector<std::unique_ptr<Edge<DorF>>> all_prior_factors;
+    if (!states_.prior.is_valid) {
+        all_prior_factors.emplace_back(std::make_unique<EdgePriorPose<DorF>>());
+        auto &prior_factor = all_prior_factors.back();
+        prior_factor->SetVertex(all_frames_p_wi.front().get(), 0);
+        prior_factor->SetVertex(all_frames_q_wi.front().get(), 1);
+
+        TMat<DorF> obv = TVec7<DorF>::Zero();
+        obv.block(0, 0, 3, 1) = all_frames_p_wi.front()->param();
+        obv.block(3, 0, 4, 1) = all_frames_q_wi.front()->param();
+        prior_factor->observation() = obv;
+
+        prior_factor->information() = TMat6<DorF>::Identity() * 1e6;
+        prior_factor->name() = std::string("prior pose");
+        RETURN_FALSE_IF(!prior_factor->SelfCheck());
+
+        for (uint32_t i = 0; i < all_cameras_p_ic.size(); ++i) {
+            all_prior_factors.emplace_back(std::make_unique<EdgePriorPose<DorF>>());
+            auto &prior_factor = all_prior_factors.back();
+            prior_factor->SetVertex(all_cameras_p_ic[i].get(), 0);
+            prior_factor->SetVertex(all_cameras_q_ic[i].get(), 1);
+
+            TMat<DorF> obv = TVec7<DorF>::Zero();
+            obv.block(0, 0, 3, 1) = all_cameras_p_ic[i]->param();
+            obv.block(3, 0, 4, 1) = all_cameras_q_ic[i]->param();
+            prior_factor->observation() = obv;
+
+            prior_factor->information() = TMat6<DorF>::Identity() * 1e6;
+            prior_factor->name() = std::string("prior extrinsic ") + std::to_string(i);
+            RETURN_FALSE_IF(!prior_factor->SelfCheck());
+        }
     }
 
     // [Vertices] Inverse depth of each feature.
@@ -232,6 +267,9 @@ bool Backend::MarginalizeOldestFrame() {
     for (auto &vertex : all_features_invdep) {
         graph_optimization_problem.AddVertex(vertex.get(), false);
     }
+    for (auto &edge : all_prior_factors) {
+        graph_optimization_problem.AddEdge(edge.get());
+    }
     for (auto &edge : all_visual_reproj_factors) {
         graph_optimization_problem.AddEdge(edge.get());
     }
@@ -239,7 +277,7 @@ bool Backend::MarginalizeOldestFrame() {
         graph_optimization_problem.AddEdge(edge.get());
     }
     if (options_.kEnableReportAllInformation) {
-        ReportInfo(RED "[Backend] Marginalizor adds " <<
+        ReportInfo(YELLOW "[Backend] Estimator adds " <<
             all_cameras_p_ic.size() << " all_cameras_p_ic, " <<
             all_cameras_q_ic.size() << " all_cameras_q_ic, " <<
             all_features_invdep.size() << " all_features_invdep, " <<
@@ -249,6 +287,7 @@ bool Backend::MarginalizeOldestFrame() {
             all_new_frames_ba.size() << " all_new_frames_ba, " <<
             all_new_frames_bg.size() << " all_new_frames_bg, and " <<
 
+            all_prior_factors.size() << " all_prior_factors, " <<
             all_visual_reproj_factors.size() << " all_visual_reproj_factors, " <<
             all_imu_factors.size() << " all_imu_factors." RESET_COLOR);
     }
