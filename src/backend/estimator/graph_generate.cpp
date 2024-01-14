@@ -151,9 +151,6 @@ bool Backend::ConvertFeatureInvdepAndAddVisualFactorForMarginalization() {
         const float invdep = 1.0f / p_c.z();
         CONTINUE_IF(p_c.z() < kZero);
 
-        // Mark these features to be marginalized.
-        // feature.status() = FeatureSolvedStatus::kMarginalized;
-
         // Convert feature invdep to vertices, and add visual factors.
         RETURN_FALSE_IF(!ConvertFeatureInvdepAndAddVisualFactor(feature, invdep, visual_info_matrix));
     }
