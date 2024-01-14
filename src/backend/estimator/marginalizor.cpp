@@ -60,7 +60,7 @@ bool Backend::MarginalizeOldestFrame() {
     Graph<DorF> graph_optimization_problem;
     ConstructGraphOptimizationProblem(idx_offset, graph_optimization_problem);
     if (states_.prior.is_valid) {
-        ReportInfo("[Backend] Before estimation, prior residual squared norm is " << graph_optimization_problem.prior_residual().squaredNorm());
+        ReportInfo("[Backend] Before marginalization, prior residual squared norm is " << graph_optimization_problem.prior_residual().squaredNorm());
     }
 
     // Set vertices to be marged.

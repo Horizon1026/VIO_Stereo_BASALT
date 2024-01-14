@@ -2,11 +2,14 @@
 #define _VIO_STEREO_BASALT_BACKEND_H_
 
 #include "datatype_basic.h"
+
 #include "data_manager.h"
-#include "binary_data_log.h"
 #include "imu.h"
 #include "visual_frontend.h"
 #include "general_graph_optimizor.h"
+
+#include "binary_data_log.h"
+#include "backend_log.h"
 
 namespace VIO {
 
@@ -63,37 +66,6 @@ struct BackendStates {
         float time_stamp_s = 0.0f;
     } motion;
 };
-
-/* Packages of log to be recorded. */
-#pragma pack(1)
-struct BackendLog {
-    uint8_t is_initialized = 0;
-
-    float time_stamp_s = 0.0f;
-    float p_wi_x = 0.0f;
-    float p_wi_y = 0.0f;
-    float p_wi_z = 0.0f;
-    float q_wi_w = 0.0f;
-    float q_wi_x = 0.0f;
-    float q_wi_y = 0.0f;
-    float q_wi_z = 0.0f;
-    float q_wi_pitch = 0.0f;
-    float q_wi_roll = 0.0f;
-    float q_wi_yaw = 0.0f;
-    float v_wi_x = 0.0f;
-    float v_wi_y = 0.0f;
-    float v_wi_z = 0.0f;
-    float bias_a_x = 0.0f;
-    float bias_a_y = 0.0f;
-    float bias_a_z = 0.0f;
-    float bias_g_x = 0.0f;
-    float bias_g_y = 0.0f;
-    float bias_g_z = 0.0f;
-
-    uint8_t marginalize_type = 0;
-    float prior_residual = 0.0f;
-};
-#pragma pack()
 
 /* Vertices and edges for estimation and marginalization. */
 struct BackendVertices {
@@ -189,8 +161,13 @@ public:
     bool TriangulizeAllVisualFeatures();
     bool ControlLocalMapDimension();
     void UpdateBackendStates();
-    void RecordBackendStatesLog();
     bool AddNewestFrameWithBiasIntoLocalMap();
+
+    // Backend log recorder.
+    float GetNewestStateTimeStamp();
+    void RecordBackendLogStates();
+    void RecordBackendLogStatusFlag();
+    void RecordBackendLogCostTime();
 
     // Backend visualizor.
     void ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id, const uint32_t cur_frame_id, const bool use_rectify = false);
@@ -231,7 +208,9 @@ private:
 
     // Record log.
     BinaryDataLog logger_;
-    BackendLog log_package_data_;
+    BackendLogStates log_package_states_;
+    BackendLogStatusFlag log_package_status_flags_;
+    BackendLogCostTime log_package_cost_time_;
 
     // Signal flags.
     bool should_quit_ = false;  // You can kill all relative threads by checking this flag.

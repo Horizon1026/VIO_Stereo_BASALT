@@ -25,6 +25,8 @@ bool Backend::RunOnce() {
         ReportError("[Backend] Backend cannot link with data manager.");
         return false;
     }
+    TickTock timer;
+    TickTock total_timer;
 
     // Add newest frame_with_bias into visual_local_map.
     if (states_.is_initialized) {
@@ -32,35 +34,44 @@ bool Backend::RunOnce() {
             ReportError("[Backend] Backend failed to add newest frame_with_bias into local map.");
             return false;
         }
+        log_package_cost_time_.add_newest_frame_into_local_map = timer.TockTickInMillisecond();
+
         if (!TriangulizeAllVisualFeatures()) {
             ReportError("[Backend] Backend failed to triangulize features in local map.");
             return false;
         }
+        log_package_cost_time_.triangulize_all_visual_features = timer.TockTickInMillisecond();
     }
 
     // If backend is not initialized, try to initialize.
     if (!states_.is_initialized) {
-        TickTock timer;
         if (TryToInitialize()) {
-            ShowTinyInformationOfVisualLocalMap();
             states_.is_initialized = true;
-            ReportInfo(GREEN "[Backend] Backend succeed to initialize within " << timer.TockTickInMillisecond() << " ms." RESET_COLOR);
+            log_package_cost_time_.initialize = timer.TockTickInMillisecond();
+
+            if (options_.kEnableReportAllInformation) {
+                ShowTinyInformationOfVisualLocalMap();
+            }
+            ReportInfo(GREEN "[Backend] Backend succeed to initialize within " << log_package_cost_time_.initialize << " ms." RESET_COLOR);
         } else {
             ResetToReintialize();
             ReportWarn("[Backend] Backend failed to initialize. All states will be reset for reinitialization.");
         }
+    } else {
+        log_package_cost_time_.initialize = 0.0f;
     }
 
     // If backend is initialized.
     if (states_.is_initialized) {
         // Try to estimate states.
-        TickTock timer;
+        timer.TockTickInMillisecond();
         if (!TryToEstimate()) {
             ResetToReintialize();
             ReportWarn("[Backend] Backend failed to estimate.");
             return true;
         } else {
-            ReportInfo(GREEN "[Backend] Backend succeed to estimate states within " << timer.TockTickInMillisecond() << " ms." RESET_COLOR);
+            log_package_cost_time_.estimate = timer.TockTickInMillisecond();
+            ReportInfo(GREEN "[Backend] Backend succeed to estimate states within " << log_package_cost_time_.estimate << " ms." RESET_COLOR);
         }
 
         if (options_.kEnableReportAllInformation) {
@@ -69,7 +80,7 @@ bool Backend::RunOnce() {
             // Show all frames and features in local map.
             ShowLocalMapFramesAndFeatures();
             // Show all frames with bias.
-            // ShowAllFramesWithBias();
+            ShowAllFramesWithBias();
         }
 
         // Decide marginalization type.
@@ -84,21 +95,28 @@ bool Backend::RunOnce() {
         }
 
         // Try to marginalize if necessary.
+        timer.TockTickInMillisecond();
         if (!TryToMarginalize()) {
             ResetToReintialize();
             ReportWarn("[Backend] Backend failed to marginalize.");
             return true;
         } else {
-            ReportInfo(GREEN "[Backend] Backend succeed to marginalize states within " << timer.TockTickInMillisecond() << " ms." RESET_COLOR);
+            log_package_cost_time_.marginalize = timer.TockTickInMillisecond();
+            ReportInfo(GREEN "[Backend] Backend succeed to marginalize states within " << log_package_cost_time_.marginalize << " ms." RESET_COLOR);
         }
     }
 
     // Control the dimension of local map.
     RETURN_FALSE_IF(!ControlLocalMapDimension());
 
-    // Update states and record log.
+    // Update states.
     UpdateBackendStates();
-    RecordBackendStatesLog();
+    log_package_cost_time_.total_loop = total_timer.TockTickInMillisecond();
+
+    // Record logs of backend.
+    RecordBackendLogStates();
+    RecordBackendLogStatusFlag();
+    RecordBackendLogCostTime();
 
     return true;
 }
