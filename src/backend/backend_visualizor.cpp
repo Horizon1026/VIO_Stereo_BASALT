@@ -187,7 +187,7 @@ void Backend::ShowAllFramesWithBias() {
     Visualizor::WaitKey(1);
 }
 
-void Backend::ShowLocalMapInWorldFrame(const int32_t delay_ms) {
+void Backend::ShowLocalMapInWorldFrame(const int32_t delay_ms, const bool block_in_loop) {
     Visualizor3D::Clear();
 
     // Add word frame.
@@ -249,10 +249,11 @@ void Backend::ShowLocalMapInWorldFrame(const int32_t delay_ms) {
     const Vec3 p_w = Visualizor3D::camera_view().q_wc * p_c + Visualizor3D::camera_view().p_wc;
     Visualizor3D::camera_view().p_wc = data_manager_->visual_local_map()->frames().back().p_wc() - p_w + Visualizor3D::camera_view().p_wc;
 
-    while (!Visualizor3D::ShouldQuit()) {
-        Visualizor3D::Refresh("Visualizor 3D", delay_ms);
-        BREAK_IF(delay_ms < 1);
-    }
+    // Refresh screen.
+    const int32_t delay = delay_ms < 1 ? 0 : delay_ms;
+    do {
+        Visualizor3D::Refresh("Visualizor 3D", delay);
+    } while (!Visualizor3D::ShouldQuit() && block_in_loop);
 }
 
 void Backend::ShowSimpleInformationOfVisualLocalMap() {

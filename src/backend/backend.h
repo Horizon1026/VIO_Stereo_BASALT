@@ -174,7 +174,7 @@ public:
     void ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id, const uint32_t cur_frame_id, const bool use_rectify = false);
     void ShowAllFramesWithBias();
     void ShowLocalMapFramesAndFeatures();
-    void ShowLocalMapInWorldFrame(const int32_t delay_ms);
+    void ShowLocalMapInWorldFrame(const int32_t delay_ms, const bool block_in_loop = false);
     void ShowMatrixImage(const std::string &title, const TMat<DorF> &matrix);
     void ShowSimpleInformationOfVisualLocalMap();
     void ShowTinyInformationOfVisualLocalMap();
