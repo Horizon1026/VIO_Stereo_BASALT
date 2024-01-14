@@ -168,6 +168,7 @@ public:
     void RecordBackendLogStates();
     void RecordBackendLogStatusFlag();
     void RecordBackendLogCostTime();
+    void RecordBackendLogPriorInformation();
 
     // Backend visualizor.
     void ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id, const uint32_t cur_frame_id, const bool use_rectify = false);

@@ -31,6 +31,7 @@ struct BackendLogStates {
     float bias_g_y = 0.0f;
     float bias_g_z = 0.0f;
 
+    uint8_t is_prior_valid = 0;
     float prior_residual = 0.0f;
 };
 

@@ -117,6 +117,7 @@ bool Backend::RunOnce() {
     RecordBackendLogStates();
     RecordBackendLogStatusFlag();
     RecordBackendLogCostTime();
+    RecordBackendLogPriorInformation();
 
     return true;
 }
