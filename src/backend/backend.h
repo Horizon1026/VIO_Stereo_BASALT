@@ -95,6 +95,34 @@ struct BackendLog {
 };
 #pragma pack()
 
+/* Vertices and edges for estimation and marginalization. */
+struct BackendVertices {
+    std::vector<std::unique_ptr<Vertex<DorF>>> all_cameras_p_ic;
+    std::vector<std::unique_ptr<VertexQuat<DorF>>> all_cameras_q_ic;
+
+    std::vector<uint32_t> all_frames_id;
+    std::vector<std::unique_ptr<Vertex<DorF>>> all_frames_p_wi;
+    std::vector<std::unique_ptr<VertexQuat<DorF>>> all_frames_q_wi;
+
+    std::vector<uint32_t> all_features_id;
+    std::vector<std::unique_ptr<Vertex<DorF>>> all_features_invdep;
+
+    std::vector<std::unique_ptr<Vertex<DorF>>> all_new_frames_v_wi;
+    std::vector<std::unique_ptr<Vertex<DorF>>> all_new_frames_ba;
+    std::vector<std::unique_ptr<Vertex<DorF>>> all_new_frames_bg;
+};
+
+struct BackendEdges {
+    std::vector<std::unique_ptr<Edge<DorF>>> all_prior_factors;
+    std::vector<std::unique_ptr<Edge<DorF>>> all_visual_reproj_factors;
+    std::vector<std::unique_ptr<Edge<DorF>>> all_imu_factors;
+};
+
+struct BackendGraph {
+    BackendVertices vertices;
+    BackendEdges edges;
+};
+
 /* Class Backend Declaration. */
 class Backend final {
 
@@ -138,6 +166,7 @@ public:
     bool TryToEstimate();
     bool AddNewestFrameWithBiasIntoLocalMap();
     TMat2<DorF> GetVisualObserveInformationMatrix();
+    void ClearBackendGraph();
 
     // Backend maginalizor.
     bool TryToMarginalize();
@@ -174,9 +203,14 @@ public:
     const BackendStates &states() const { return states_; }
 
 private:
-    // Options and status of backend.
+    // Options of backend.
     BackendOptions options_;
+
+    // Motion and prior states of backend.
     BackendStates states_;
+
+    // Graph of backend.
+    BackendGraph graph_;
 
     // Register some relative components.
     VisualFrontend *visual_frontend_ = nullptr;

@@ -4,7 +4,7 @@
 
 namespace VIO {
 
-constexpr uint32_t kBackendStatesLogIndex = 0;
+constexpr uint32_t kBackendStatesLogIndex = 1;
 
 void Backend::RegisterLogPackages() {
     using namespace SLAM_DATA_LOG;
