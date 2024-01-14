@@ -253,22 +253,4 @@ void Backend::UpdateBackendStates() {
     states_.motion.bg = newest_frame_with_bias.imu_preint_block.bias_gyro();
 }
 
-void Backend::ClearBackendGraph() {
-    graph_.vertices.all_cameras_p_ic.clear();
-    graph_.vertices.all_cameras_q_ic.clear();
-    graph_.vertices.all_frames_id.clear();
-    graph_.vertices.all_frames_p_wi.clear();
-    graph_.vertices.all_frames_q_wi.clear();
-    graph_.vertices.all_features_id.clear();
-    graph_.vertices.all_features_invdep.clear();
-    graph_.vertices.all_new_frames_v_wi.clear();
-    graph_.vertices.all_new_frames_ba.clear();
-    graph_.vertices.all_cameras_p_ic.clear();
-    graph_.vertices.all_new_frames_bg.clear();
-
-    graph_.edges.all_prior_factors.clear();
-    graph_.edges.all_visual_reproj_factors.clear();
-    graph_.edges.all_imu_factors.clear();
-}
-
 }

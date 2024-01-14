@@ -164,14 +164,25 @@ public:
 
     // Backend estimator.
     bool TryToEstimate();
-    bool AddNewestFrameWithBiasIntoLocalMap();
     TMat2<DorF> GetVisualObserveInformationMatrix();
-    void ClearBackendGraph();
 
     // Backend maginalizor.
     bool TryToMarginalize();
     bool MarginalizeOldestFrame();
     bool MarginalizeSubnewFrame();
+
+    // Support for backend estimator and marginalizor.
+    void ClearBackendGraph();
+    void ConvertCameraPoseAndExtrinsicToVertices();
+    bool AddPriorFactorWhenNoPrior();
+    bool ConvertFeatureInvdepAndAddVisualFactorForEstimation();
+    bool ConvertFeatureInvdepAndAddVisualFactorForMarginalization();
+    bool ConvertFeatureInvdepAndAddVisualFactor(const FeatureType &feature, const float invdep, const TMat2<DorF> &visual_info_matrix);
+    void ConvertImuMotionStatesToVertices();
+    bool AddImuPreintegrationFactorForEstimation(const uint32_t idx_offset);
+    bool AddImuPreintegrationFactorForMarginalization(const uint32_t idx_offset);
+    void ConstructGraphOptimizationProblem(const uint32_t idx_offset, Graph<DorF> &problem);
+    void UpdateAllStatesAfterEstimation(const Graph<DorF> &problem, const uint32_t idx_offset);
 
     // Backend data processor.
     void RecomputeImuPreintegration();
@@ -179,6 +190,7 @@ public:
     bool ControlLocalMapDimension();
     void UpdateBackendStates();
     void RecordBackendStatesLog();
+    bool AddNewestFrameWithBiasIntoLocalMap();
 
     // Backend visualizor.
     void ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id, const uint32_t cur_frame_id, const bool use_rectify = false);
