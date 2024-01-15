@@ -119,8 +119,8 @@ bool Backend::ConvertFeatureInvdepAndAddVisualFactorForEstimation() {
 
         // Select features which has at least two observations.
         CONTINUE_IF(feature.observes().size() < 1 && feature.observes().front().size() < 1);
-        // Select features which is triangulized successfully.
-        CONTINUE_IF(feature.status() != FeatureSolvedStatus::kSolved);
+        // Select features which is marginalized successfully.
+        CONTINUE_IF(feature.status() == FeatureSolvedStatus::kMarginalized);
 
         // Compute inverse depth by p_w of this feature.
         const auto &frame = data_manager_->visual_local_map()->frame(feature.first_frame_id());

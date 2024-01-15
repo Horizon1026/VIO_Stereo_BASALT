@@ -9,6 +9,34 @@ using namespace SLAM_VISUALIZOR;
 
 namespace VIO {
 
+RgbPixel Backend::GetFeatureColor(const FeatureType &feature) {
+    RgbPixel pixel_color = RgbPixel{.r = 255, .g = 255, .b = 0};
+    switch (feature.status()) {
+        case FeatureSolvedStatus::kSolved:
+            if (feature.observes().size() > 1) {
+                // If this feature is observed in different frame.
+                pixel_color = RgbPixel{.r = 0, .g = 255, .b = 0};
+            } else {
+                // If this feature is only observed in one frame but has stereo view.
+                pixel_color = RgbPixel{.r = 255, .g = 255, .b = 0};
+            }
+            break;
+        case FeatureSolvedStatus::kMarginalized:
+            pixel_color = RgbPixel{.r = 0, .g = 0, .b = 255};
+            break;
+        default:
+        case FeatureSolvedStatus::kUnsolved:
+            pixel_color = RgbPixel{.r = 255, .g = 0, .b = 0};
+            break;
+    }
+
+    if (feature.observes().size() == 1 && feature.observes().front().size() == 1) {
+        pixel_color = RgbPixel{.r = 255, .g = 255, .b = 255};
+    }
+
+    return pixel_color;
+}
+
 void Backend::ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id,
                                                const uint32_t cur_frame_id,
                                                const bool use_rectify) {
@@ -95,29 +123,7 @@ void Backend::ShowLocalMapFramesAndFeatures() {
 
                     // Draw feature in rgb image.
                     const Vec2 pixel_uv = observe[camera_id].raw_pixel_uv;
-                    RgbPixel pixel_color = RgbPixel{.r = 255, .g = 255, .b = 0};
-                    switch (feature->status()) {
-                        case FeatureSolvedStatus::kSolved:
-                            if (feature->observes().size() > 1) {
-                                // If this feature is observed in different frame.
-                                pixel_color = RgbPixel{.r = 0, .g = 255, .b = 0};
-                            } else {
-                                // If this feature is only observed in one frame but has stereo view.
-                                pixel_color = RgbPixel{.r = 255, .g = 255, .b = 0};
-                            }
-                            break;
-                        case FeatureSolvedStatus::kMarginalized:
-                            pixel_color = RgbPixel{.r = 0, .g = 0, .b = 255};
-                            break;
-                        default:
-                        case FeatureSolvedStatus::kUnsolved:
-                            pixel_color = RgbPixel{.r = 255, .g = 0, .b = 0};
-                            break;
-                    }
-
-                    if (feature->observes().size() == 1 && feature->observes().front().size() == 1) {
-                        pixel_color = RgbPixel{.r = 0, .g = 0, .b = 0};
-                    }
+                    const RgbPixel pixel_color = GetFeatureColor(*feature);
 
                     Visualizor::DrawSolidCircle(rgb_image, pixel_uv.x(), pixel_uv.y(), 3, pixel_color);
                     Visualizor::DrawString(rgb_image, std::to_string(feature->id()), pixel_uv.x(), pixel_uv.y(), pixel_color);
@@ -203,12 +209,9 @@ void Backend::ShowLocalMapInWorldFrame(const int32_t delay_ms, const bool block_
     // Add all features in locap map.
     for (const auto &pair : data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
-        CONTINUE_IF(feature.status() == FeatureSolvedStatus::kUnsolved);
-        const RgbPixel color = feature.status() == FeatureSolvedStatus::kSolved ?
-            RgbPixel{.r = 0, .g = 255, .b = 255} : RgbPixel{.r = 0, .g = 255, .b = 0};
         Visualizor3D::points().emplace_back(PointType{
             .p_w = feature.param(),
-            .color = color,
+            .color = GetFeatureColor(feature),
             .radius = 2,
         });
     }

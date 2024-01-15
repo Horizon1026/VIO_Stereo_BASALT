@@ -210,6 +210,7 @@ bool Backend::ControlLocalMapDimension() {
 
             // Remove features which is marginalized.
             std::vector<uint32_t> features_id;
+            features_id.reserve(100);
             for (const auto &pair : data_manager_->visual_local_map()->features()) {
                 const auto &feature = pair.second;
                 if (feature.status() == FeatureSolvedStatus::kMarginalized) {
@@ -219,23 +220,22 @@ bool Backend::ControlLocalMapDimension() {
             for (const auto &id : features_id) {
                 data_manager_->visual_local_map()->RemoveFeature(id);
             }
-
-            RETURN_FALSE_IF(!data_manager_->visual_local_map()->SelfCheck());
             break;
         }
         case BackendMarginalizeType::kMarginalizeSubnewFrame: {
             const auto subnew_frame_id = data_manager_->visual_local_map()->frames().back().id() -
                 data_manager_->options().kMaxStoredNewFrames + 1;
             data_manager_->visual_local_map()->RemoveFrame(subnew_frame_id);
-            RETURN_FALSE_IF(!data_manager_->visual_local_map()->SelfCheck());
             break;
         }
         default:
         case BackendMarginalizeType::kNotMarginalize: {
-
             break;
         }
     }
+
+    RETURN_FALSE_IF(!data_manager_->visual_local_map()->SelfCheck());
+
     if (data_manager_->frames_with_bias().size() >= data_manager_->options().kMaxStoredNewFrames) {
         data_manager_->frames_with_bias().pop_front();
     }

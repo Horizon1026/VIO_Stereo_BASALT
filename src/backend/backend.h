@@ -176,6 +176,7 @@ public:
     void RecordBackendLogPriorInformation();
 
     // Backend visualizor.
+    RgbPixel GetFeatureColor(const FeatureType &feature);
     void ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id, const uint32_t cur_frame_id, const bool use_rectify = false);
     void ShowAllFramesWithBias();
     void ShowLocalMapFramesAndFeatures();
