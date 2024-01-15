@@ -202,6 +202,9 @@ bool Backend::AddNewestFrameWithBiasIntoLocalMap() {
 bool Backend::ControlLocalMapDimension() {
     RETURN_TRUE_IF(!states_.is_initialized);
 
+    std::vector<uint32_t> features_id;
+    features_id.reserve(100);
+
     switch (states_.marginalize_type) {
         case BackendMarginalizeType::kMarginalizeOldestFrame: {
             // Remove frames which is marginalized.
@@ -209,16 +212,11 @@ bool Backend::ControlLocalMapDimension() {
             data_manager_->visual_local_map()->RemoveFrame(oldest_frame_id);
 
             // Remove features which is marginalized.
-            std::vector<uint32_t> features_id;
-            features_id.reserve(100);
             for (const auto &pair : data_manager_->visual_local_map()->features()) {
                 const auto &feature = pair.second;
                 if (feature.status() == FeatureSolvedStatus::kMarginalized) {
                     features_id.emplace_back(feature.id());
                 }
-            }
-            for (const auto &id : features_id) {
-                data_manager_->visual_local_map()->RemoveFeature(id);
             }
             break;
         }
@@ -234,6 +232,21 @@ bool Backend::ControlLocalMapDimension() {
         }
     }
 
+    // Remove features that cannot has more observations.
+    const uint32_t newest_keyframe_id = data_manager_->visual_local_map()->frames().front().id() +
+        data_manager_->options().kMaxStoredKeyFrames -
+        data_manager_->options().kMaxStoredNewFrames - 1;
+    for (const auto &pair : data_manager_->visual_local_map()->features()) {
+        const auto &feature = pair.second;
+        if (feature.observes().empty() || (feature.observes().size() == 1 && feature.first_frame_id() < newest_keyframe_id)) {
+            features_id.emplace_back(feature.id());
+        }
+    }
+    for (const auto &id : features_id) {
+        data_manager_->visual_local_map()->RemoveFeature(id);
+    }
+
+    // Check validation of visual local map.
     RETURN_FALSE_IF(!data_manager_->visual_local_map()->SelfCheck());
 
     if (data_manager_->frames_with_bias().size() >= data_manager_->options().kMaxStoredNewFrames) {
