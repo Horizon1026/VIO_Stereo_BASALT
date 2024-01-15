@@ -48,6 +48,7 @@ bool Backend::TryToEstimate() {
     // Construct solver to solve this problem.
     SolverLm<DorF> solver;
     solver.options().kEnableReportEachIteration = options_.kEnableReportAllInformation;
+    solver.options().kMaxConvergedSquaredStepLength = static_cast<DorF>(1e-3);
     solver.problem() = &graph_optimization_problem;
     solver.Solve(states_.prior.is_valid);
 
