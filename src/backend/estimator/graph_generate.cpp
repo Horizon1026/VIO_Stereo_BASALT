@@ -126,6 +126,7 @@ bool Backend::ConvertFeatureInvdepAndAddVisualFactorForEstimation() {
         const auto &frame = data_manager_->visual_local_map()->frame(feature.first_frame_id());
         const Vec3 p_c = frame->q_wc().inverse() * (feature.param() - frame->p_wc());
         const float invdep = p_c.z() < options_.kMinValidFeatureDepthInMeter ? 1.0f / options_.kDefaultFeatureDepthInMeter : 1.0f / p_c.z();
+        CONTINUE_IF(std::isinf(invdep) || std::isnan(invdep));
 
         // Convert feature invdep to vertices, and add visual factors.
         RETURN_FALSE_IF(!ConvertFeatureInvdepAndAddVisualFactor(feature, invdep, visual_info_matrix));
@@ -149,7 +150,7 @@ bool Backend::ConvertFeatureInvdepAndAddVisualFactorForMarginalization() {
         const auto &frame = data_manager_->visual_local_map()->frame(feature.first_frame_id());
         const Vec3 p_c = frame->q_wc().inverse() * (feature.param() - frame->p_wc());
         const float invdep = 1.0f / p_c.z();
-        CONTINUE_IF(p_c.z() < kZero);
+        CONTINUE_IF(std::isinf(invdep) || std::isnan(invdep) || p_c.z() < kZero);
 
         // Convert feature invdep to vertices, and add visual factors.
         RETURN_FALSE_IF(!ConvertFeatureInvdepAndAddVisualFactor(feature, invdep, visual_info_matrix));
@@ -187,7 +188,7 @@ bool Backend::ConvertFeatureInvdepAndAddVisualFactor(const FeatureType &feature,
         visual_reproj_factor->SetVertex(graph_.vertices.all_cameras_q_ic[i].get(), 4);
         visual_reproj_factor->observation() = observe_vector.cast<DorF>();
         visual_reproj_factor->information() = visual_info_matrix;
-        visual_reproj_factor->kernel() = std::make_unique<KernelHuber<DorF>>(static_cast<DorF>(1.0));
+        visual_reproj_factor->kernel() = std::make_unique<KernelHuber<DorF>>(static_cast<DorF>(0.5));
         visual_reproj_factor->name() = std::string("one frame two cameras");
         RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
     }
@@ -209,7 +210,7 @@ bool Backend::ConvertFeatureInvdepAndAddVisualFactor(const FeatureType &feature,
         visual_reproj_factor->SetVertex(graph_.vertices.all_cameras_q_ic[0].get(), 6);
         visual_reproj_factor->observation() = observe_vector.cast<DorF>();
         visual_reproj_factor->information() = visual_info_matrix;
-        visual_reproj_factor->kernel() = std::make_unique<KernelHuber<DorF>>(static_cast<DorF>(1.0));
+        visual_reproj_factor->kernel() = std::make_unique<KernelHuber<DorF>>(static_cast<DorF>(0.5));
         visual_reproj_factor->name() = std::string("two frames one camera");
         RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
 
@@ -230,7 +231,7 @@ bool Backend::ConvertFeatureInvdepAndAddVisualFactor(const FeatureType &feature,
             visual_reproj_factor->SetVertex(graph_.vertices.all_cameras_q_ic[i].get(), 8);
             visual_reproj_factor->observation() = observe_vector.cast<DorF>();
             visual_reproj_factor->information() = visual_info_matrix;
-            visual_reproj_factor->kernel() = std::make_unique<KernelHuber<DorF>>(static_cast<DorF>(1.0));
+            visual_reproj_factor->kernel() = std::make_unique<KernelHuber<DorF>>(static_cast<DorF>(0.5));
             visual_reproj_factor->name() = std::string("two frames two cameras");
             RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
         }

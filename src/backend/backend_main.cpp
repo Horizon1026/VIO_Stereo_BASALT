@@ -36,7 +36,7 @@ bool Backend::RunOnce() {
         }
         log_package_cost_time_.add_newest_frame_into_local_map = timer.TockTickInMillisecond();
 
-        if (!TriangulizeAllVisualFeatures()) {
+        if (!TriangulizeAllNewVisualFeatures()) {
             ReportError("[Backend] Backend failed to triangulize features in local map.");
             return false;
         }

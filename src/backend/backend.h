@@ -158,7 +158,12 @@ public:
 
     // Backend data processor.
     void RecomputeImuPreintegration();
+    bool TriangulizeAllNewVisualFeatures();
     bool TriangulizeAllVisualFeatures();
+    bool TriangulizeVisualFeature(std::vector<Quat> &q_wc_vec,
+                                  std::vector<Vec3> &p_wc_vec,
+                                  std::vector<Vec2> &norm_xy_vec,
+                                  FeatureType &feature);
     bool ControlLocalMapDimension();
     void UpdateBackendStates();
     bool AddNewestFrameWithBiasIntoLocalMap();
