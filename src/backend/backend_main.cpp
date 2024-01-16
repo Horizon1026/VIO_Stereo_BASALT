@@ -84,15 +84,7 @@ bool Backend::RunOnce() {
         }
 
         // Decide marginalization type.
-        if (data_manager_->visual_local_map()->frames().size() >= data_manager_->options().kMaxStoredKeyFrames) {
-            if (data_manager_->frames_with_bias().front().visual_measure->is_current_keyframe) {
-                states_.marginalize_type = BackendMarginalizeType::kMarginalizeOldestFrame;
-            } else {
-                states_.marginalize_type = BackendMarginalizeType::kMarginalizeSubnewFrame;
-            }
-        } else {
-            states_.marginalize_type = BackendMarginalizeType::kNotMarginalize;
-        }
+        states_.marginalize_type = DecideMarginalizeType();
 
         // Try to marginalize if necessary.
         timer.TockTickInMillisecond();

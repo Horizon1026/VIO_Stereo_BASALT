@@ -139,6 +139,7 @@ public:
     TMat2<DorF> GetVisualObserveInformationMatrix();
 
     // Backend maginalizor.
+    BackendMarginalizeType DecideMarginalizeType();
     bool TryToMarginalize();
     bool MarginalizeOldestFrame();
     bool MarginalizeSubnewFrame();

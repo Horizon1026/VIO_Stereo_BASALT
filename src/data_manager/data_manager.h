@@ -18,8 +18,8 @@ using namespace SENSOR_MODEL;
 
 /* Options for Data Manager. */
 struct DataManagerOptions {
-    uint32_t kMaxStoredKeyFrames = 5;
-    uint32_t kMaxStoredNewFrames = 3;
+    uint32_t kMaxStoredKeyFrames = 0;
+    uint32_t kMaxStoredNewFrames = 0;
     bool kEnableRecordBinaryCurveLog = false;
 };
 
@@ -64,6 +64,9 @@ public:
     // Transform packed measurements to a new frame.
     bool ProcessMeasure(std::unique_ptr<PackedMeasurement> &new_packed_measure,
                         std::unique_ptr<FrontendOutputData> &new_visual_measure);
+
+    // Get specified frame id.
+    uint32_t GetNewestKeyframeId();
 
     // Reference for member variables.
     DataManagerOptions &options() { return options_; }

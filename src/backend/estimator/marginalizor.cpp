@@ -9,6 +9,41 @@
 
 namespace VIO {
 
+BackendMarginalizeType Backend::DecideMarginalizeType() {
+    if (data_manager_->visual_local_map()->frames().size() < data_manager_->options().kMaxStoredKeyFrames) {
+        return BackendMarginalizeType::kNotMarginalize;
+    }
+
+    // Visual frontend select keyframes.
+    if (visual_frontend_->options().kSelfSelectKeyframe) {
+        if (data_manager_->frames_with_bias().front().visual_measure->is_current_keyframe) {
+            return BackendMarginalizeType::kMarginalizeOldestFrame;
+        } else {
+            return BackendMarginalizeType::kMarginalizeSubnewFrame;
+        }
+
+    // Backend select keyframes.
+    } else {
+        // Get covisible features only in left camera.
+        std::vector<FeatureType *> covisible_features;
+        covisible_features.reserve(visual_frontend_->options().kMaxStoredFeaturePointsNumber);
+
+        const uint32_t ref_frame_id = data_manager_->GetNewestKeyframeId();
+        const uint32_t cur_frame_id = ref_frame_id + 1;
+        if (!data_manager_->visual_local_map()->GetCovisibleFeatures(ref_frame_id, cur_frame_id, covisible_features)) {
+            covisible_features.clear();
+        }
+
+        if (covisible_features.size() < visual_frontend_->options().kMinDetectedFeaturePointsNumberInCurrentImage) {
+            return BackendMarginalizeType::kMarginalizeOldestFrame;
+        } else {
+            return BackendMarginalizeType::kMarginalizeSubnewFrame;
+        }
+    }
+
+    return BackendMarginalizeType::kNotMarginalize;
+}
+
 bool Backend::TryToMarginalize() {
     switch (states_.marginalize_type) {
         case BackendMarginalizeType::kMarginalizeOldestFrame: {

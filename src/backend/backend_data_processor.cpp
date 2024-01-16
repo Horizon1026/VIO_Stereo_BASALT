@@ -233,9 +233,7 @@ bool Backend::ControlLocalMapDimension() {
     }
 
     // Remove features that cannot has more observations.
-    const uint32_t newest_keyframe_id = data_manager_->visual_local_map()->frames().front().id() +
-        data_manager_->options().kMaxStoredKeyFrames -
-        data_manager_->options().kMaxStoredNewFrames - 1;
+    const uint32_t newest_keyframe_id = data_manager_->GetNewestKeyframeId();
     for (const auto &pair : data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
         if (feature.observes().empty() || (feature.observes().size() == 1 && feature.first_frame_id() < newest_keyframe_id)) {
