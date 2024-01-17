@@ -21,9 +21,7 @@ bool DataManager::ProcessMeasure(std::unique_ptr<PackedMeasurement> &new_packed_
 
 // Get specified frame id.
 uint32_t DataManager::GetNewestKeyframeId() {
-    return visual_local_map_->frames().front().id() +
-        options_.kMaxStoredKeyFrames -
-        options_.kMaxStoredNewFrames - 1;
+    return visual_local_map_->frames().front().id() + options_.kMaxStoredKeyFrames - options_.kMaxStoredNewFrames - 1;
 }
 
 }
