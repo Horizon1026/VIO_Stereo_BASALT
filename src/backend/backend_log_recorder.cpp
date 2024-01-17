@@ -5,7 +5,7 @@
 namespace VIO {
 
 constexpr uint32_t kBackendStatesLogIndex = 1;
-constexpr uint32_t kBackendStatusFlagLogIndex = 2;
+constexpr uint32_t kBackendStatusLogIndex = 2;
 constexpr uint32_t kBackendCostTimeLogIndex = 3;
 constexpr uint32_t kBackendPriorHessianLogIndex = 4;
 
@@ -42,10 +42,11 @@ void Backend::RegisterLogPackages() {
     }
 
     std::unique_ptr<PackageInfo> package_status_flags_ptr = std::make_unique<PackageInfo>();
-    package_status_flags_ptr->id = kBackendStatusFlagLogIndex;
-    package_status_flags_ptr->name = "backend status flags";
+    package_status_flags_ptr->id = kBackendStatusLogIndex;
+    package_status_flags_ptr->name = "backend status";
     package_status_flags_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint8, .name = "is_initialized"});
     package_status_flags_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint8, .name = "marginalize_type"});
+    package_status_flags_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_valid_loop"});
     if (!logger_.RegisterPackage(package_status_flags_ptr)) {
         ReportError("[Backend] Failed to register package for backend status flags log.");
     }
@@ -114,14 +115,15 @@ void Backend::RecordBackendLogStates() {
     logger_.RecordPackage(kBackendStatesLogIndex, reinterpret_cast<const char *>(&log_package_states_), GetNewestStateTimeStamp());
 }
 
-void Backend::RecordBackendLogStatusFlag() {
+void Backend::RecordBackendLogStatus() {
     RETURN_IF(!options().kEnableRecordBinaryCurveLog);
 
-    log_package_status_flags_.is_initialized = states_.is_initialized;
-    log_package_status_flags_.marginalize_type = static_cast<uint8_t>(states_.marginalize_type);
+    log_package_status_.is_initialized = states_.is_initialized;
+    log_package_status_.marginalize_type = static_cast<uint8_t>(states_.marginalize_type);
+    log_package_status_.num_of_valid_loop = states_.is_initialized ? log_package_status_.num_of_valid_loop + 1 : 0;
 
     // Record log.
-    logger_.RecordPackage(kBackendStatusFlagLogIndex, reinterpret_cast<const char *>(&log_package_status_flags_), GetNewestStateTimeStamp());
+    logger_.RecordPackage(kBackendStatusLogIndex, reinterpret_cast<const char *>(&log_package_status_), GetNewestStateTimeStamp());
 }
 
 void Backend::RecordBackendLogCostTime() {

@@ -107,7 +107,7 @@ bool Backend::RunOnce() {
 
     // Record logs of backend.
     RecordBackendLogStates();
-    RecordBackendLogStatusFlag();
+    RecordBackendLogStatus();
     RecordBackendLogCostTime();
     RecordBackendLogPriorInformation();
 

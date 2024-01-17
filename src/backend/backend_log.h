@@ -35,9 +35,10 @@ struct BackendLogStates {
     float prior_residual = 0.0f;
 };
 
-struct BackendLogStatusFlag {
+struct BackendLogStatus {
     uint8_t is_initialized = 0;
     uint8_t marginalize_type = 0;
+    uint32_t num_of_valid_loop = 0;
 };
 
 struct BackendLogCostTime {

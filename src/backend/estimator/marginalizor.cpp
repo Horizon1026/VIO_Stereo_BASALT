@@ -16,6 +16,7 @@ BackendMarginalizeType Backend::DecideMarginalizeType() {
 
     // Visual frontend select keyframes.
     if (visual_frontend_->options().kSelfSelectKeyframe) {
+        ReportInfo("[Backend] Visual frontend select keyframe.");
         if (data_manager_->frames_with_bias().front().visual_measure->is_current_keyframe) {
             return BackendMarginalizeType::kMarginalizeOldestFrame;
         } else {
@@ -24,6 +25,8 @@ BackendMarginalizeType Backend::DecideMarginalizeType() {
 
     // Backend select keyframes.
     } else {
+        ReportInfo("[Backend] Backend select keyframe.");
+
         // Get covisible features only in left camera.
         std::vector<FeatureType *> covisible_features;
         covisible_features.reserve(visual_frontend_->options().kMaxStoredFeaturePointsNumber);

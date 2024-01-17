@@ -172,7 +172,7 @@ public:
     // Backend log recorder.
     float GetNewestStateTimeStamp();
     void RecordBackendLogStates();
-    void RecordBackendLogStatusFlag();
+    void RecordBackendLogStatus();
     void RecordBackendLogCostTime();
     void RecordBackendLogPriorInformation();
 
@@ -217,7 +217,7 @@ private:
     // Record log.
     BinaryDataLog logger_;
     BackendLogStates log_package_states_;
-    BackendLogStatusFlag log_package_status_flags_;
+    BackendLogStatus log_package_status_;
     BackendLogCostTime log_package_cost_time_;
 
     // Signal flags.
