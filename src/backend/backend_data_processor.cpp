@@ -210,14 +210,6 @@ bool Backend::ControlLocalMapDimension() {
             // Remove frames which is marginalized.
             const auto oldest_frame_id = data_manager_->visual_local_map()->frames().front().id();
             data_manager_->visual_local_map()->RemoveFrame(oldest_frame_id);
-
-            // Remove features which is marginalized.
-            for (const auto &pair : data_manager_->visual_local_map()->features()) {
-                const auto &feature = pair.second;
-                if (feature.status() == FeatureSolvedStatus::kMarginalized) {
-                    features_id.emplace_back(feature.id());
-                }
-            }
             break;
         }
         case BackendMarginalizeType::kMarginalizeSubnewFrame: {
@@ -232,14 +224,26 @@ bool Backend::ControlLocalMapDimension() {
         }
     }
 
-    // Remove features that cannot has more observations.
     const uint32_t newest_keyframe_id = data_manager_->GetNewestKeyframeId();
     for (const auto &pair : data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
+        // Remove features that cannot has more observations.
         if (feature.observes().empty() || (feature.observes().size() == 1 && feature.first_frame_id() < newest_keyframe_id)) {
             features_id.emplace_back(feature.id());
         }
+
+        // Remove features that only observed in old keyframes, and cannot be solved.
+        if (feature.status() == FeatureSolvedStatus::kUnsolved && feature.final_frame_id() < newest_keyframe_id) {
+            features_id.emplace_back(feature.id());
+        }
+
+        // Remove features which is marginalized.
+        if (feature.status() == FeatureSolvedStatus::kMarginalized) {
+            features_id.emplace_back(feature.id());
+        }
     }
+
+    // Remove selected features.
     for (const auto &id : features_id) {
         data_manager_->visual_local_map()->RemoveFeature(id);
     }
