@@ -178,6 +178,7 @@ public:
 
     // Backend selfcheck.
     bool CheckGraphOptimizationFactors();
+    bool CheckGraphOptimizationFactors(std::vector<std::unique_ptr<Edge<DorF>>> &edges);
 
     // Backend visualizor.
     RgbPixel GetFeatureColor(const FeatureType &feature);

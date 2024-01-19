@@ -33,6 +33,43 @@ bool Backend::CheckGraphOptimizationFactors() {
     const uint32_t idx_offset = data_manager_->visual_local_map()->frames().size() - data_manager_->frames_with_bias().size();
     RETURN_FALSE_IF(!AddImuPreintegrationFactorForEstimation(idx_offset));
 
+    // Iterate all edges.
+    RETURN_FALSE_IF(!CheckGraphOptimizationFactors(graph_.edges.all_prior_factors));
+    RETURN_FALSE_IF(!CheckGraphOptimizationFactors(graph_.edges.all_visual_reproj_factors));
+    RETURN_FALSE_IF(!CheckGraphOptimizationFactors(graph_.edges.all_imu_factors));
+
+    return true;
+}
+
+bool Backend::CheckGraphOptimizationFactors(std::vector<std::unique_ptr<Edge<DorF>>> &edges) {
+    const DorF disturb_step = static_cast<DorF>(1e-3);
+    // Iterate all edges.
+    for (auto &edge : edges) {
+        // Compute residual and jacobian at linearized point.
+        edge->ComputeResidual();
+        edge->ComputeJacobians();
+
+        // Compute residual at disturbance based on linearized point.
+        auto residual_0 = edge->residual();
+        for (const auto &jacobian : edge->GetJacobians()) {
+            residual_0 += jacobian * TVec<DorF>::Ones(jacobian.cols()) * disturb_step;
+        }
+
+        // Compute residual at new linearized point.
+        for (auto &vertex : edge->GetVertices()) {
+            const auto delta_param = TVec<DorF>::Ones(vertex->GetIncrementDimension()) * disturb_step;
+            vertex->UpdateParam(delta_param);
+        }
+        edge->ComputeResidual();
+        const auto residual_1 = edge->residual();
+
+        // Compare difference of residuals.
+        const auto residual = residual_0 - residual_1;
+        if (residual.norm() > static_cast<DorF>(1e-4)) {
+            ReportError("[Backend] SelfCheck edge <" << edge->name() << "> residual is " << LogVec(residual));
+        }
+    }
+
     return true;
 }
 

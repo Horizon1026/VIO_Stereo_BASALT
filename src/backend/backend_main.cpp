@@ -82,17 +82,11 @@ bool Backend::RunOnce() {
             ShowTinyInformationOfVisualLocalMap();
             // Show all frames and features in local map.
             ShowLocalMapFramesAndFeatures(0, false, 1);
-            ShowLocalMapFramesAndFeatures(0, true, 1);
-            ShowLocalMapFramesAndFeatures(1, false, 1);
-            ShowLocalMapFramesAndFeatures(1, true);
             // Show all frames with bias.
             ShowAllFramesWithBias();
+            // Show covisible features between keyframe and non-keyframe.
+            ShowFeaturePairsBetweenTwoFrames(data_manager_->GetNewestKeyframeId(), data_manager_->GetNewestKeyframeId() + 1, true, 1);
         }
-
-        // Debug: Show covisible features between keyframe and non-keyframe.
-        ShowFeaturePairsBetweenTwoFrames(data_manager_->GetNewestKeyframeId(), data_manager_->GetNewestKeyframeId() + 1, true, 1);
-        // Debug: Show all frames and features in local map.
-        ShowLocalMapFramesAndFeatures();
 
         // Decide marginalization type.
         states_.marginalize_type = DecideMarginalizeType();

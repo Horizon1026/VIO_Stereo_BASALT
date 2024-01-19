@@ -162,7 +162,7 @@ void Backend::ShowLocalMapFramesAndFeatures(const int32_t camera_id, const bool 
             auto &feature = pair.second;
             auto &observe = feature->observe(frame.id());
             if (static_cast<int32_t>(observe.size()) > camera_id) {
-                CONTINUE_IF(observe[camera_id].id != camera_id);
+                CONTINUE_IF(static_cast<int32_t>(observe[camera_id].id) != camera_id);
 
                 // Draw feature in rgb image.
                 Vec2 pixel_uv = observe[camera_id].raw_pixel_uv;
