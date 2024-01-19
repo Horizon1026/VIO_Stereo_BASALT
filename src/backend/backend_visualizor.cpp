@@ -10,7 +10,7 @@ using namespace SLAM_VISUALIZOR;
 namespace VIO {
 
 namespace {
-    constexpr int32_t kMaxImageNumInOneRow = 4;
+    constexpr int32_t kMaxImageNumInOneRow = 3;
 }
 
 RgbPixel Backend::GetFeatureColor(const FeatureType &feature) {
@@ -103,17 +103,15 @@ void Backend::ShowMatrixImage(const std::string &title, const TMat<DorF> &matrix
     Visualizor::WaitKey(1);
 }
 
-void Backend::ShowLocalMapFramesAndFeatures() {
-    // Camera name of each camera is camera_name[camera_id].
-    std::vector<std::string> camera_name = {"left", "right"};
-    uint32_t camera_id = 0;
-
+void Backend::ShowLocalMapFramesAndFeatures(const int32_t camera_id, const bool use_rectify, const int32_t delay_ms) {
     RETURN_IF(data_manager_->visual_local_map()->frames().empty());
     RETURN_IF(data_manager_->visual_local_map()->frames().front().raw_images().empty());
 
     // Memory allocation.
     const int32_t cols_of_images = kMaxImageNumInOneRow;
-    const int32_t rows_of_images = data_manager_->options().kMaxStoredKeyFrames / cols_of_images + 1;
+    const int32_t rows_of_images = data_manager_->options().kMaxStoredKeyFrames % cols_of_images == 0 ?
+        data_manager_->options().kMaxStoredKeyFrames / cols_of_images :
+        data_manager_->options().kMaxStoredKeyFrames / cols_of_images + 1;
     const int32_t image_cols = data_manager_->visual_local_map()->frames().front().raw_images()[camera_id].cols();
     const int32_t image_rows = data_manager_->visual_local_map()->frames().front().raw_images()[camera_id].rows();
     const int32_t show_image_cols = image_cols * cols_of_images;
@@ -127,7 +125,15 @@ void Backend::ShowLocalMapFramesAndFeatures() {
         const int32_t row_offset = image_rows * (frame_id / cols_of_images);
         const int32_t col_offset = image_cols * (frame_id % cols_of_images);
         // Load image.
-        show_image_mat.block(row_offset, col_offset, image_rows, image_cols) = frame.raw_images()[camera_id];
+        if (use_rectify) {
+            GrayImage raw_gray_image(frame.raw_images()[camera_id]);
+            MatImg rectify_image_mat = MatImg::Zero(raw_gray_image.rows(), raw_gray_image.cols());
+            GrayImage rectify_gray_image(rectify_image_mat);
+            visual_frontend_->camera_models()[camera_id]->CorrectDistortedImage(raw_gray_image, rectify_gray_image);
+            show_image_mat.block(row_offset, col_offset, image_rows, image_cols) = rectify_image_mat;
+        } else {
+            show_image_mat.block(row_offset, col_offset, image_rows, image_cols) = frame.raw_images()[camera_id];
+        }
         // Accumulate index.
         ++frame_id;
     }
@@ -152,13 +158,16 @@ void Backend::ShowLocalMapFramesAndFeatures() {
         for (auto &pair : frame.features()) {
             auto &feature = pair.second;
             auto &observe = feature->observe(frame.id());
-            if (observe.size() > camera_id) {
+            if (static_cast<int32_t>(observe.size()) > camera_id) {
                 CONTINUE_IF(observe[camera_id].id != camera_id);
 
                 // Draw feature in rgb image.
-                const Vec2 pixel_uv = observe[camera_id].raw_pixel_uv;
+                Vec2 pixel_uv = observe[camera_id].raw_pixel_uv;
+                if (use_rectify) {
+                    visual_frontend_->camera_models()[camera_id]->LiftFromNormalizedPlaneToImagePlane(observe[camera_id].rectified_norm_xy, pixel_uv);
+                    CONTINUE_IF(pixel_uv.x() < 0 || pixel_uv.x() > image_cols || pixel_uv.y() < 0 || pixel_uv.y() > image_rows);
+                }
                 const RgbPixel pixel_color = GetFeatureColor(*feature);
-
                 Visualizor::DrawSolidCircle(show_image, pixel_uv.x() + col_offset, pixel_uv.y() + row_offset, 3, pixel_color);
                 Visualizor::DrawString(show_image, std::to_string(feature->id()), pixel_uv.x() + col_offset, pixel_uv.y() + row_offset, pixel_color);
             }
@@ -167,8 +176,10 @@ void Backend::ShowLocalMapFramesAndFeatures() {
         ++frame_id;
     }
 
-    Visualizor::ShowImage(std::string("Local map [") + camera_name[camera_id] + std::string("]"), show_image);
-    Visualizor::WaitKey(0);
+    const std::string status_of_distortion = use_rectify ? "rectify" : "distorted";
+    const std::vector<std::string> camera_name = {"left", "right"};
+    Visualizor::ShowImage(std::string("Local map [") + camera_name[camera_id] + std::string("] <") + status_of_distortion + std::string(">"), show_image);
+    Visualizor::WaitKey(delay_ms);
 }
 
 void Backend::ShowAllFramesWithBias() {

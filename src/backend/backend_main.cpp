@@ -78,13 +78,16 @@ bool Backend::RunOnce() {
             // Show information of visual local map if neccessary.
             ShowTinyInformationOfVisualLocalMap();
             // Show all frames and features in local map.
-            ShowLocalMapFramesAndFeatures();
+            ShowLocalMapFramesAndFeatures(0, false, 1);
+            ShowLocalMapFramesAndFeatures(0, true, 1);
+            ShowLocalMapFramesAndFeatures(1, false, 1);
+            ShowLocalMapFramesAndFeatures(1, true);
             // Show all frames with bias.
             ShowAllFramesWithBias();
         }
 
         // Debug: Only show all frames and features in local map.
-        // ShowLocalMapFramesAndFeatures();
+        ShowLocalMapFramesAndFeatures();
 
         // Decide marginalization type.
         states_.marginalize_type = DecideMarginalizeType();

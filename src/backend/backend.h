@@ -180,7 +180,7 @@ public:
     RgbPixel GetFeatureColor(const FeatureType &feature);
     void ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id, const uint32_t cur_frame_id, const bool use_rectify = false);
     void ShowAllFramesWithBias();
-    void ShowLocalMapFramesAndFeatures();
+    void ShowLocalMapFramesAndFeatures(const int32_t camera_id = 0, const bool use_rectify = false, const int32_t delay_ms = 0);
     void ShowLocalMapInWorldFrame(const int32_t delay_ms, const bool block_in_loop = false);
     void ShowMatrixImage(const std::string &title, const TMat<DorF> &matrix);
     void ShowSimpleInformationOfVisualLocalMap();
