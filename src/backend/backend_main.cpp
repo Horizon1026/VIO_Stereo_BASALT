@@ -63,6 +63,9 @@ bool Backend::RunOnce() {
 
     // If backend is initialized.
     if (states_.is_initialized) {
+        // Debug : Check visual-inertial factors.
+        RETURN_FALSE_IF(!CheckGraphOptimizationFactors());
+
         // Try to estimate states.
         timer.TockTickInMillisecond();
         if (!TryToEstimate()) {
@@ -86,7 +89,9 @@ bool Backend::RunOnce() {
             ShowAllFramesWithBias();
         }
 
-        // Debug: Only show all frames and features in local map.
+        // Debug: Show covisible features between keyframe and non-keyframe.
+        ShowFeaturePairsBetweenTwoFrames(data_manager_->GetNewestKeyframeId(), data_manager_->GetNewestKeyframeId() + 1, true, 1);
+        // Debug: Show all frames and features in local map.
         ShowLocalMapFramesAndFeatures();
 
         // Decide marginalization type.

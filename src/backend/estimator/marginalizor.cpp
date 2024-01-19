@@ -69,7 +69,6 @@ bool Backend::TryToMarginalize() {
 
 bool Backend::MarginalizeOldestFrame() {
     ReportInfo("[Bakcend] Backend try to marginalize oldest frame.");
-    const uint32_t idx_offset = data_manager_->visual_local_map()->frames().size() - data_manager_->frames_with_bias().size();
 
     // Clear all vectors of vertices and edges.
     ClearBackendGraph();
@@ -91,6 +90,7 @@ bool Backend::MarginalizeOldestFrame() {
     ConvertImuMotionStatesToVertices();
 
     // [Edges] Inerial preintegration factor.
+    const uint32_t idx_offset = data_manager_->visual_local_map()->frames().size() - data_manager_->frames_with_bias().size();
     RETURN_FALSE_IF(!AddImuPreintegrationFactorForMarginalization(idx_offset));
 
     // Construct graph problem, add all vertices and edges.

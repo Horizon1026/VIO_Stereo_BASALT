@@ -40,13 +40,6 @@ bool Backend::TryToInitialize() {
         return false;
     }
 
-    // Show feature pairs for initialization.
-    if (options_.kEnableReportAllInformation) {
-        for (uint32_t i = data_manager_->visual_local_map()->frames().front().id(); i < data_manager_->visual_local_map()->frames().back().id(); ++i) {
-            ShowFeaturePairsBetweenTwoFrames(i, i + 1, true);
-        }
-    }
-
     return true;
 }
 

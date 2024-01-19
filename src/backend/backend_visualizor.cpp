@@ -43,7 +43,8 @@ RgbPixel Backend::GetFeatureColor(const FeatureType &feature) {
 
 void Backend::ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id,
                                                const uint32_t cur_frame_id,
-                                               const bool use_rectify) {
+                                               const bool use_rectify,
+                                               const int32_t delay_ms) {
     // Get covisible features only in left camera.
     std::vector<FeatureType *> covisible_features;
     if (!data_manager_->visual_local_map()->GetCovisibleFeatures(ref_frame_id, cur_frame_id, covisible_features)) {
@@ -84,14 +85,16 @@ void Backend::ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id,
         visual_frontend_->camera_models()[0]->CorrectDistortedImage(ref_image, ref_rectify_image);
         visual_frontend_->camera_models()[0]->CorrectDistortedImage(cur_image, cur_rectify_image);
 
-        Visualizor::ShowImageWithTrackedFeatures("ref and cur rectify image", ref_rectify_image, cur_rectify_image,
+        Visualizor::ShowImageWithTrackedFeatures(std::string("Recify image [ ") + std::to_string(ref_frame_id) + std::string(" | ") +
+            std::to_string(cur_frame_id) + std::string(" ] covisible features"), ref_rectify_image, cur_rectify_image,
             ref_pixel_uv, cur_pixel_uv, tracked_status);
     } else {
-        Visualizor::ShowImageWithTrackedFeatures("ref and cur raw image", ref_image, cur_image,
+        Visualizor::ShowImageWithTrackedFeatures(std::string("Raw image [ ") + std::to_string(ref_frame_id) + std::string(" | ") +
+            std::to_string(cur_frame_id) + std::string(" ] covisible features"), ref_image, cur_image,
             ref_pixel_uv, cur_pixel_uv, tracked_status);
     }
 
-    Visualizor::WaitKey(0);
+    Visualizor::WaitKey(delay_ms);
 }
 
 void Backend::ShowMatrixImage(const std::string &title, const TMat<DorF> &matrix) {

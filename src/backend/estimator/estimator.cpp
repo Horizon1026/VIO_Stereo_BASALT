@@ -13,8 +13,6 @@
 namespace VIO {
 
 bool Backend::TryToEstimate() {
-    const uint32_t idx_offset = data_manager_->visual_local_map()->frames().size() - data_manager_->frames_with_bias().size();
-
     // Clear all vectors of vertices and edges.
     ClearBackendGraph();
 
@@ -35,6 +33,7 @@ bool Backend::TryToEstimate() {
     ConvertImuMotionStatesToVertices();
 
     // [Edges] Inerial preintegration factor.
+    const uint32_t idx_offset = data_manager_->visual_local_map()->frames().size() - data_manager_->frames_with_bias().size();
     RETURN_FALSE_IF(!AddImuPreintegrationFactorForEstimation(idx_offset));
 
     // Construct graph problem, add all vertices and edges.
