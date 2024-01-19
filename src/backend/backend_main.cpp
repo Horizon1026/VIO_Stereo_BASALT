@@ -83,6 +83,9 @@ bool Backend::RunOnce() {
             ShowAllFramesWithBias();
         }
 
+        // Debug: Only show all frames and features in local map.
+        // ShowLocalMapFramesAndFeatures();
+
         // Decide marginalization type.
         states_.marginalize_type = DecideMarginalizeType();
 

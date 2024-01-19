@@ -9,6 +9,10 @@ using namespace SLAM_VISUALIZOR;
 
 namespace VIO {
 
+namespace {
+    constexpr int32_t kMaxImageNumInOneRow = 4;
+}
+
 RgbPixel Backend::GetFeatureColor(const FeatureType &feature) {
     RgbPixel pixel_color = RgbPixel{.r = 255, .g = 255, .b = 0};
     switch (feature.status()) {
@@ -102,39 +106,69 @@ void Backend::ShowMatrixImage(const std::string &title, const TMat<DorF> &matrix
 void Backend::ShowLocalMapFramesAndFeatures() {
     // Camera name of each camera is camera_name[camera_id].
     std::vector<std::string> camera_name = {"left", "right"};
+    uint32_t camera_id = 0;
 
+    RETURN_IF(data_manager_->visual_local_map()->frames().empty());
+    RETURN_IF(data_manager_->visual_local_map()->frames().front().raw_images().empty());
+
+    // Memory allocation.
+    const int32_t cols_of_images = kMaxImageNumInOneRow;
+    const int32_t rows_of_images = data_manager_->options().kMaxStoredKeyFrames / cols_of_images + 1;
+    const int32_t image_cols = data_manager_->visual_local_map()->frames().front().raw_images()[camera_id].cols();
+    const int32_t image_rows = data_manager_->visual_local_map()->frames().front().raw_images()[camera_id].rows();
+    const int32_t show_image_cols = image_cols * cols_of_images;
+    const int32_t show_image_rows = image_rows * rows_of_images;
+
+    // Load all frame images.
+    int32_t frame_id = 0;
+    MatImg show_image_mat = MatImg::Zero(show_image_rows, show_image_cols);
     for (auto &frame : data_manager_->visual_local_map()->frames()) {
-        // If stereo, camera id can be 0 and 1.
-        RETURN_IF(frame.raw_images().size() > data_manager_->camera_extrinsics().size());
-        for (uint32_t camera_id = 0; camera_id < frame.raw_images().size(); ++camera_id) {
-            // Convert gray image to rgb image.
-            GrayImage gray_image(frame.raw_images()[camera_id]);
-            RgbImage rgb_image;
-            uint8_t *rgb_buf = (uint8_t *)SlamMemory::Malloc(gray_image.rows() * gray_image.cols() * 3 * sizeof(uint8_t));
-            rgb_image.SetImage(rgb_buf, gray_image.rows(), gray_image.cols(), true);
-            Visualizor::ConvertUint8ToRgb(gray_image.data(), rgb_image.data(), gray_image.rows() * gray_image.cols());
-
-            // Draw all observed features in this frame and this camera image.
-            for (auto &pair : frame.features()) {
-                auto &feature = pair.second;
-                auto &observe = feature->observe(frame.id());
-                if (observe.size() > camera_id) {
-                    CONTINUE_IF(observe[camera_id].id != camera_id);
-
-                    // Draw feature in rgb image.
-                    const Vec2 pixel_uv = observe[camera_id].raw_pixel_uv;
-                    const RgbPixel pixel_color = GetFeatureColor(*feature);
-
-                    Visualizor::DrawSolidCircle(rgb_image, pixel_uv.x(), pixel_uv.y(), 3, pixel_color);
-                    Visualizor::DrawString(rgb_image, std::to_string(feature->id()), pixel_uv.x(), pixel_uv.y(), pixel_color);
-                }
-            }
-
-            Visualizor::ShowImage(std::string("frame ") + std::to_string(frame.id()) + std::string(" ") + camera_name[camera_id] +
-                std::string(" at ") + std::to_string(frame.time_stamp_s()) + std::string("s"), rgb_image);
-        }
+        // Compute location offset.
+        const int32_t row_offset = image_rows * (frame_id / cols_of_images);
+        const int32_t col_offset = image_cols * (frame_id % cols_of_images);
+        // Load image.
+        show_image_mat.block(row_offset, col_offset, image_rows, image_cols) = frame.raw_images()[camera_id];
+        // Accumulate index.
+        ++frame_id;
     }
-    Visualizor::WaitKey(1);
+    GrayImage gray_show_image(show_image_mat);
+    uint8_t *show_image_buf = (uint8_t *)SlamMemory::Malloc(show_image_rows * show_image_cols * 3 * sizeof(uint8_t));
+    RgbImage show_image(show_image_buf, show_image_rows, show_image_cols, true);
+    Visualizor::ConvertUint8ToRgb(gray_show_image.data(), show_image.data(), gray_show_image.rows() * gray_show_image.cols());
+
+    // Iterate all frames in local map.
+    frame_id = 0;
+    for (const auto &frame : data_manager_->visual_local_map()->frames()) {
+        // Compute location offset.
+        const int32_t row_offset = image_rows * (frame_id / cols_of_images);
+        const int32_t col_offset = image_cols * (frame_id % cols_of_images);
+        // Type basic information of each frame.
+        const int32_t font_size = 16;
+        const RgbPixel info_color = frame_id >= static_cast<int32_t>(data_manager_->options().kMaxStoredKeyFrames - data_manager_->options().kMaxStoredNewFrames) ?
+            RgbPixel{.r = 255, .g = 0, .b = 0} : RgbPixel{.r = 0, .g = 255, .b = 0};
+        Visualizor::DrawString(show_image, std::string("[ ") + std::to_string(frame.id()) + std::string(" | ") + std::to_string(frame.time_stamp_s()) + std::string("s ]"),
+            col_offset, row_offset, info_color, font_size);
+        // Draw all observed features in this frame and this camera image.
+        for (auto &pair : frame.features()) {
+            auto &feature = pair.second;
+            auto &observe = feature->observe(frame.id());
+            if (observe.size() > camera_id) {
+                CONTINUE_IF(observe[camera_id].id != camera_id);
+
+                // Draw feature in rgb image.
+                const Vec2 pixel_uv = observe[camera_id].raw_pixel_uv;
+                const RgbPixel pixel_color = GetFeatureColor(*feature);
+
+                Visualizor::DrawSolidCircle(show_image, pixel_uv.x() + col_offset, pixel_uv.y() + row_offset, 3, pixel_color);
+                Visualizor::DrawString(show_image, std::to_string(feature->id()), pixel_uv.x() + col_offset, pixel_uv.y() + row_offset, pixel_color);
+            }
+        }
+        // Accumulate index.
+        ++frame_id;
+    }
+
+    Visualizor::ShowImage(std::string("Local map [") + camera_name[camera_id] + std::string("]"), show_image);
+    Visualizor::WaitKey(0);
 }
 
 void Backend::ShowAllFramesWithBias() {

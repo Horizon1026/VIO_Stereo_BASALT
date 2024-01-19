@@ -158,9 +158,6 @@ int main(int argc, char **argv) {
     ReportInfo(YELLOW ">> Test vio on " << dataset_root_dir << "." RESET_COLOR);
     vio.options().frontend.image_rows = 480;
     vio.options().frontend.image_cols = 752;
-    vio.options().frontend.enable_recording_curve_binlog = true;
-    vio.options().frontend.enable_recording_image_binlog = false;
-    vio.options().frontend.enable_drawing_track_result = true;
 
     // Fill left camera extrinsics.
     Mat3 R_i_cl;

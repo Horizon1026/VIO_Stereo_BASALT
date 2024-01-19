@@ -40,7 +40,7 @@ struct VioOptionsOfFeatureTracker {
 struct VioOptionsOfFrontend {
     uint32_t image_rows = 0;
     uint32_t image_cols = 0;
-    bool enable_drawing_track_result = true;
+    bool enable_drawing_track_result = false;
     bool select_keyframe = true;
     uint32_t max_feature_number = 121;
     uint32_t min_feature_number = 60;
@@ -64,7 +64,7 @@ struct VioOptionsOfBackend {
     float default_feature_depth_in_meter = 1.0f;
 
     bool enable_report_all_information = false;
-    bool enable_local_map_store_raw_images = false;
+    bool enable_local_map_store_raw_images = true;
 
     bool enable_recording_curve_binlog = true;
     std::string log_file_name = "backend.binlog";
@@ -79,7 +79,7 @@ struct VioOptionsOfDataLoader {
 };
 
 struct VioOptionsOfDataManager {
-    uint32_t max_num_of_stored_keyframes = 7;
+    uint32_t max_num_of_stored_keyframes = 6;
     uint32_t max_num_of_stored_new_frames = 3;
     bool enable_recording_curve_binlog = true;
     std::string log_file_name = "data_manager.binlog";
