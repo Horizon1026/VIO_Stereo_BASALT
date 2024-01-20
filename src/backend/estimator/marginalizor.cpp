@@ -98,7 +98,8 @@ bool Backend::MarginalizeOldestFrame() {
     Graph<DorF> graph_optimization_problem;
     ConstructGraphOptimizationProblem(idx_offset, graph_optimization_problem);
     if (states_.prior.is_valid) {
-        ReportInfo("[Backend] Before marginalization, prior residual squared norm is " << graph_optimization_problem.prior_residual().squaredNorm());
+        ReportInfo("[Backend] Before marginalization, prior residual squared norm [" <<
+            graph_optimization_problem.prior_residual().squaredNorm() << "]");
     }
 
     // Set vertices to be marged.
@@ -128,9 +129,9 @@ bool Backend::MarginalizeOldestFrame() {
     }
 
     // Report marginalization result.
-    ReportInfo("[Backend] Marginalized prior residual size is " << states_.prior.residual.rows() <<
-        ", squared norm is " << marger.problem()->prior_residual().squaredNorm() <<
-        ", cost of problem is " << marger.cost_of_problem());
+    ReportInfo("[Backend] Marginalized prior size [" << states_.prior.residual.rows() <<
+        "], squared norm [" << marger.problem()->prior_residual().squaredNorm() <<
+        "], cost of problem [" << marger.cost_of_problem() << "]");
     if (options_.kEnableReportAllInformation) {
         ShowMatrixImage("marg hessian", marger.problem()->hessian());
         ShowMatrixImage("reverse hessian", marger.reverse_hessian());
@@ -154,7 +155,7 @@ bool Backend::MarginalizeSubnewFrame() {
     RETURN_TRUE_IF_FALSE(states_.prior.is_valid);
 
     const uint32_t target_size = states_.prior.hessian.cols() > 15 ? std::max(static_cast<uint32_t>(states_.prior.hessian.cols() - 15), min_size) : 0;
-    ReportInfo(RED "[Backend] Marginalizor discard prior information. [" << states_.prior.hessian.cols() << "]->[" << target_size << "]" RESET_COLOR);
+    ReportInfo("[Backend] Marginalizor discard prior information with size [" << states_.prior.hessian.cols() << "]->[" << target_size << "]");
     if (states_.prior.is_valid && target_size > 0) {
         Marginalizor<DorF> marger;
         // Prior information of frame to be discarded shoule be directly discarded.
@@ -167,8 +168,8 @@ bool Backend::MarginalizeSubnewFrame() {
     }
 
     // Report marginalization result.
-    ReportInfo("[Backend] Marginalized prior residual size is " << states_.prior.residual.rows() <<
-        ", squared norm is " << states_.prior.residual.squaredNorm());
+    ReportInfo("[Backend] Marginalized prior size [" << states_.prior.residual.rows() <<
+        "], squared norm [" << states_.prior.residual.squaredNorm() << "]");
     if (options_.kEnableReportAllInformation) {
         ShowMatrixImage("prior", states_.prior.hessian);
     }
