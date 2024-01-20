@@ -153,7 +153,7 @@ void Backend::ShowLocalMapFramesAndFeatures(const int32_t camera_id, const bool 
         const int32_t col_offset = image_cols * (frame_id % cols_of_images);
         // Type basic information of each frame.
         const int32_t font_size = 16;
-        const RgbPixel info_color = frame_id >= static_cast<int32_t>(data_manager_->options().kMaxStoredKeyFrames - data_manager_->options().kMaxStoredNewFrames) ?
+        const RgbPixel info_color = frame_id >= static_cast<int32_t>(data_manager_->visual_local_map()->frames().size() - data_manager_->options().kMaxStoredNewFrames) ?
             RgbPixel{.r = 255, .g = 0, .b = 0} : RgbPixel{.r = 0, .g = 255, .b = 0};
         Visualizor::DrawString(show_image, std::string("[ ") + std::to_string(frame.id()) + std::string(" | ") + std::to_string(frame.time_stamp_s()) + std::string("s ]"),
             col_offset, row_offset, info_color, font_size);
@@ -185,60 +185,77 @@ void Backend::ShowLocalMapFramesAndFeatures(const int32_t camera_id, const bool 
     Visualizor::WaitKey(delay_ms);
 }
 
-void Backend::ShowAllFramesWithBias() {
-    // Camera name of each camera is camera_name[camera_id].
-    std::vector<std::string> camera_name = {"left", "right"};
+void Backend::ShowAllFramesWithBias(const bool use_rectify, const int32_t delay_ms) {
+    RETURN_IF(data_manager_->frames_with_bias().empty());
+    RETURN_IF(data_manager_->frames_with_bias().front().packed_measure->left_image == nullptr);
 
+    // Memory allocation.
+    const int32_t cols_of_images = kMaxImageNumInOneRow;
+    const int32_t rows_of_images = data_manager_->options().kMaxStoredNewFrames % cols_of_images == 0 ?
+        data_manager_->options().kMaxStoredNewFrames / cols_of_images :
+        data_manager_->options().kMaxStoredNewFrames / cols_of_images + 1;
+    const int32_t image_cols = data_manager_->frames_with_bias().front().packed_measure->left_image->image.cols();
+    const int32_t image_rows = data_manager_->frames_with_bias().front().packed_measure->left_image->image.rows();
+    const int32_t show_image_cols = image_cols * cols_of_images;
+    const int32_t show_image_rows = image_rows * rows_of_images;
+
+    // Load all frame images.
+    int32_t frame_id = 0;
+    MatImg show_image_mat = MatImg::Zero(show_image_rows, show_image_cols);
+    for (auto &frame_with_bias : data_manager_->frames_with_bias()) {
+        // Compute location offset.
+        const int32_t row_offset = image_rows * (frame_id / cols_of_images);
+        const int32_t col_offset = image_cols * (frame_id % cols_of_images);
+        // Load image.
+        if (use_rectify) {
+            GrayImage raw_gray_image(frame_with_bias.packed_measure->left_image->image);
+            MatImg rectify_image_mat = MatImg::Zero(raw_gray_image.rows(), raw_gray_image.cols());
+            GrayImage rectify_gray_image(rectify_image_mat);
+            visual_frontend_->camera_models()[0]->CorrectDistortedImage(raw_gray_image, rectify_gray_image);
+            show_image_mat.block(row_offset, col_offset, image_rows, image_cols) = rectify_image_mat;
+        } else {
+            show_image_mat.block(row_offset, col_offset, image_rows, image_cols) = frame_with_bias.packed_measure->left_image->image;
+        }
+        // Accumulate index.
+        ++frame_id;
+    }
+    GrayImage gray_show_image(show_image_mat);
+    uint8_t *show_image_buf = (uint8_t *)SlamMemory::Malloc(show_image_rows * show_image_cols * 3 * sizeof(uint8_t));
+    RgbImage show_image(show_image_buf, show_image_rows, show_image_cols, true);
+    Visualizor::ConvertUint8ToRgb(gray_show_image.data(), show_image.data(), gray_show_image.rows() * gray_show_image.cols());
+
+    // Iterate all frames in local map.
+    frame_id = 0;
     for (auto &frame_with_bias : data_manager_->frames_with_bias()) {
         CONTINUE_IF(frame_with_bias.packed_measure == nullptr || frame_with_bias.visual_measure == nullptr);
+        CONTINUE_IF((frame_with_bias.packed_measure->left_image == nullptr));
 
-        if (frame_with_bias.packed_measure->left_image != nullptr) {
-            // Convert gray image to rgb image.
-            GrayImage gray_image(frame_with_bias.packed_measure->left_image->image);
-            RgbImage rgb_image;
-            uint8_t *rgb_buf = (uint8_t *)SlamMemory::Malloc(gray_image.rows() * gray_image.cols() * 3 * sizeof(uint8_t));
-            rgb_image.SetImage(rgb_buf, gray_image.rows(), gray_image.cols(), true);
-            Visualizor::ConvertUint8ToRgb(gray_image.data(), rgb_image.data(), gray_image.rows() * gray_image.cols());
+        // Compute location offset.
+        const int32_t row_offset = image_rows * (frame_id / cols_of_images);
+        const int32_t col_offset = image_cols * (frame_id % cols_of_images);
+        // Type basic information of each frame.
+        const int32_t font_size = 16;
+        const RgbPixel info_color = frame_id >= static_cast<int32_t>(data_manager_->options().kMaxStoredKeyFrames - data_manager_->options().kMaxStoredNewFrames) ?
+            RgbPixel{.r = 255, .g = 0, .b = 0} : RgbPixel{.r = 0, .g = 255, .b = 0};
+        Visualizor::DrawString(show_image, std::string("[ ") + std::to_string(frame_with_bias.time_stamp_s) + std::string("s ]"),
+            col_offset, row_offset, info_color, font_size);
 
-            // Draw all observed features in this frame and this camera image.
-            for (uint32_t i = 0; i < frame_with_bias.visual_measure->features_id.size(); ++i) {
-                const Vec2 pixel_uv = frame_with_bias.visual_measure->observes_per_frame[i][0].raw_pixel_uv;
-                const RgbPixel pixel_color = RgbPixel{.r = 0, .g = 255, .b = 255};
-                Visualizor::DrawSolidCircle(rgb_image, pixel_uv.x(), pixel_uv.y(), 3, pixel_color);
-                Visualizor::DrawString(rgb_image, std::to_string(frame_with_bias.visual_measure->features_id[i]),
-                    pixel_uv.x(), pixel_uv.y(), pixel_color);
-            }
-
-            // Draw image to show.
-            Visualizor::ShowImage(std::string("frame with bias of ") + camera_name[0] + std::string(" at ") +
-                std::to_string(frame_with_bias.time_stamp_s) + std::string("s"), rgb_image);
+        // Draw all observed features in this frame and this camera image.
+        for (uint32_t i = 0; i < frame_with_bias.visual_measure->features_id.size(); ++i) {
+            const Vec2 pixel_uv = frame_with_bias.visual_measure->observes_per_frame[i][0].raw_pixel_uv + Vec2(col_offset, row_offset);
+            const RgbPixel pixel_color = RgbPixel{.r = 0, .g = 255, .b = 127};
+            Visualizor::DrawSolidCircle(show_image, pixel_uv.x(), pixel_uv.y(), 3, pixel_color);
+            Visualizor::DrawString(show_image, std::to_string(frame_with_bias.visual_measure->features_id[i]),
+                pixel_uv.x(), pixel_uv.y(), pixel_color);
         }
 
-        if (frame_with_bias.packed_measure->right_image != nullptr) {
-            // Convert gray image to rgb image.
-            GrayImage gray_image(frame_with_bias.packed_measure->right_image->image);
-            RgbImage rgb_image;
-            uint8_t *rgb_buf = (uint8_t *)SlamMemory::Malloc(gray_image.rows() * gray_image.cols() * 3 * sizeof(uint8_t));
-            rgb_image.SetImage(rgb_buf, gray_image.rows(), gray_image.cols(), true);
-            Visualizor::ConvertUint8ToRgb(gray_image.data(), rgb_image.data(), gray_image.rows() * gray_image.cols());
-
-            // Draw all observed features in this frame and this camera image.
-            for (uint32_t i = 0; i < frame_with_bias.visual_measure->features_id.size(); ++i) {
-                CONTINUE_IF(frame_with_bias.visual_measure->observes_per_frame[i].size() < 2);
-                const Vec2 pixel_uv = frame_with_bias.visual_measure->observes_per_frame[i][1].raw_pixel_uv;
-                const RgbPixel pixel_color = RgbPixel{.r = 0, .g = 255, .b = 255};
-                Visualizor::DrawSolidCircle(rgb_image, pixel_uv.x(), pixel_uv.y(), 3, pixel_color);
-                Visualizor::DrawString(rgb_image, std::to_string(frame_with_bias.visual_measure->features_id[i]),
-                    pixel_uv.x(), pixel_uv.y(), pixel_color);
-            }
-
-            // Draw image to show.
-            Visualizor::ShowImage(std::string("frame with bias of ") + camera_name[1] + std::string(" at ") +
-                std::to_string(frame_with_bias.time_stamp_s) + std::string("s"), rgb_image);
-        }
+        // Accumulate index.
+        ++frame_id;
     }
 
-    Visualizor::WaitKey(1);
+    const std::string status_of_distortion = use_rectify ? "rectify" : "distorted";
+    Visualizor::ShowImage(std::string("New frames with bias [left] <") + status_of_distortion + std::string(">"), show_image);
+    Visualizor::WaitKey(delay_ms);
 }
 
 void Backend::ShowLocalMapInWorldFrame(const int32_t delay_ms, const bool block_in_loop) {
