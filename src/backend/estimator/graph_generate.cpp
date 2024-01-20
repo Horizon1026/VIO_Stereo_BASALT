@@ -215,26 +215,26 @@ bool Backend::ConvertFeatureInvdepAndAddVisualFactor(const FeatureType &feature,
         RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
 
         // Add edges of visual reprojection factor, considering two cameras view two frames.
-        // for (uint32_t i = 1; i < obv_in_cur.size(); ++i) {
-        //     observe_vector.tail<2>() = obv_in_cur[i].rectified_norm_xy;
+        for (uint32_t i = 1; i < obv_in_cur.size(); ++i) {
+            observe_vector.tail<2>() = obv_in_cur[i].rectified_norm_xy;
 
-        //     graph_.edges.all_visual_reproj_factors.emplace_back(std::make_unique<EdgeFeatureInvdepToNormPlaneViaImuWithinTwoFramesTwoCamera<DorF>>());
-        //     auto &visual_reproj_factor = graph_.edges.all_visual_reproj_factors.back();
-        //     visual_reproj_factor->SetVertex(graph_.vertices.all_features_invdep.back().get(), 0);
-        //     visual_reproj_factor->SetVertex(graph_.vertices.all_frames_p_wi[min_frame_id - idx_offset].get(), 1);
-        //     visual_reproj_factor->SetVertex(graph_.vertices.all_frames_q_wi[min_frame_id - idx_offset].get(), 2);
-        //     visual_reproj_factor->SetVertex(graph_.vertices.all_frames_p_wi[idx - idx_offset].get(), 3);
-        //     visual_reproj_factor->SetVertex(graph_.vertices.all_frames_q_wi[idx - idx_offset].get(), 4);
-        //     visual_reproj_factor->SetVertex(graph_.vertices.all_cameras_p_ic[0].get(), 5);
-        //     visual_reproj_factor->SetVertex(graph_.vertices.all_cameras_q_ic[0].get(), 6);
-        //     visual_reproj_factor->SetVertex(graph_.vertices.all_cameras_p_ic[i].get(), 7);
-        //     visual_reproj_factor->SetVertex(graph_.vertices.all_cameras_q_ic[i].get(), 8);
-        //     visual_reproj_factor->observation() = observe_vector.cast<DorF>();
-        //     visual_reproj_factor->information() = visual_info_matrix;
-        //     visual_reproj_factor->kernel() = std::make_unique<KernelHuber<DorF>>(static_cast<DorF>(0.5));
-        //     visual_reproj_factor->name() = std::string("two frames two cameras");
-        //     RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
-        // }
+            graph_.edges.all_visual_reproj_factors.emplace_back(std::make_unique<EdgeFeatureInvdepToNormPlaneViaImuWithinTwoFramesTwoCamera<DorF>>());
+            auto &visual_reproj_factor = graph_.edges.all_visual_reproj_factors.back();
+            visual_reproj_factor->SetVertex(graph_.vertices.all_features_invdep.back().get(), 0);
+            visual_reproj_factor->SetVertex(graph_.vertices.all_frames_p_wi[min_frame_id - idx_offset].get(), 1);
+            visual_reproj_factor->SetVertex(graph_.vertices.all_frames_q_wi[min_frame_id - idx_offset].get(), 2);
+            visual_reproj_factor->SetVertex(graph_.vertices.all_frames_p_wi[idx - idx_offset].get(), 3);
+            visual_reproj_factor->SetVertex(graph_.vertices.all_frames_q_wi[idx - idx_offset].get(), 4);
+            visual_reproj_factor->SetVertex(graph_.vertices.all_cameras_p_ic[0].get(), 5);
+            visual_reproj_factor->SetVertex(graph_.vertices.all_cameras_q_ic[0].get(), 6);
+            visual_reproj_factor->SetVertex(graph_.vertices.all_cameras_p_ic[i].get(), 7);
+            visual_reproj_factor->SetVertex(graph_.vertices.all_cameras_q_ic[i].get(), 8);
+            visual_reproj_factor->observation() = observe_vector.cast<DorF>();
+            visual_reproj_factor->information() = visual_info_matrix;
+            visual_reproj_factor->kernel() = std::make_unique<KernelHuber<DorF>>(static_cast<DorF>(0.5));
+            visual_reproj_factor->name() = std::string("two frames two cameras");
+            RETURN_FALSE_IF(!visual_reproj_factor->SelfCheck());
+        }
     }
 
     return true;

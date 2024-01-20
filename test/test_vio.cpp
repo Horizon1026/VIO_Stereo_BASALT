@@ -149,7 +149,7 @@ void TestRunVio(const uint32_t max_wait_ticks) {
 
 int main(int argc, char **argv) {
     // Root direction of Euroc dataset.
-    std::string dataset_root_dir;
+    std::string dataset_root_dir = "D:/My_Github/Datasets/MH_01_easy/";
     if (argc == 2) {
         dataset_root_dir = argv[1];
     }

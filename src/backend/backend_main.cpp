@@ -63,8 +63,10 @@ bool Backend::RunOnce() {
 
     // If backend is initialized.
     if (states_.is_initialized) {
-        // Debug : Check visual-inertial factors.
-        RETURN_FALSE_IF(!CheckGraphOptimizationFactors());
+        // Check visual-inertial factors and report error.
+        if (options_.kEnableReportAllInformation) {
+            CheckGraphOptimizationFactors();
+        }
 
         // Try to estimate states.
         timer.TockTickInMillisecond();

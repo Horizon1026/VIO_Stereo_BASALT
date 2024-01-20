@@ -190,34 +190,24 @@ public:
         const TQuat<Scalar> q_ci = q_ic_.inverse();
         const TQuat<Scalar> q_cw = q_ci * q_wi_.inverse();
         const TQuat<Scalar> q_ci0 = q_cw * q_wi0_;
-        const TQuat<Scalar> q_cc0 = q_ci0 * q_ic_;
+        const TQuat<Scalar> q_cc0 = q_ci0 * q_ic0_;
         const TMat3<Scalar> R_ci = q_ci.toRotationMatrix();
         const TMat3<Scalar> R_cw = q_cw.toRotationMatrix();
         const TMat3<Scalar> R_ci0 = q_ci0.toRotationMatrix();
         const TMat3<Scalar> R_cc0 = q_cc0.toRotationMatrix();
 
-        // jaco_i.leftCols<3>() = ric2.transpose() * Rj.transpose();
-        // jaco_i.rightCols<3>() = ric2.transpose() * Rj.transpose() * Ri * -Utility::skewSymmetric(pts_imu_i);
         const TMat3<Scalar> jacobian_cam0_p = R_cw;
         const TMat3<Scalar> jacobian_cam0_q = - R_ci0 * Utility::SkewSymmetricMatrix(p_i0_);
 
-        // jaco_j.leftCols<3>() = ric2.transpose() * -Rj.transpose();
-        // jaco_j.rightCols<3>() = ric2.transpose() * Utility::skewSymmetric(pts_imu_j);
         const TMat3<Scalar> jacobian_cam_p = - R_cw;
         const TMat3<Scalar> jacobian_cam_q = R_ci * Utility::SkewSymmetricMatrix(p_i_);
 
-        // jacobian_feature = reduce * ric2.transpose() * Rj.transpose() * Ri * ric * pts_i_td * -1.0 / (inv_dep_i * inv_dep_i);
-        // jacobian_feature = reduce * ric.transpose() * Rj.transpose() * Ri * ric * pts_i;
         const TVec3<Scalar> jacobian_invdep = - R_cc0 *
             TVec3<Scalar>(norm_xy0_.x(), norm_xy0_.y(), static_cast<Scalar>(1)) / (inv_depth0_ * inv_depth0_);
 
-        // jaco_ex.leftCols<3>() = ric2.transpose() * Rj.transpose() * Ri;
-        // jaco_ex.rightCols<3>() = ric2.transpose() * Rj.transpose() * Ri * ric * -Utility::skewSymmetric(pts_camera_i);
         const TMat3<Scalar> jacobian_ex0_p = R_ci0;
         const TMat3<Scalar> jacobian_ex0_q = - R_cc0 * Utility::SkewSymmetricMatrix(p_c0_);
 
-        // jaco_ex.leftCols<3>() = - ric2.transpose();
-        // jaco_ex.rightCols<3>() = Utility::skewSymmetric(pts_camera_j);
         const TMat3<Scalar> jacobian_ex_p = - R_ci;
         const TMat3<Scalar> jacobian_ex_q = Utility::SkewSymmetricMatrix(p_c_);
 

@@ -42,35 +42,14 @@ bool Backend::CheckGraphOptimizationFactors() {
 }
 
 bool Backend::CheckGraphOptimizationFactors(std::vector<std::unique_ptr<Edge<DorF>>> &edges) {
-    const DorF disturb_step = static_cast<DorF>(1e-3);
-    // Iterate all edges.
+    bool is_factor_valid = true;
     for (auto &edge : edges) {
-        // Compute residual and jacobian at linearized point.
-        edge->ComputeResidual();
-        edge->ComputeJacobians();
-
-        // Compute residual at disturbance based on linearized point.
-        auto residual_0 = edge->residual();
-        for (const auto &jacobian : edge->GetJacobians()) {
-            residual_0 += jacobian * TVec<DorF>::Ones(jacobian.cols()) * disturb_step;
-        }
-
-        // Compute residual at new linearized point.
-        for (auto &vertex : edge->GetVertices()) {
-            const auto delta_param = TVec<DorF>::Ones(vertex->GetIncrementDimension()) * disturb_step;
-            vertex->UpdateParam(delta_param);
-        }
-        edge->ComputeResidual();
-        const auto residual_1 = edge->residual();
-
-        // Compare difference of residuals.
-        const auto residual = residual_0 - residual_1;
-        if (residual.norm() > static_cast<DorF>(1e-4)) {
-            ReportError("[Backend] SelfCheck edge <" << edge->name() << "> residual is " << LogVec(residual));
+        if (!edge->SelfCheckJacobians()) {
+            is_factor_valid = false;
         }
     }
 
-    return true;
+    return is_factor_valid;
 }
 
 }
