@@ -161,19 +161,19 @@ void Backend::ShowLocalMapFramesAndFeatures(const int32_t camera_id, const bool 
         for (auto &pair : frame.features()) {
             auto &feature = pair.second;
             auto &observe = feature->observe(frame.id());
-            if (static_cast<int32_t>(observe.size()) > camera_id) {
-                CONTINUE_IF(static_cast<int32_t>(observe[camera_id].id) != camera_id);
+            CONTINUE_IF(static_cast<int32_t>(observe.size()) <= camera_id);
+            CONTINUE_IF(static_cast<int32_t>(observe[camera_id].id) != camera_id);
 
-                // Draw feature in rgb image.
-                Vec2 pixel_uv = observe[camera_id].raw_pixel_uv;
-                if (use_rectify) {
-                    visual_frontend_->camera_models()[camera_id]->LiftFromNormalizedPlaneToImagePlane(observe[camera_id].rectified_norm_xy, pixel_uv);
-                    CONTINUE_IF(pixel_uv.x() < 0 || pixel_uv.x() > image_cols || pixel_uv.y() < 0 || pixel_uv.y() > image_rows);
-                }
-                const RgbPixel pixel_color = GetFeatureColor(*feature);
-                Visualizor::DrawSolidCircle(show_image, pixel_uv.x() + col_offset, pixel_uv.y() + row_offset, 3, pixel_color);
-                Visualizor::DrawString(show_image, std::to_string(feature->id()), pixel_uv.x() + col_offset, pixel_uv.y() + row_offset, pixel_color);
+            // Draw feature in rgb image.
+            Vec2 pixel_uv = observe[camera_id].raw_pixel_uv;
+            if (use_rectify) {
+                visual_frontend_->camera_models()[camera_id]->LiftFromNormalizedPlaneToImagePlane(observe[camera_id].rectified_norm_xy, pixel_uv);
+                CONTINUE_IF(pixel_uv.x() < 0 || pixel_uv.x() > image_cols || pixel_uv.y() < 0 || pixel_uv.y() > image_rows);
             }
+            const RgbPixel pixel_color = GetFeatureColor(*feature);
+            const std::string feature_text = feature->first_frame_id() == frame.id() ? std::to_string(feature->id()) + std::string("+") : std::to_string(feature->id());
+            Visualizor::DrawSolidCircle(show_image, pixel_uv.x() + col_offset, pixel_uv.y() + row_offset, 3, pixel_color);
+            Visualizor::DrawString(show_image, feature_text, pixel_uv.x() + col_offset, pixel_uv.y() + row_offset, pixel_color);
         }
         // Accumulate index.
         ++frame_id;

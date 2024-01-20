@@ -121,6 +121,8 @@ bool Backend::ConvertFeatureInvdepAndAddVisualFactorForEstimation() {
         CONTINUE_IF(feature.observes().size() < 2 && feature.observes().front().size() < 2);
         // Select features which is marginalized successfully.
         CONTINUE_IF(feature.status() == FeatureSolvedStatus::kMarginalized);
+        // Select features which is first observed in keyframes.
+        CONTINUE_IF(feature.first_frame_id() > data_manager_->GetNewestKeyframeId());
 
         // Compute inverse depth by p_w of this feature.
         const auto &frame = data_manager_->visual_local_map()->frame(feature.first_frame_id());

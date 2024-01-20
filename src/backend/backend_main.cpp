@@ -64,9 +64,7 @@ bool Backend::RunOnce() {
     // If backend is initialized.
     if (states_.is_initialized) {
         // Check visual-inertial factors and report error.
-        if (options_.kEnableReportAllInformation) {
-            CheckGraphOptimizationFactors();
-        }
+        CheckGraphOptimizationFactors();
 
         // Try to estimate states.
         timer.TockTickInMillisecond();
@@ -104,6 +102,9 @@ bool Backend::RunOnce() {
             ReportInfo(GREEN "[Backend] Backend succeed to marginalize states within " << log_package_cost_time_.marginalize << " ms." RESET_COLOR);
         }
     }
+
+    // Show all frames and features in local map.
+    ShowLocalMapFramesAndFeatures();
 
     // Control the dimension of local map.
     RETURN_FALSE_IF(!ControlLocalMapDimension());
