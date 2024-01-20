@@ -118,7 +118,7 @@ bool Backend::ConvertFeatureInvdepAndAddVisualFactorForEstimation() {
         const auto &feature = pair.second;
 
         // Select features which has at least two observations.
-        CONTINUE_IF(feature.observes().size() < 1 && feature.observes().front().size() < 1);
+        CONTINUE_IF(feature.observes().size() < 2 && feature.observes().front().size() < 2);
         // Select features which is marginalized successfully.
         CONTINUE_IF(feature.status() == FeatureSolvedStatus::kMarginalized);
 
@@ -143,8 +143,12 @@ bool Backend::ConvertFeatureInvdepAndAddVisualFactorForMarginalization() {
     // [Edges] Visual reprojection factor.
     for (const auto &pair : data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
-        CONTINUE_IF(feature.observes().size() < 2);
+        // Select features which has at least two observations.
+        CONTINUE_IF(feature.observes().size() < 2 && feature.observes().front().size() < 2);
+        // Select features which is first observed in oldest keyframe.
         CONTINUE_IF(feature.first_frame_id() != data_manager_->visual_local_map()->frames().front().id());
+        // Select features which is solved successfully.
+        CONTINUE_IF(feature.status() != FeatureSolvedStatus::kSolved);
 
         // Compute inverse depth by p_w of this feature.
         const auto &frame = data_manager_->visual_local_map()->frame(feature.first_frame_id());
