@@ -10,7 +10,7 @@ using namespace SLAM_VISUALIZOR;
 namespace VIO {
 
 namespace {
-    constexpr int32_t kMaxImageNumInOneRow = 3;
+    constexpr int32_t kMaxImageNumInOneRow = 4;
 }
 
 RgbPixel Backend::GetFeatureColor(const FeatureType &feature) {

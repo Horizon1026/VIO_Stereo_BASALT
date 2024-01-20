@@ -103,6 +103,7 @@ bool Backend::RunOnce() {
         }
     }
 
+    // Debug:
     // Show all frames with bias.
     ShowAllFramesWithBias(false, 1);
     // Show all frames and features in local map.
