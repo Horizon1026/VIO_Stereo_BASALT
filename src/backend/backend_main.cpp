@@ -103,14 +103,6 @@ bool Backend::RunOnce() {
         }
     }
 
-    // Debug:
-    // if (log_package_status_.num_of_valid_loop > 273) {
-    //     // Show all frames with bias.
-    //     ShowAllFramesWithBias(false, 1);
-    //     // Show all frames and features in local map.
-    //     ShowLocalMapFramesAndFeatures();
-    // }
-
     // Trigger log recording of data manager.
     data_manager_->TriggerLogRecording(GetNewestStateTimeStamp());
 
