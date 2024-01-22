@@ -20,6 +20,10 @@ RgbPixel Backend::GetFeatureColor(const FeatureType &feature) {
             if (feature.observes().size() > 1) {
                 // If this feature is observed in different frame.
                 pixel_color = RgbPixel{.r = 0, .g = 255, .b = 0};
+                // If this feature is observed in newset keyframe.
+                if (feature.first_frame_id() == data_manager_->GetNewestKeyframeId()) {
+                    pixel_color = RgbPixel{.r = 255, .g = 0, .b = 255};
+                }
             } else {
                 // If this feature is only observed in one frame but has stereo view.
                 pixel_color = RgbPixel{.r = 255, .g = 255, .b = 0};
@@ -313,7 +317,7 @@ void Backend::ShowLocalMapInWorldFrame(const int32_t delay_ms, const bool block_
     }
 
     // Set visualizor camera view by newest frame.
-    const Vec3 p_c = Vec3(0, 0, 0.5);
+    const Vec3 p_c = Vec3(0, 0, 0.3);
     const Vec3 p_w = Visualizor3D::camera_view().q_wc * p_c + Visualizor3D::camera_view().p_wc;
     Visualizor3D::camera_view().p_wc = data_manager_->visual_local_map()->frames().back().p_wc() - p_w + Visualizor3D::camera_view().p_wc;
 

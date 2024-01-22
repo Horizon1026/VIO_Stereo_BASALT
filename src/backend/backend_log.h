@@ -3,7 +3,6 @@
 
 #include "datatype_basic.h"
 #include "data_manager.h"
-#include "binary_data_log.h"
 
 namespace VIO {
 
@@ -49,9 +48,7 @@ struct BackendLogCostTime {
     float estimate = 0.0f;
     float marginalize = 0.0f;
 };
-
 #pragma pack()
-
 
 }
 

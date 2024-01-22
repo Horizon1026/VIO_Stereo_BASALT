@@ -104,10 +104,12 @@ bool Backend::RunOnce() {
     }
 
     // Debug:
-    // Show all frames with bias.
-    ShowAllFramesWithBias(false, 1);
-    // Show all frames and features in local map.
-    ShowLocalMapFramesAndFeatures();
+    // if (log_package_status_.num_of_valid_loop > 273) {
+    //     // Show all frames with bias.
+    //     ShowAllFramesWithBias(false, 1);
+    //     // Show all frames and features in local map.
+    //     ShowLocalMapFramesAndFeatures();
+    // }
 
     // Control the dimension of local map.
     RETURN_FALSE_IF(!ControlLocalMapDimension());
