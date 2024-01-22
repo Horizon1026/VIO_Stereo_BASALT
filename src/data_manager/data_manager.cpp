@@ -51,9 +51,55 @@ void DataManager::RegisterLogPackages() {
 }
 
 void DataManager::TriggerLogRecording(const float time_stamp_s) {
-    // Record log of local map.
+    RETURN_IF(visual_local_map_ == nullptr);
 
-    // Record log of covisible graph.
+    RecordLocalMap(time_stamp_s);
+    RecordCovisibleGraph(time_stamp_s);
+}
+
+void DataManager::RecordLocalMap(const float time_stamp_s) {
+    log_package_local_map_ = DataManagerLocalMapLog{};
+    log_package_local_map_.num_of_features = visual_local_map_->features().size();
+    for (const auto &pair : visual_local_map_->features()) {
+        const auto &feature = pair.second;
+        switch (feature.status()) {
+            case FeatureSolvedStatus::kUnsolved: {
+                ++log_package_local_map_.num_of_unsolved_features;
+                break;
+            }
+            case FeatureSolvedStatus::kSolved: {
+                ++log_package_local_map_.num_of_solved_features;
+                break;
+            }
+            case FeatureSolvedStatus::kMarginalized: {
+                ++log_package_local_map_.num_of_marginalized_features;
+                break;
+            }
+            default: break;
+        }
+    }
+
+    const auto frame_ptr = visual_local_map_->frame(GetNewestKeyframeId());
+    if (frame_ptr != nullptr) {
+        for (const auto &pair : frame_ptr->features()) {
+            const auto &feature_ptr = pair.second;
+            ++log_package_local_map_.num_of_features_observed_in_newest_keyframe;
+            if (feature_ptr->status() == FeatureSolvedStatus::kSolved) {
+                ++log_package_local_map_.num_of_solved_features_observed_in_newest_keyframe;
+            }
+        }
+    }
+
+    log_package_local_map_.num_of_frames = visual_local_map_->frames().size();
+    log_package_local_map_.num_of_newframes = frames_with_bias_.size();
+    log_package_local_map_.num_of_keyframes = visual_local_map_->frames().empty() ? 0 :
+        visual_local_map_->frames().size() - frames_with_bias_.size();
+
+    logger_.RecordPackage(kDataManagerLocalMapLogIndex, reinterpret_cast<const char *>(&log_package_local_map_), time_stamp_s);
+}
+
+void DataManager::RecordCovisibleGraph(const float time_stamp_s) {
+
 }
 
 // Transform packed measurements to a new frame.

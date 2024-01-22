@@ -62,7 +62,11 @@ public:
     void Clear();
     bool Configuration(const std::string &log_file_name);
     void RegisterLogPackages();
+
+    // Record log.
     void TriggerLogRecording(const float time_stamp_s);
+    void RecordLocalMap(const float time_stamp_s);
+    void RecordCovisibleGraph(const float time_stamp_s);
 
     // Transform packed measurements to a new frame.
     bool ProcessMeasure(std::unique_ptr<PackedMeasurement> &new_packed_measure,
