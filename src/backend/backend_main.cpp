@@ -111,6 +111,9 @@ bool Backend::RunOnce() {
     //     ShowLocalMapFramesAndFeatures();
     // }
 
+    // Trigger log recording of data manager.
+    data_manager_->TriggerLogRecording(GetNewestStateTimeStamp());
+
     // Control the dimension of local map.
     RETURN_FALSE_IF(!ControlLocalMapDimension());
 

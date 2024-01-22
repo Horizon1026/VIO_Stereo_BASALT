@@ -2,6 +2,60 @@
 
 namespace VIO {
 
+namespace {
+    constexpr uint32_t kDataManagerLocalMapLogIndex = 0;
+}
+
+void DataManager::Clear() {
+    if (visual_local_map_ != nullptr) {
+        visual_local_map_->Clear();
+    }
+    frames_with_bias_.clear();
+    camera_extrinsics_.clear();
+}
+
+bool DataManager::Configuration(const std::string &log_file_name) {
+    // Register packages for log file.
+    if (options_.kEnableRecordBinaryCurveLog) {
+        if (!logger_.CreateLogFile(log_file_name)) {
+            ReportError("[DataManager] Failed to create log file.");
+            options_.kEnableRecordBinaryCurveLog = false;
+            return false;
+        }
+
+        RegisterLogPackages();
+        logger_.PrepareForRecording();
+    }
+
+    return true;
+}
+
+void DataManager::RegisterLogPackages() {
+    using namespace SLAM_DATA_LOG;
+
+    std::unique_ptr<PackageInfo> package_ptr = std::make_unique<PackageInfo>();
+    package_ptr->id = kDataManagerLocalMapLogIndex;
+    package_ptr->name = "local map";
+    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_features"});
+    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_solved_features"});
+    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_marginalized_features"});
+    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_unsolved_features"});
+    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_features_observed_in_newest_keyframe"});
+    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_solved_features_observed_in_newest_keyframe"});
+    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_frames"});
+    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_keyframes"});
+    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_newframes"});
+    if (!logger_.RegisterPackage(package_ptr)) {
+        ReportError("[DataManager] Failed to register package for data manager log.");
+    }
+}
+
+void DataManager::TriggerLogRecording(const float time_stamp_s) {
+    // Record log of local map.
+
+    // Record log of covisible graph.
+}
+
 // Transform packed measurements to a new frame.
 bool DataManager::ProcessMeasure(std::unique_ptr<PackedMeasurement> &new_packed_measure,
                                  std::unique_ptr<FrontendOutputData> &new_visual_measure) {

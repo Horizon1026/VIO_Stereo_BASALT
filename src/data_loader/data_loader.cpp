@@ -4,10 +4,12 @@
 
 namespace VIO {
 
-constexpr uint32_t kDataLoaderLogIndex = 0;
-constexpr uint32_t kImuRawDataLogIndex = 1;
-constexpr uint32_t kLeftImageRawDataLogIndex = 2;
-constexpr uint32_t kRightImageRawDataLogIndex = 3;
+namespace {
+    constexpr uint32_t kDataLoaderLogIndex = 0;
+    constexpr uint32_t kImuRawDataLogIndex = 1;
+    constexpr uint32_t kLeftImageRawDataLogIndex = 2;
+    constexpr uint32_t kRightImageRawDataLogIndex = 3;
+}
 
 void DataLoader::Clear() {
     imu_buffer_.clear();
@@ -44,7 +46,7 @@ void DataLoader::RegisterLogPackages() {
     package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_left_image_in_buffer"});
     package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_right_image_in_buffer"});
     if (!logger_.RegisterPackage(package_ptr)) {
-        ReportError("[DataLoader] Failed to register package for dataloader log.");
+        ReportError("[DataLoader] Failed to register package for data loader log.");
     }
 
     if (options_.kEnableRecordRawData) {

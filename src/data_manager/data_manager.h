@@ -8,6 +8,9 @@
 #include "data_loader.h"
 #include "visual_frontend.h"
 
+#include "data_manager_log.h"
+#include "binary_data_log.h"
+
 #include "memory"
 #include "deque"
 
@@ -37,11 +40,6 @@ struct CameraExtrinsic {
     Quat q_ic = Quat::Identity();
     Vec3 p_ic = Vec3::Zero();
 };
-struct RelativeCameraExtrinsic {
-    // Rotation and translation between first camera and other cameras.
-    Quat q_cicj = Quat::Identity();
-    Vec3 t_cicj = Vec3::Zero();
-};
 
 /* Definition of Frame and FrameWithBias. */
 using FrameType = VisualFrame<FeatureType>;
@@ -61,6 +59,11 @@ public:
     DataManager() = default;
     ~DataManager() = default;
 
+    void Clear();
+    bool Configuration(const std::string &log_file_name);
+    void RegisterLogPackages();
+    void TriggerLogRecording(const float time_stamp_s);
+
     // Transform packed measurements to a new frame.
     bool ProcessMeasure(std::unique_ptr<PackedMeasurement> &new_packed_measure,
                         std::unique_ptr<FrontendOutputData> &new_visual_measure);
@@ -77,6 +80,7 @@ public:
 private:
     // Options for data manager.
     DataManagerOptions options_;
+
     // All keyframes and map points.
     // Keyframes : [ p_wc, q_wc ]
     // Feature Points : [ p_w | invdep ]
@@ -85,6 +89,10 @@ private:
     std::deque<FrameWithBias> frames_with_bias_;
     // Camera extrinsics.
     std::vector<CameraExtrinsic> camera_extrinsics_;
+
+    // Record log.
+    SLAM_DATA_LOG::BinaryDataLog logger_;
+    DataManagerLocalMapLog log_package_local_map_;
 
 };
 

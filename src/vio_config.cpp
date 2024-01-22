@@ -49,7 +49,9 @@ bool Vio::ConfigComponentOfDataManager() {
     data_manager_ = std::make_unique<DataManager>();
     data_manager_->options().kMaxStoredKeyFrames = options_.data_manager.max_num_of_stored_keyframes;
     data_manager_->options().kMaxStoredNewFrames = options_.data_manager.max_num_of_stored_new_frames;
+
     data_manager_->options().kEnableRecordBinaryCurveLog = options_.data_manager.enable_recording_curve_binlog;
+    RETURN_FALSE_IF_FALSE(data_manager_->Configuration(options_.log_file_root_name + options_.data_manager.log_file_name));
 
     // Config all camera extrinsics.
     if (options_.data_manager.all_R_ic.size() != options_.data_manager.all_t_ic.size()) {
