@@ -31,15 +31,20 @@ bool Backend::TriangulizeAllNewVisualFeatures() {
     norm_xy_vec.reserve(max_capacity);
 
     // Iterate all feature in visual_local_map to triangulize.
-    for (auto &pair : data_manager_->visual_local_map()->frames().back().features()) {
-        auto &feature = *(pair.second);
-        CONTINUE_IF(feature.status() == FeatureSolvedStatus::kMarginalized);
-        if (feature.observes().empty() || (feature.observes().size() < 2 && feature.observes().front().size() < 2)) {
-            feature.status() = FeatureSolvedStatus::kUnsolved;
-            continue;
-        }
+    for (auto &frame : data_manager_->visual_local_map()->frames()) {
+        // Only triangulize features firstly observed in newest key frame and all new frames.
+        CONTINUE_IF(frame.id() < data_manager_->GetNewestKeyframeId());
 
-        RETURN_FALSE_IF(!TriangulizeVisualFeature(q_wc_vec, p_wc_vec, norm_xy_vec, feature));
+        for (auto &pair : frame.features()) {
+            auto &feature = *(pair.second);
+            CONTINUE_IF(feature.status() == FeatureSolvedStatus::kMarginalized);
+            if (feature.observes().empty() || (feature.observes().size() < 2 && feature.observes().front().size() < 2)) {
+                feature.status() = FeatureSolvedStatus::kUnsolved;
+                continue;
+            }
+
+            RETURN_FALSE_IF(!TriangulizeVisualFeature(q_wc_vec, p_wc_vec, norm_xy_vec, feature));
+        }
     }
 
     return true;

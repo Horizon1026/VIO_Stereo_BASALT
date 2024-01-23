@@ -93,15 +93,6 @@ bool Backend::MarginalizeOldestFrame() {
     const uint32_t idx_offset = data_manager_->visual_local_map()->frames().size() - data_manager_->frames_with_bias().size();
     RETURN_FALSE_IF(!AddImuPreintegrationFactorForMarginalization(idx_offset));
 
-    // Reduce vertices for marginalization.
-    while (graph_.vertices.all_new_frames_v_wi.size() > 2) {
-        graph_.vertices.all_frames_p_wi.pop_back();
-        graph_.vertices.all_frames_q_wi.pop_back();
-        graph_.vertices.all_new_frames_v_wi.pop_back();
-        graph_.vertices.all_new_frames_ba.pop_back();
-        graph_.vertices.all_new_frames_bg.pop_back();
-    }
-
     // Construct graph problem, add all vertices and edges.
     // Add prior information if valid.
     Graph<DorF> graph_optimization_problem;
@@ -152,6 +143,10 @@ bool Backend::MarginalizeOldestFrame() {
 
 bool Backend::MarginalizeSubnewFrame() {
     ReportInfo("[Bakcend] Backend try to marginalize subnew frame.");
+    if (!states_.prior.is_valid) {
+        ReportInfo("[Bakcend] Backend does not need to marginalize subnew frame, because of no valid prior information.");
+        return true;
+    }
 
     // Discard relative prior information.
     const uint32_t min_size = 6 * (data_manager_->options().kMaxStoredKeyFrames - data_manager_->options().kMaxStoredNewFrames) +
