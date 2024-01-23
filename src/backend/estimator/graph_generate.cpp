@@ -72,6 +72,7 @@ void Backend::ConvertCameraPoseAndExtrinsicToVertices() {
 
 bool Backend::AddPriorFactorWhenNoPrior() {
     RETURN_TRUE_IF(states_.prior.is_valid);
+    RETURN_FALSE_IF(graph_.vertices.all_frames_p_wi.empty() || graph_.vertices.all_frames_q_wi.empty());
 
     // [Edges] Camera pose prior factor.
     // [Edges] Camera extrinsic prior factor.
@@ -131,7 +132,7 @@ bool Backend::ConvertFeatureInvdepAndAddVisualFactorForEstimation() {
         CONTINUE_IF(std::isinf(invdep) || std::isnan(invdep));
 
         // Convert feature invdep to vertices, and add visual factors.
-        RETURN_FALSE_IF(!ConvertFeatureInvdepAndAddVisualFactor(feature, invdep, visual_info_matrix));
+        RETURN_FALSE_IF(!ConvertFeatureInvdepAndAddVisualFactor(feature, invdep, visual_info_matrix, feature.final_frame_id()));
     }
 
     return true;
@@ -159,16 +160,17 @@ bool Backend::ConvertFeatureInvdepAndAddVisualFactorForMarginalization() {
         CONTINUE_IF(std::isinf(invdep) || std::isnan(invdep) || p_c.z() < kZero);
 
         // Convert feature invdep to vertices, and add visual factors.
-        RETURN_FALSE_IF(!ConvertFeatureInvdepAndAddVisualFactor(feature, invdep, visual_info_matrix));
+        uint32_t max_frame_id = feature.final_frame_id();
+        max_frame_id = std::min(data_manager_->GetNewestKeyframeId() + 2, feature.final_frame_id());
+        RETURN_FALSE_IF(!ConvertFeatureInvdepAndAddVisualFactor(feature, invdep, visual_info_matrix, max_frame_id));
     }
 
     return true;
 }
 
-bool Backend::ConvertFeatureInvdepAndAddVisualFactor(const FeatureType &feature, const float invdep, const TMat2<DorF> &visual_info_matrix) {
+bool Backend::ConvertFeatureInvdepAndAddVisualFactor(const FeatureType &feature, const float invdep, const TMat2<DorF> &visual_info_matrix, const uint32_t max_frame_id) {
     // Determine the range of all observations of this feature.
     const uint32_t min_frame_id = feature.first_frame_id();
-    const uint32_t max_frame_id = feature.final_frame_id();
     const uint32_t idx_offset = min_frame_id - data_manager_->visual_local_map()->frames().front().id() + 1;
 
     // Add vertex of feature invdep.
@@ -303,11 +305,10 @@ bool Backend::AddImuPreintegrationFactorForEstimation(const uint32_t idx_offset)
 
 bool Backend::AddImuPreintegrationFactorForMarginalization(const uint32_t idx_offset) {
     // [Edges] Inerial preintegration factor.
-
-    const uint32_t frame_idx = idx_offset;
-    const uint32_t new_frame_idx = 0;
     // The imu preintegration block combined with the oldest 'new frame with bias' is useless.
     // Add edges of imu preintegration.
+    const uint32_t frame_idx = idx_offset;
+    const uint32_t new_frame_idx = 0;
     const auto &frame = *std::next(data_manager_->frames_with_bias().begin());
 
     graph_.edges.all_imu_factors.emplace_back(std::make_unique<EdgeImuPreintegrationBetweenRelativePose<DorF>>(

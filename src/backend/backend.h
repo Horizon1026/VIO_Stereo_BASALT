@@ -150,7 +150,7 @@ public:
     bool AddPriorFactorWhenNoPrior();
     bool ConvertFeatureInvdepAndAddVisualFactorForEstimation();
     bool ConvertFeatureInvdepAndAddVisualFactorForMarginalization();
-    bool ConvertFeatureInvdepAndAddVisualFactor(const FeatureType &feature, const float invdep, const TMat2<DorF> &visual_info_matrix);
+    bool ConvertFeatureInvdepAndAddVisualFactor(const FeatureType &feature, const float invdep, const TMat2<DorF> &visual_info_matrix, const uint32_t max_frame_id);
     void ConvertImuMotionStatesToVertices();
     bool AddImuPreintegrationFactorForEstimation(const uint32_t idx_offset);
     bool AddImuPreintegrationFactorForMarginalization(const uint32_t idx_offset);
