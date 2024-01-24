@@ -104,7 +104,7 @@ bool Backend::RunOnce() {
     }
 
     // Trigger log recording of data manager.
-    data_manager_->TriggerLogRecording(GetNewestStateTimeStamp());
+    data_manager_->TriggerLogRecording(data_manager_->GetNewestStateTimeStamp());
 
     // Control the dimension of local map.
     RETURN_FALSE_IF(!ControlLocalMapDimension());

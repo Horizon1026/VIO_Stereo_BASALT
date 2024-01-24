@@ -73,10 +73,6 @@ void Backend::RegisterLogPackages() {
     }
 }
 
-float Backend::GetNewestStateTimeStamp() {
-    return data_manager_->frames_with_bias().empty() ? 0.0f : data_manager_->frames_with_bias().back().time_stamp_s;
-}
-
 void Backend::RecordBackendLogStates() {
     RETURN_IF(!options().kEnableRecordBinaryCurveLog);
 
@@ -112,7 +108,7 @@ void Backend::RecordBackendLogStates() {
     log_package_states_.prior_residual = states_.prior.is_valid ? states_.prior.residual.squaredNorm() : 0.0f;
 
     // Record log.
-    logger_.RecordPackage(kBackendStatesLogIndex, reinterpret_cast<const char *>(&log_package_states_), GetNewestStateTimeStamp());
+    logger_.RecordPackage(kBackendStatesLogIndex, reinterpret_cast<const char *>(&log_package_states_), data_manager_->GetNewestStateTimeStamp());
 }
 
 void Backend::RecordBackendLogStatus() {
@@ -123,14 +119,14 @@ void Backend::RecordBackendLogStatus() {
     log_package_status_.num_of_valid_loop = states_.is_initialized ? log_package_status_.num_of_valid_loop + 1 : 0;
 
     // Record log.
-    logger_.RecordPackage(kBackendStatusLogIndex, reinterpret_cast<const char *>(&log_package_status_), GetNewestStateTimeStamp());
+    logger_.RecordPackage(kBackendStatusLogIndex, reinterpret_cast<const char *>(&log_package_status_), data_manager_->GetNewestStateTimeStamp());
 }
 
 void Backend::RecordBackendLogCostTime() {
     RETURN_IF(!options().kEnableRecordBinaryCurveLog);
 
     // Record log.
-    logger_.RecordPackage(kBackendCostTimeLogIndex, reinterpret_cast<const char *>(&log_package_cost_time_), GetNewestStateTimeStamp());
+    logger_.RecordPackage(kBackendCostTimeLogIndex, reinterpret_cast<const char *>(&log_package_cost_time_), data_manager_->GetNewestStateTimeStamp());
 }
 
 void Backend::RecordBackendLogPriorInformation() {
@@ -138,7 +134,7 @@ void Backend::RecordBackendLogPriorInformation() {
 
     // Record log.
     if (states_.prior.is_valid) {
-        logger_.RecordPackage(kBackendPriorHessianLogIndex, states_.prior.hessian.cast<float>(), GetNewestStateTimeStamp());
+        logger_.RecordPackage(kBackendPriorHessianLogIndex, states_.prior.hessian.cast<float>(), data_manager_->GetNewestStateTimeStamp());
     }
 }
 

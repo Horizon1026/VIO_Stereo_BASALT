@@ -51,6 +51,7 @@ void DataManager::RegisterLogPackages() {
 }
 
 void DataManager::TriggerLogRecording(const float time_stamp_s) {
+    RETURN_IF(!options_.kEnableRecordBinaryCurveLog);
     RETURN_IF(visual_local_map_ == nullptr);
 
     RecordLocalMap(time_stamp_s);
@@ -122,6 +123,11 @@ bool DataManager::ProcessMeasure(std::unique_ptr<PackedMeasurement> &new_packed_
 // Get specified frame id.
 uint32_t DataManager::GetNewestKeyframeId() {
     return visual_local_map_->frames().front().id() + options_.kMaxStoredKeyFrames - options_.kMaxStoredNewFrames - 1;
+}
+
+// Get specified frame timestamp.
+float DataManager::GetNewestStateTimeStamp() {
+    return frames_with_bias_.empty() ? 0.0f : frames_with_bias_.back().time_stamp_s;
 }
 
 }

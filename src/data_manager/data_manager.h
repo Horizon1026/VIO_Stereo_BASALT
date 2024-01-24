@@ -74,6 +74,8 @@ public:
 
     // Get specified frame id.
     uint32_t GetNewestKeyframeId();
+    // Get specified frame timestamp.
+    float GetNewestStateTimeStamp();
 
     // Reference for member variables.
     DataManagerOptions &options() { return options_; }

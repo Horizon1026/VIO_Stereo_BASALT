@@ -170,7 +170,6 @@ public:
     bool AddNewestFrameWithBiasIntoLocalMap();
 
     // Backend log recorder.
-    float GetNewestStateTimeStamp();
     void RecordBackendLogStates();
     void RecordBackendLogStatus();
     void RecordBackendLogCostTime();

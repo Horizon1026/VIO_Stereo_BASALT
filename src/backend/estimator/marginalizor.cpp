@@ -59,7 +59,7 @@ bool Backend::TryToMarginalize() {
         }
         default:
         case BackendMarginalizeType::kNotMarginalize: {
-            ReportInfo("[Bakcend] Backend not marginalize any frame.");
+            ReportInfo("[Backend] Backend not marginalize any frame.");
             break;
         }
     }
@@ -68,7 +68,7 @@ bool Backend::TryToMarginalize() {
 }
 
 bool Backend::MarginalizeOldestFrame() {
-    ReportInfo("[Bakcend] Backend try to marginalize oldest frame.");
+    ReportInfo("[Backend] Backend try to marginalize oldest frame.");
 
     // Clear all vectors of vertices and edges.
     ClearBackendGraph();
@@ -142,9 +142,9 @@ bool Backend::MarginalizeOldestFrame() {
 }
 
 bool Backend::MarginalizeSubnewFrame() {
-    ReportInfo("[Bakcend] Backend try to marginalize subnew frame.");
+    ReportInfo("[Backend] Backend try to marginalize subnew frame.");
     if (!states_.prior.is_valid) {
-        ReportInfo("[Bakcend] Backend does not need to marginalize subnew frame, because of no valid prior information.");
+        ReportInfo("[Backend] Backend does not need to marginalize subnew frame, because of no valid prior information.");
         return true;
     }
 
