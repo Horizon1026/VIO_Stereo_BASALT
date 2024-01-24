@@ -160,9 +160,7 @@ bool Backend::ConvertFeatureInvdepAndAddVisualFactorForMarginalization() {
         CONTINUE_IF(std::isinf(invdep) || std::isnan(invdep) || p_c.z() < kZero);
 
         // Convert feature invdep to vertices, and add visual factors.
-        uint32_t max_frame_id = feature.final_frame_id();
-        max_frame_id = std::min(data_manager_->GetNewestKeyframeId() + 2, feature.final_frame_id());
-        RETURN_FALSE_IF(!ConvertFeatureInvdepAndAddVisualFactor(feature, invdep, visual_info_matrix, max_frame_id));
+        RETURN_FALSE_IF(!ConvertFeatureInvdepAndAddVisualFactor(feature, invdep, visual_info_matrix, feature.final_frame_id()));
     }
 
     return true;
