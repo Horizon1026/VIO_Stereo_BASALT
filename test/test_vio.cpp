@@ -57,6 +57,7 @@ void PublishImuData(const std::string &csv_file_path,
         // Waiting for next timestamp.
         while (timer.TockInMillisecond() < period_ms || vio.data_loader()->IsImuBufferFull()) {
             usleep(100);
+            BREAK_IF(vio.backend()->should_quit());
         }
 
         BREAK_IF(vio.backend()->should_quit());
@@ -109,6 +110,7 @@ void PublishCameraData(const std::string &csv_file_path,
         // Waiting for next timestamp.
         while (timer.TockInMillisecond() < period_ms || vio.data_loader()->IsImageBufferFull()) {
             usleep(100);
+            BREAK_IF(vio.backend()->should_quit());
         }
 
         BREAK_IF(vio.backend()->should_quit());
@@ -120,7 +122,7 @@ void PublishCameraData(const std::string &csv_file_path,
 
 void TestRunVio(const uint32_t max_wait_ticks) {
     uint32_t cnt = max_wait_ticks;
-    const uint32_t max_valid_steps = 400;
+    const uint32_t max_valid_steps = 100;
     uint32_t valid_steps = 0;
     while (cnt) {
         const bool res = vio.RunOnce();
@@ -132,9 +134,9 @@ void TestRunVio(const uint32_t max_wait_ticks) {
         }
 
         if (vio.backend()->should_quit()) {
-            vio.backend()->ShowAllFramesWithBias(false, 1);
-            vio.backend()->ShowLocalMapFramesAndFeatures(0, false, 1);
-            vio.backend()->ShowLocalMapInWorldFrame(50, true);
+            // vio.backend()->ShowAllFramesWithBias(false, 1);
+            // vio.backend()->ShowLocalMapFramesAndFeatures(0, false, 1);
+            vio.backend()->ShowLocalMapInWorldFrame(30, true);
             break;
         } else if (vio.backend()->states().is_initialized) {
             vio.backend()->ShowLocalMapInWorldFrame(1, false);
