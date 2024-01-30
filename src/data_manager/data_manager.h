@@ -63,6 +63,10 @@ public:
     bool Configuration(const std::string &log_file_name);
     void RegisterLogPackages();
 
+    // Self check.
+    bool SelfCheckVisualLocalMap();
+    bool SelfCheckFramesWithBias();
+
     // Record log.
     void TriggerLogRecording(const float time_stamp_s);
     void RecordLocalMap(const float time_stamp_s);

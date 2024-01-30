@@ -66,6 +66,10 @@ bool Backend::RunOnce() {
         // Check visual-inertial factors and report error.
         CheckGraphOptimizationFactors();
 
+        // Check data manager components.
+        data_manager_->SelfCheckVisualLocalMap();
+        data_manager_->SelfCheckFramesWithBias();
+
         // Try to estimate states.
         timer.TockTickInMillisecond();
         if (!TryToEstimate()) {

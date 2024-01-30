@@ -134,8 +134,8 @@ void TestRunVio(const uint32_t max_wait_ticks) {
         }
 
         if (vio.backend()->should_quit()) {
-            // vio.backend()->ShowAllFramesWithBias(false, 1);
-            // vio.backend()->ShowLocalMapFramesAndFeatures(0, false, 1);
+            vio.backend()->ShowAllFramesWithBias(false, 1);
+            vio.backend()->ShowLocalMapFramesAndFeatures(0, false, 1);
             vio.backend()->ShowLocalMapInWorldFrame(30, true);
             break;
         } else if (vio.backend()->states().is_initialized) {
@@ -151,12 +151,16 @@ void TestRunVio(const uint32_t max_wait_ticks) {
     }
 }
 
+static std::ofstream g_txt_log("../output/vio_log.txt");
 int main(int argc, char **argv) {
     // Root direction of Euroc dataset.
     std::string dataset_root_dir = "D:/My_Github/Datasets/MH_01_easy/";
     if (argc == 2) {
         dataset_root_dir = argv[1];
     }
+
+    // Config std::cout print into files.
+    // std::cout.rdbuf(g_txt_log.rdbuf());
 
     // Fill configuration of vio.
     ReportInfo(YELLOW ">> Test vio on " << dataset_root_dir << "." RESET_COLOR);

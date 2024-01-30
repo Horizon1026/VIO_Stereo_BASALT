@@ -130,4 +130,14 @@ float DataManager::GetNewestStateTimeStamp() {
     return frames_with_bias_.empty() ? 0.0f : frames_with_bias_.back().time_stamp_s;
 }
 
+// Self check.
+bool DataManager::SelfCheckVisualLocalMap() {
+    RETURN_FALSE_IF(!visual_local_map_->SelfCheck());
+    return true;
+}
+
+bool DataManager::SelfCheckFramesWithBias() {
+    return true;
+}
+
 }
