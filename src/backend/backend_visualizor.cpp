@@ -110,7 +110,7 @@ void Backend::ShowMatrixImage(const std::string &title, const TMat<DorF> &matrix
     Visualizor::WaitKey(1);
 }
 
-void Backend::ShowLocalMapFramesAndFeatures(const int32_t camera_id, const bool use_rectify, const int32_t delay_ms) {
+void Backend::ShowLocalMapFramesAndFeatures(const int32_t feature_id, const int32_t camera_id, const bool use_rectify, const int32_t delay_ms) {
     RETURN_IF(data_manager_->visual_local_map()->frames().empty());
     RETURN_IF(data_manager_->visual_local_map()->frames().front().raw_images().empty());
 
@@ -165,6 +165,7 @@ void Backend::ShowLocalMapFramesAndFeatures(const int32_t camera_id, const bool 
         for (auto &pair : frame.features()) {
             auto &feature = pair.second;
             auto &observe = feature->observe(frame.id());
+            CONTINUE_IF(feature_id > 0 && static_cast<uint32_t>(feature_id) != feature->id());
             CONTINUE_IF(static_cast<int32_t>(observe.size()) <= camera_id);
 
             // Draw feature in rgb image.
