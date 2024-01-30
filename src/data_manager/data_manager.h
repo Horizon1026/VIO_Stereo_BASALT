@@ -65,7 +65,6 @@ public:
 
     // Self check.
     bool SelfCheckVisualLocalMap();
-    bool SelfCheckFramesWithBias();
 
     // Record log.
     void TriggerLogRecording(const float time_stamp_s);

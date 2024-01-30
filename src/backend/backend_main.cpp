@@ -68,7 +68,6 @@ bool Backend::RunOnce() {
 
         // Check data manager components.
         data_manager_->SelfCheckVisualLocalMap();
-        data_manager_->SelfCheckFramesWithBias();
 
         // Try to estimate states.
         timer.TockTickInMillisecond();
