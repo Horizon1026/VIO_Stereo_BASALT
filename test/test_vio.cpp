@@ -134,9 +134,9 @@ void TestRunVio(const uint32_t max_wait_ticks) {
         }
 
         if (vio.backend()->should_quit()) {
-            for (const auto &pair : vio.data_manager()->visual_local_map()->features()) {
-                vio.backend()->ShowLocalMapFramesAndFeatures(pair.second.id(), 0, true, 0);
-            }
+            // for (const auto &pair : vio.data_manager()->visual_local_map()->features()) {
+            //     vio.backend()->ShowLocalMapFramesAndFeatures(pair.second.id(), 0, true, 0);
+            // }
             vio.backend()->ShowLocalMapInWorldFrame(30, true);
             break;
         } else if (vio.backend()->states().is_initialized) {

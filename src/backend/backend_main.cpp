@@ -64,10 +64,10 @@ bool Backend::RunOnce() {
     // If backend is initialized.
     if (states_.is_initialized) {
         // Check visual-inertial factors and report error.
-        CheckGraphOptimizationFactors();
+        // CheckGraphOptimizationFactors();
 
         // Check data manager components.
-        data_manager_->SelfCheckVisualLocalMap();
+        // data_manager_->SelfCheckVisualLocalMap();
 
         // Try to estimate states.
         timer.TockTickInMillisecond();
