@@ -218,8 +218,8 @@ int main(int argc, char **argv) {
     vio.ConfigAllComponents();
 
     // Config visualizor 3d.
-    Visualizor3D::camera_view().q_wc = Quat(1, -0.9, 0, 0).normalized();
-    Visualizor3D::camera_view().p_wc.y() = -2.0f;
+    Visualizor3D::camera_view().q_wc = Quat(1.0, -1.0, 0, 0).normalized();
+    Visualizor3D::camera_view().p_wc.y() = -3.0f;
 
     // Start threads for data pipeline and vio node.
     const float imu_timeout_ms = 3.5f;

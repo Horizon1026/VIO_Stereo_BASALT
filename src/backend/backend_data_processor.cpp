@@ -230,10 +230,11 @@ bool Backend::ControlLocalMapDimension() {
     }
 
     const uint32_t newest_keyframe_id = data_manager_->GetNewestKeyframeId();
+    const uint32_t newest_frame_id = data_manager_->visual_local_map()->frames().back().id();
     for (const auto &pair : data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
         // Remove features that cannot has more observations.
-        if (feature.observes().empty() || (feature.observes().size() == 1 && feature.first_frame_id() < newest_keyframe_id)) {
+        if (feature.observes().empty() || (feature.observes().size() == 1 && feature.first_frame_id() < newest_frame_id)) {
             features_id.emplace_back(feature.id());
         }
 
