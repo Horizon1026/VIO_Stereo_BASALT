@@ -355,22 +355,21 @@ void Backend::ConstructGraphOptimizationProblem(const uint32_t idx_offset, Graph
         problem.AddEdge(edge.get());
     }
 
-    // Report information if necessary.
-    if (options_.kEnableReportAllInformation) {
-        ReportInfo(YELLOW "[Backend] Estimator adds " <<
-            graph_.vertices.all_cameras_p_ic.size() << " all_cameras_p_ic, " <<
-            graph_.vertices.all_cameras_q_ic.size() << " all_cameras_q_ic, " <<
-            graph_.vertices.all_features_invdep.size() << " all_features_invdep, " <<
-            graph_.vertices.all_frames_p_wi.size() << " all_frames_p_wi, " <<
-            graph_.vertices.all_frames_q_wi.size() << " all_frames_q_wi, " <<
-            graph_.vertices.all_new_frames_v_wi.size() << " all_new_frames_v_wi, " <<
-            graph_.vertices.all_new_frames_ba.size() << " all_new_frames_ba, " <<
-            graph_.vertices.all_new_frames_bg.size() << " all_new_frames_bg, and " <<
+    // Report information.
+    const std::string prior_str = states_.prior.is_valid ? ", and prior information." : ".";
+    ReportInfo("[Backend] Estimator adds " <<
+        graph_.vertices.all_cameras_p_ic.size() << " cameras_p_ic, " <<
+        graph_.vertices.all_cameras_q_ic.size() << " cameras_q_ic, " <<
+        graph_.vertices.all_features_invdep.size() << " features_invdep, " <<
+        graph_.vertices.all_frames_p_wi.size() << " frames_p_wi, " <<
+        graph_.vertices.all_frames_q_wi.size() << " frames_q_wi, " <<
+        graph_.vertices.all_new_frames_v_wi.size() << " new_frames_v_wi, " <<
+        graph_.vertices.all_new_frames_ba.size() << " new_frames_ba, " <<
+        graph_.vertices.all_new_frames_bg.size() << " new_frames_bg, and " <<
 
-            graph_.edges.all_prior_factors.size() << " all_prior_factors, " <<
-            graph_.edges.all_visual_reproj_factors.size() << " all_visual_reproj_factors, " <<
-            graph_.edges.all_imu_factors.size() << " all_imu_factors." RESET_COLOR);
-    }
+        graph_.edges.all_prior_factors.size() << " prior_factors, " <<
+        graph_.edges.all_visual_reproj_factors.size() << " visual_reproj_factors, " <<
+        graph_.edges.all_imu_factors.size() << " imu_factors" << prior_str);
 
     // Add prior information if valid.
     if (states_.prior.is_valid) {

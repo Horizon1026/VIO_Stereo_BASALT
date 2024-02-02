@@ -179,6 +179,47 @@ bool DataManager::SelfCheckVisualLocalMap() {
         }
     }
 
+    ReportInfo("[DataManager] Visual local map self check ok.");
+    return true;
+}
+
+bool DataManager::SelfCheckFramesWithBias() {
+    // Iterate each frame with bias.
+    for (const auto &frame_with_bias : frames_with_bias_) {
+        // Check timestamp of visual observations.
+        for (const auto &observes : frame_with_bias.visual_measure->observes_per_frame) {
+            const auto time_stamp_0 = frame_with_bias.time_stamp_s;
+            for (const auto &observe : observes) {
+                const auto time_stamp_1 = observe.frame_time_stamp_s;
+                if (time_stamp_0 != time_stamp_1) {
+                    ReportError("[DataManager] Frames with bias self check frontend output data, feature observe timestamp error [" <<
+                        time_stamp_0 << "] != [" << time_stamp_1 << "].");
+                    return false;
+                }
+            }
+        }
+
+        // Check timestamp of imu and images.
+        const auto last_imu_time_stamp_s = frame_with_bias.packed_measure->imus.back()->time_stamp_s;
+        if (frame_with_bias.packed_measure->left_image != nullptr) {
+            const auto left_image_time_stamp_s = frame_with_bias.packed_measure->left_image->time_stamp_s;
+            if (last_imu_time_stamp_s != left_image_time_stamp_s) {
+                ReportError("[DataManager] Frames with bias self check imu and left image, feature observe timestamp error [" <<
+                    last_imu_time_stamp_s << "] != [" << left_image_time_stamp_s << "].");
+                return false;
+            }
+        }
+        if (frame_with_bias.packed_measure->right_image != nullptr) {
+            const auto left_image_time_stamp_s = frame_with_bias.packed_measure->right_image->time_stamp_s;
+            if (last_imu_time_stamp_s != left_image_time_stamp_s) {
+                ReportError("[DataManager] Frames with bias self check imu and right image, feature observe timestamp error [" <<
+                    last_imu_time_stamp_s << "] != [" << left_image_time_stamp_s << "].");
+                return false;
+            }
+        }
+    }
+
+    ReportInfo("[DataManager] Frames with bias self check ok.");
     return true;
 }
 
