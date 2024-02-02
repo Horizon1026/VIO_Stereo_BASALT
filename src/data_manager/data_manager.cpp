@@ -200,20 +200,26 @@ bool DataManager::SelfCheckFramesWithBias() {
         }
 
         // Check timestamp of imu and images.
-        const auto last_imu_time_stamp_s = frame_with_bias.packed_measure->imus.back()->time_stamp_s;
+        const auto latest_imu_time_stamp_s = frame_with_bias.packed_measure->imus.back()->time_stamp_s;
+        const auto oldest_imu_time_stamp_s = frame_with_bias.packed_measure->imus.front()->time_stamp_s;
+        if (latest_imu_time_stamp_s - oldest_imu_time_stamp_s > 0.055f) {
+            ReportError("[DataManager] Frames with bias self check imus, imu timestamp error [" <<
+                latest_imu_time_stamp_s << "] - [" << oldest_imu_time_stamp_s << "] > 0.055f.");
+            return false;
+        }
         if (frame_with_bias.packed_measure->left_image != nullptr) {
             const auto left_image_time_stamp_s = frame_with_bias.packed_measure->left_image->time_stamp_s;
-            if (last_imu_time_stamp_s != left_image_time_stamp_s) {
+            if (latest_imu_time_stamp_s != left_image_time_stamp_s) {
                 ReportError("[DataManager] Frames with bias self check imu and left image, feature observe timestamp error [" <<
-                    last_imu_time_stamp_s << "] != [" << left_image_time_stamp_s << "].");
+                    latest_imu_time_stamp_s << "] != [" << left_image_time_stamp_s << "].");
                 return false;
             }
         }
         if (frame_with_bias.packed_measure->right_image != nullptr) {
             const auto left_image_time_stamp_s = frame_with_bias.packed_measure->right_image->time_stamp_s;
-            if (last_imu_time_stamp_s != left_image_time_stamp_s) {
+            if (latest_imu_time_stamp_s != left_image_time_stamp_s) {
                 ReportError("[DataManager] Frames with bias self check imu and right image, feature observe timestamp error [" <<
-                    last_imu_time_stamp_s << "] != [" << left_image_time_stamp_s << "].");
+                    latest_imu_time_stamp_s << "] != [" << left_image_time_stamp_s << "].");
                 return false;
             }
         }
