@@ -154,8 +154,8 @@ bool Backend::AddNewestFrameWithBiasIntoLocalMap() {
     }
 
     // Preintegrate imu measurements.
-    auto &sub_new_frame_with_imu = *std::prev(std::prev(data_manager_->frames_with_bias().end()));
     newest_frame_imu.imu_preint_block.Reset();
+    auto &sub_new_frame_with_imu = *std::prev(std::prev(data_manager_->frames_with_bias().end()));
     newest_frame_imu.imu_preint_block.bias_gyro() = sub_new_frame_with_imu.imu_preint_block.bias_gyro();
     newest_frame_imu.imu_preint_block.bias_accel() = sub_new_frame_with_imu.imu_preint_block.bias_accel();
     newest_frame_imu.imu_preint_block.SetImuNoiseSigma(imu_model_->options().kAccelNoise,
@@ -186,6 +186,7 @@ bool Backend::AddNewestFrameWithBiasIntoLocalMap() {
                                                                raw_images);
     auto &newest_frame = data_manager_->visual_local_map()->frames().back();
 
+    // Predict position, velocity and attitude of newest frame.
     Vec3 p_wi = Vec3::Zero();
     Quat q_wi = Quat::Identity();
     const Vec3 &p_ic = data_manager_->camera_extrinsics().front().p_ic;

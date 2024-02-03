@@ -268,6 +268,8 @@ void Backend::ConvertImuMotionStatesToVertices() {
 }
 
 bool Backend::AddImuPreintegrationFactorForEstimation(const uint32_t idx_offset) {
+    RETURN_TRUE_IF(data_manager_->frames_with_bias().size() < 2);
+
     // [Edges] Inerial preintegration factor.
     uint32_t frame_idx = idx_offset;
     uint32_t new_frame_idx = 0;
@@ -300,6 +302,8 @@ bool Backend::AddImuPreintegrationFactorForEstimation(const uint32_t idx_offset)
 }
 
 bool Backend::AddImuPreintegrationFactorForMarginalization(const uint32_t idx_offset) {
+    RETURN_TRUE_IF(data_manager_->frames_with_bias().size() < 2);
+
     // [Edges] Inerial preintegration factor.
     // The imu preintegration block combined with the oldest 'new frame with bias' is useless.
     // Add edges of imu preintegration.
