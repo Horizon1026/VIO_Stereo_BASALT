@@ -24,6 +24,7 @@ struct DataManagerCovisibleGraphLog {
     uint32_t num_of_observed_features = 0;
     uint32_t num_of_solved_features = 0;
     uint32_t num_of_tracked_features_from_prev_frame = 0;
+    uint32_t num_of_solved_tracked_features_from_prev_frame = 0;
 
     float time_stamp_s = 0.0f;
     float p_wc_x = 0.0f;
@@ -36,8 +37,6 @@ struct DataManagerCovisibleGraphLog {
     float v_wc_x = 0.0f;
     float v_wc_y = 0.0f;
     float v_wc_z = 0.0f;
-
-    float average_of_reprojection_error = 0.0f;
 };
 #pragma pack()
 

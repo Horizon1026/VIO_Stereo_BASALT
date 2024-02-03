@@ -102,7 +102,6 @@ private:
 
     // Record log.
     SLAM_DATA_LOG::BinaryDataLog logger_;
-    DataManagerLocalMapLog log_package_local_map_;
 
 };
 
