@@ -79,7 +79,7 @@ bool Backend::EstimateGyroBiasByMethodOneForInitialization() {
         auto new_frame_iter = std::next(data_manager_->frames_with_bias().begin());
         for (uint32_t i = min_frames_idx; i < max_frames_idx; ++i) {
             // Localize the frame with bias in 'frames_with_bias_' between frame i and i + 1.
-            ImuPreintegrateBlock &imu_preint_block = new_frame_iter->imu_preint_block;
+            ImuPreintegrateBlock<> &imu_preint_block = new_frame_iter->imu_preint_block;
             ++new_frame_iter;
             const Mat3 dr_dbg = imu_preint_block.dr_dbg();
             const Quat q_bibj = imu_preint_block.q_ij();
@@ -154,7 +154,7 @@ bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
         }
 
         // Localize the frame with bias in 'frames_with_bias_' between frame i and i + 1.
-        ImuPreintegrateBlock &imu_preint_block = new_frame_iter->imu_preint_block;
+        ImuPreintegrateBlock<> &imu_preint_block = new_frame_iter->imu_preint_block;
         ++new_frame_iter;
         const Mat3 dr_dbg = imu_preint_block.dr_dbg();
         const Quat imu_q_ij = imu_preint_block.q_ij();
@@ -246,7 +246,7 @@ bool Backend::EstimateGyroBiasByMethodThreeForInitialization() {
         RETURN_FALSE_IF(!EstimatePureRotationOfCameraFrame(i, i + 1, min_frames_idx, ref_norm_xy, cur_norm_xy, q_cr));
 
         // Localize the frame with bias in 'frames_with_bias_' between frame i and i + 1.
-        ImuPreintegrateBlock &imu_preint_block = new_frame_iter->imu_preint_block;
+        ImuPreintegrateBlock<> &imu_preint_block = new_frame_iter->imu_preint_block;
         ++new_frame_iter;
         const Mat3 dr_dbg = imu_preint_block.dr_dbg();
         const Quat imu_q_ij = imu_preint_block.q_ij();

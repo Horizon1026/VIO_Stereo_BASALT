@@ -6,7 +6,7 @@ namespace VIO {
 
 bool Backend::EstimateVelocityAndGravityForInitialization(Vec3 &gravity_i0) {
     // Compute imu blocks based on the first frame.
-    std::vector<ImuPreintegrateBlock> imu_blocks;
+    std::vector<ImuPreintegrateBlock<>> imu_blocks;
     if (!ComputeImuPreintegrationBasedOnFirstFrameForInitialization(imu_blocks)) {
         ReportError("[Backend] Backend failed to compute imu preintegration block based on first frame.");
         return false;
@@ -41,7 +41,7 @@ bool Backend::EstimateVelocityAndGravityForInitialization(Vec3 &gravity_i0) {
     return true;
 }
 
-bool Backend::ComputeImuPreintegrationBasedOnFirstFrameForInitialization(std::vector<ImuPreintegrateBlock> &imu_blocks) {
+bool Backend::ComputeImuPreintegrationBasedOnFirstFrameForInitialization(std::vector<ImuPreintegrateBlock<>> &imu_blocks) {
     const int32_t num_of_imu_block = data_manager_->visual_local_map()->frames().size() - 1;
     RETURN_FALSE_IF(num_of_imu_block < 1);
 
@@ -54,7 +54,7 @@ bool Backend::ComputeImuPreintegrationBasedOnFirstFrameForInitialization(std::ve
     for (int32_t i = 1; i < num_of_imu_block; ++i) {
         ++end_iter;
 
-        ImuPreintegrateBlock new_imu_block(imu_blocks.back());
+        ImuPreintegrateBlock<> new_imu_block(imu_blocks.back());
         new_imu_block.ResetIntegratedStates();
         for (auto iter = start_iter; iter != end_iter; ++iter) {
             const int32_t max_idx = static_cast<int32_t>(iter->packed_measure->imus.size());
@@ -108,7 +108,7 @@ bool Backend::SelectTwoFramesWithMaxParallax(CovisibleGraphType *local_map,
     return true;
 }
 
-bool Backend::ConstructLigtFunction(const std::vector<ImuPreintegrateBlock> &imu_blocks, Mat6 &A, Vec6 &b, float &Q) {
+bool Backend::ConstructLigtFunction(const std::vector<ImuPreintegrateBlock<>> &imu_blocks, Mat6 &A, Vec6 &b, float &Q) {
     // Compute the norm of gravity vector.
     const float gravity_norm = options_.kGravityInWordFrame.norm();
 
@@ -356,7 +356,7 @@ bool Backend::RefineGravityForInitialization(const Mat &M,
     return true;
 }
 
-bool Backend::PropagateAllBasedOnFirstCameraFrameForInitializaion(const std::vector<ImuPreintegrateBlock> &imu_blocks,
+bool Backend::PropagateAllBasedOnFirstCameraFrameForInitializaion(const std::vector<ImuPreintegrateBlock<>> &imu_blocks,
                                                                   const Vec3 &v_i0i0,
                                                                   const Vec3 &gravity_i0) {
     // Localize the left camera extrinsic.

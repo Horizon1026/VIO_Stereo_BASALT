@@ -32,7 +32,7 @@ class EdgeImuPreintegrationBetweenRelativePose : public Edge<Scalar> {
 //              [imu bias_g 1, bias_g1]
 
 public:
-    EdgeImuPreintegrationBetweenRelativePose(const ImuPreintegrateBlock &imu_block,
+    EdgeImuPreintegrationBetweenRelativePose(const ImuPreintegrateBlock<> &imu_block,
                                              const Vec3 &gravity_w) : Edge<Scalar>(15, 10) {
         linear_point_.p_ij = imu_block.p_ij().cast<Scalar>();
         linear_point_.q_ij = imu_block.q_ij().cast<Scalar>();
@@ -100,7 +100,7 @@ public:
         dr_dba0.template block<3, 3>(ImuIndex::kBiasAccel, 0) = - TMat3<Scalar>::Identity();
         TMat15x3<Scalar> dr_dbg0 = TMat15x3<Scalar>::Zero();
         dr_dbg0.template block<3, 3>(ImuIndex::kPosition, 0) = - imu_jacobians_.dp_dbg;
-        dr_dbg0.template block<3, 3>(ImuIndex::kRotation, 0) = - Utility::Qleft(q_wi1_.inverse() * q_wi0_ * q_ij_).template bottomRightCorner<3, 3>() * imu_jacobians_.dr_dbg;
+        dr_dbg0.template block<3, 3>(ImuIndex::kRotation, 0) = - Utility::Qleft(q_wi1_.inverse() * q_wi0_ * linear_point_.q_ij).template bottomRightCorner<3, 3>() * imu_jacobians_.dr_dbg;
         dr_dbg0.template block<3, 3>(ImuIndex::kVelocity, 0) = - imu_jacobians_.dv_dbg;
         dr_dbg0.template block<3, 3>(ImuIndex::kBiasGyro, 0) = - TMat3<Scalar>::Identity();
 

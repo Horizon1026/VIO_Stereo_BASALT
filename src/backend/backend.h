@@ -128,10 +128,10 @@ public:
     // Estimate velocity and gravity for initialization.
     bool EstimateVelocityAndGravityForInitialization(Vec3 &gravity_i0);
     bool SelectTwoFramesWithMaxParallax(CovisibleGraphType *local_map, const FeatureType &feature, int32_t &frame_id_l, int32_t &frame_id_r);
-    bool ComputeImuPreintegrationBasedOnFirstFrameForInitialization(std::vector<ImuPreintegrateBlock> &imu_blocks);
-    bool ConstructLigtFunction(const std::vector<ImuPreintegrateBlock> &imu_blocks, Mat6 &A, Vec6 &b, float &Q);
+    bool ComputeImuPreintegrationBasedOnFirstFrameForInitialization(std::vector<ImuPreintegrateBlock<>> &imu_blocks);
+    bool ConstructLigtFunction(const std::vector<ImuPreintegrateBlock<>> &imu_blocks, Mat6 &A, Vec6 &b, float &Q);
     bool RefineGravityForInitialization(const Mat &M, const Vec &m, const float Q, const float gravity_mag, Vec &rhs);
-    bool PropagateAllBasedOnFirstCameraFrameForInitializaion(const std::vector<ImuPreintegrateBlock> &imu_blocks, const Vec3 &v_i0i0, const Vec3 &gravity_i0);
+    bool PropagateAllBasedOnFirstCameraFrameForInitializaion(const std::vector<ImuPreintegrateBlock<>> &imu_blocks, const Vec3 &v_i0i0, const Vec3 &gravity_i0);
     bool TransformAllStatesToWorldFrameForInitialization(const Vec3 &gravity_i0);
 
     // Backend estimator.
