@@ -1,6 +1,6 @@
 cmake_minimum_required( VERSION 3.10 )
 
-project( visual_frontend )
+project( test_vio_stereo_basalt )
 
 set( CMAKE_BUILD_TYPE "RelWithDegInfo" )
 set( CMAKE_CXX_FLAGS "-std=c++17 -O3 -g -Wall -lpthread" )
