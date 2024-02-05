@@ -41,7 +41,7 @@ struct VioOptionsOfFrontend {
     uint32_t image_rows = 0;
     uint32_t image_cols = 0;
     bool enable_drawing_track_result = false;
-    bool select_keyframe = true;
+    bool select_keyframe = false;
     uint32_t max_feature_number = 121;
     uint32_t min_feature_number = 60;
     VioOptionsOfFeatureDetector feature_detector;
@@ -59,7 +59,7 @@ struct VioOptionsOfBackend {
     uint32_t method_index_to_estimate_gyro_bias_for_initialization = 3;
 
     Vec3 gravity_w = Vec3(0.0f, 0.0f, 9.8f);
-    float max_valid_feature_depth_in_meter = 120.0f;
+    float max_valid_feature_depth_in_meter = 50.0f;
     float min_valid_feature_depth_in_meter = 0.05f;
     float default_feature_depth_in_meter = 1.0f;
 

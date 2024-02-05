@@ -47,7 +47,7 @@ bool Backend::TryToEstimate() {
     // Construct solver to solve this problem.
     SolverLm<DorF> solver;
     solver.options().kEnableReportEachIteration = options_.kEnableReportAllInformation;
-    solver.options().kMaxConvergedSquaredStepLength = static_cast<DorF>(1e-3);
+    solver.options().kMaxConvergedSquaredStepLength = static_cast<DorF>(1e-4);
     solver.options().kMaxCostTimeInSecond = 0.05f;
     solver.problem() = &graph_optimization_problem;
     solver.Solve(states_.prior.is_valid);
@@ -139,7 +139,7 @@ void Backend::UpdateAllStatesAfterEstimation(const Graph<DorF> &problem, const u
         states_.prior.jacobian_t_inv = problem.prior_jacobian_t_inv();
         states_.prior.residual = problem.prior_residual();
 
-        ReportInfo("[Backend] After estimation, prior residual squared norm is " << problem.prior_residual().squaredNorm());
+        ReportInfo("[Backend] After estimation, prior residual squared norm [" << problem.prior_residual().squaredNorm() << "].");
     }
 }
 
