@@ -120,10 +120,10 @@ void Backend::UpdateAllStatesAfterEstimation(const Graph<DorF> &problem, const u
         frame.imu_preint_block.Reset();
         frame.imu_preint_block.bias_accel() = graph_.vertices.all_new_frames_ba[idx]->param().cast<float>();
         frame.imu_preint_block.bias_gyro() = graph_.vertices.all_new_frames_bg[idx]->param().cast<float>();
-        frame.imu_preint_block.SetImuNoiseSigma(imu_model_->options().kAccelNoise,
-                                                imu_model_->options().kGyroNoise,
-                                                imu_model_->options().kAccelRandomWalk,
-                                                imu_model_->options().kGyroRandomWalk);
+        frame.imu_preint_block.SetImuNoiseSigma(imu_model_->options().kAccelNoiseSigma,
+                                                imu_model_->options().kGyroNoiseSigma,
+                                                imu_model_->options().kAccelRandomWalkSigma,
+                                                imu_model_->options().kGyroRandomWalkSigma);
         ++idx;
 
         const int32_t max_idx = static_cast<int32_t>(frame.packed_measure->imus.size());

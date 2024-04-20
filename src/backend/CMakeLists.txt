@@ -59,6 +59,12 @@ if ( NOT TARGET lib_polynomial_solver )
     add_subdirectory( ${SLAM_SOLVER_PATH}/polynomial_solver ${PROJECT_SOURCE_DIR}/build/lib_polynomial_solver )
 endif()
 
+# Add image painter.
+set( IMAGE_PAINTER_PATH ${PROJECT_SOURCE_DIR}/../Image_Painter/src )
+if ( NOT TARGET lib_image_painter )
+    add_subdirectory( ${IMAGE_PAINTER_PATH} ${PROJECT_SOURCE_DIR}/build/lib_image_painter )
+endif()
+
 # Add visualizor.
 set( VISUALIZOR_2D_PATH ${PROJECT_SOURCE_DIR}/../Visualizor2D )
 if ( NOT TARGET lib_image_visualizor )
@@ -101,6 +107,7 @@ target_link_libraries( lib_vio_stereo_basalt_backend
     lib_vision_geometry_relative_rotation
 
     lib_binary_data_log
+    lib_image_painter
     lib_image_visualizor
     lib_3d_visualizor
 

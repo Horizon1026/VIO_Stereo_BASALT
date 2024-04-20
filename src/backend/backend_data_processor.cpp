@@ -9,10 +9,10 @@ void Backend::RecomputeImuPreintegration() {
     for (auto &frame : data_manager_->frames_with_bias()) {
         frame.imu_preint_block.Reset();
 
-        frame.imu_preint_block.SetImuNoiseSigma(imu_model_->options().kAccelNoise,
-                                                imu_model_->options().kGyroNoise,
-                                                imu_model_->options().kAccelRandomWalk,
-                                                imu_model_->options().kGyroRandomWalk);
+        frame.imu_preint_block.SetImuNoiseSigma(imu_model_->options().kAccelNoiseSigma,
+                                                imu_model_->options().kGyroNoiseSigma,
+                                                imu_model_->options().kAccelRandomWalkSigma,
+                                                imu_model_->options().kGyroRandomWalkSigma);
         const int32_t max_idx = static_cast<int32_t>(frame.packed_measure->imus.size());
         for (int32_t i = 1; i < max_idx; ++i) {
             frame.imu_preint_block.Propagate(*frame.packed_measure->imus[i - 1], *frame.packed_measure->imus[i]);
@@ -158,10 +158,10 @@ bool Backend::AddNewestFrameWithBiasIntoLocalMap() {
     auto &sub_new_frame_with_imu = *std::prev(std::prev(data_manager_->frames_with_bias().end()));
     newest_frame_imu.imu_preint_block.bias_gyro() = sub_new_frame_with_imu.imu_preint_block.bias_gyro();
     newest_frame_imu.imu_preint_block.bias_accel() = sub_new_frame_with_imu.imu_preint_block.bias_accel();
-    newest_frame_imu.imu_preint_block.SetImuNoiseSigma(imu_model_->options().kAccelNoise,
-                                                       imu_model_->options().kGyroNoise,
-                                                       imu_model_->options().kAccelRandomWalk,
-                                                       imu_model_->options().kGyroRandomWalk);
+    newest_frame_imu.imu_preint_block.SetImuNoiseSigma(imu_model_->options().kAccelNoiseSigma,
+                                                       imu_model_->options().kGyroNoiseSigma,
+                                                       imu_model_->options().kAccelRandomWalkSigma,
+                                                       imu_model_->options().kGyroRandomWalkSigma);
     const int32_t max_idx = static_cast<int32_t>(newest_frame_imu.packed_measure->imus.size());
     for (int32_t i = 1; i < max_idx; ++i) {
         newest_frame_imu.imu_preint_block.Propagate(*newest_frame_imu.packed_measure->imus[i - 1], *newest_frame_imu.packed_measure->imus[i]);

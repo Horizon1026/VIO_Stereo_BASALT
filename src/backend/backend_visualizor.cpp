@@ -2,10 +2,12 @@
 #include "log_report.h"
 #include "slam_memory.h"
 #include "math_kinematics.h"
+#include "image_painter.h"
 #include "visualizor.h"
 #include "visualizor_3d.h"
 
 using namespace SLAM_VISUALIZOR;
+using namespace IMAGE_PAINTER;
 
 namespace VIO {
 
@@ -105,7 +107,7 @@ void Backend::ShowMatrixImage(const std::string &title, const TMat<DorF> &matrix
     const uint32_t scale = 3;
     uint8_t *buf = (uint8_t *)malloc(matrix.rows() * matrix.cols() * scale * scale * sizeof(uint8_t));
     GrayImage image_matrix(buf, matrix.rows() * scale, matrix.cols() * scale, true);
-    Visualizor::ConvertMatrixToImage<DorF>(matrix, image_matrix, 100.0f, scale);
+    ImagePainter::ConvertMatrixToImage<DorF>(matrix, image_matrix, 100.0f, scale);
     Visualizor::ShowImage(title, image_matrix);
     Visualizor::WaitKey(1);
 }
@@ -147,7 +149,7 @@ void Backend::ShowLocalMapFramesAndFeatures(const int32_t feature_id, const int3
     GrayImage gray_show_image(show_image_mat);
     uint8_t *show_image_buf = (uint8_t *)SlamMemory::Malloc(show_image_rows * show_image_cols * 3 * sizeof(uint8_t));
     RgbImage show_image(show_image_buf, show_image_rows, show_image_cols, true);
-    Visualizor::ConvertUint8ToRgb(gray_show_image.data(), show_image.data(), gray_show_image.rows() * gray_show_image.cols());
+    ImagePainter::ConvertUint8ToRgb(gray_show_image.data(), show_image.data(), gray_show_image.rows() * gray_show_image.cols());
 
     // Iterate all frames in local map.
     frame_id = 0;
@@ -159,7 +161,7 @@ void Backend::ShowLocalMapFramesAndFeatures(const int32_t feature_id, const int3
         const int32_t font_size = 16;
         const RgbPixel info_color = frame_id >= static_cast<int32_t>(data_manager_->visual_local_map()->frames().size() - data_manager_->options().kMaxStoredNewFrames) ?
             RgbPixel{.r = 255, .g = 0, .b = 0} : RgbPixel{.r = 0, .g = 255, .b = 0};
-        Visualizor::DrawString(show_image, std::string("[ ") + std::to_string(frame.id()) + std::string(" | ") + std::to_string(frame.time_stamp_s()) + std::string("s ]"),
+        ImagePainter::DrawString(show_image, std::string("[ ") + std::to_string(frame.id()) + std::string(" | ") + std::to_string(frame.time_stamp_s()) + std::string("s ]"),
             col_offset, row_offset, info_color, font_size);
         // Draw all observed features in this frame and this camera image.
         for (auto &pair : frame.features()) {
@@ -176,8 +178,8 @@ void Backend::ShowLocalMapFramesAndFeatures(const int32_t feature_id, const int3
             }
             const RgbPixel pixel_color = GetFeatureColor(*feature);
             const std::string feature_text = feature->first_frame_id() == frame.id() ? std::to_string(feature->id()) + std::string("+") : std::to_string(feature->id());
-            Visualizor::DrawSolidCircle(show_image, pixel_uv.x() + col_offset, pixel_uv.y() + row_offset, 3, pixel_color);
-            Visualizor::DrawString(show_image, feature_text, pixel_uv.x() + col_offset, pixel_uv.y() + row_offset, pixel_color);
+            ImagePainter::DrawSolidCircle(show_image, pixel_uv.x() + col_offset, pixel_uv.y() + row_offset, 3, pixel_color);
+            ImagePainter::DrawString(show_image, feature_text, pixel_uv.x() + col_offset, pixel_uv.y() + row_offset, pixel_color);
         }
         // Accumulate index.
         ++frame_id;
@@ -226,7 +228,7 @@ void Backend::ShowAllFramesWithBias(const bool use_rectify, const int32_t delay_
     GrayImage gray_show_image(show_image_mat);
     uint8_t *show_image_buf = (uint8_t *)SlamMemory::Malloc(show_image_rows * show_image_cols * 3 * sizeof(uint8_t));
     RgbImage show_image(show_image_buf, show_image_rows, show_image_cols, true);
-    Visualizor::ConvertUint8ToRgb(gray_show_image.data(), show_image.data(), gray_show_image.rows() * gray_show_image.cols());
+    ImagePainter::ConvertUint8ToRgb(gray_show_image.data(), show_image.data(), gray_show_image.rows() * gray_show_image.cols());
 
     // Iterate all frames in local map.
     frame_id = 0;
@@ -241,15 +243,15 @@ void Backend::ShowAllFramesWithBias(const bool use_rectify, const int32_t delay_
         const int32_t font_size = 16;
         const RgbPixel info_color = frame_id >= static_cast<int32_t>(data_manager_->options().kMaxStoredKeyFrames - data_manager_->options().kMaxStoredNewFrames) ?
             RgbPixel{.r = 255, .g = 0, .b = 0} : RgbPixel{.r = 0, .g = 255, .b = 0};
-        Visualizor::DrawString(show_image, std::string("[ ") + std::to_string(frame_with_bias.time_stamp_s) + std::string("s ]"),
+        ImagePainter::DrawString(show_image, std::string("[ ") + std::to_string(frame_with_bias.time_stamp_s) + std::string("s ]"),
             col_offset, row_offset, info_color, font_size);
 
         // Draw all observed features in this frame and this camera image.
         for (uint32_t i = 0; i < frame_with_bias.visual_measure->features_id.size(); ++i) {
             const Vec2 pixel_uv = frame_with_bias.visual_measure->observes_per_frame[i][0].raw_pixel_uv + Vec2(col_offset, row_offset);
             const RgbPixel pixel_color = RgbPixel{.r = 0, .g = 255, .b = 127};
-            Visualizor::DrawSolidCircle(show_image, pixel_uv.x(), pixel_uv.y(), 3, pixel_color);
-            Visualizor::DrawString(show_image, std::to_string(frame_with_bias.visual_measure->features_id[i]),
+            ImagePainter::DrawSolidCircle(show_image, pixel_uv.x(), pixel_uv.y(), 3, pixel_color);
+            ImagePainter::DrawString(show_image, std::to_string(frame_with_bias.visual_measure->features_id[i]),
                 pixel_uv.x(), pixel_uv.y(), pixel_color);
         }
 
