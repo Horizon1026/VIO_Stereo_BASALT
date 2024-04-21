@@ -319,7 +319,7 @@ void Backend::ShowLocalMapInWorldFrame(const int32_t delay_ms, const bool block_
     }
 
     // Set visualizor camera view by newest frame.
-    const Vec3 p_c = Vec3(0, 0, 0.3);
+    const Vec3 p_c = Vec3(0, 0, 3);
     const Vec3 p_w = Visualizor3D::camera_view().q_wc * p_c + Visualizor3D::camera_view().p_wc;
     Visualizor3D::camera_view().p_wc = data_manager_->visual_local_map()->frames().back().p_wc() - p_w + Visualizor3D::camera_view().p_wc;
 
