@@ -5,6 +5,7 @@ A simple visual-inertial odometry reconstructed from basalt.
 - [x] Data manager.
 - [x] Data loader.
 - [x] Frontend.
+    - [x] Stereo visual frontend.
 - [x] Backend.
     - [x] Backend initialization.
     - [x] Backend optimization.
@@ -21,6 +22,8 @@ A simple visual-inertial odometry reconstructed from basalt.
 - Slam_Solver
 - Visual_Frontend
 - Binary_Data_Log
+- Visualizor2D
+- Visualizor3D
 
 # Tips
 - 这是为了学习开源的 BASALT-VIO 而创建的用于复现/魔改 paper 的代码仓库，欢迎一起交流学习，不同意商用；
