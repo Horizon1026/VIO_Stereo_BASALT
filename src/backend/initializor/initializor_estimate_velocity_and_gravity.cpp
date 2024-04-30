@@ -369,14 +369,16 @@ bool Backend::PropagateAllBasedOnFirstCameraFrameForInitializaion(const std::vec
 
     // Set states of first frame.
     auto first_frame = data_manager_->visual_local_map()->frame(min_frames_idx);
-    first_frame->v_w() = q_ci * v_i0i0;
+    auto first_frame_with_bias = data_manager_->frames_with_bias().begin();
+    first_frame_with_bias->v_wi = q_ci * v_i0i0;
     const Vec3 p_c0c0 = first_frame->p_wc();
     const Quat q_c0c0 = first_frame->q_wc();
-    const Vec3 v_c0c0 = first_frame->v_w();
+    const Vec3 v_c0c0 = first_frame_with_bias->v_wi;
     const Vec3 gracity_c0 = q_ci * gravity_i0;
 
     // Iterate all frames to propagate states based on frame c0.
     uint32_t idx_of_imu_block = 0;
+    auto it = data_manager_->frames_with_bias().begin();
     for (uint32_t i = min_frames_idx + 1; i <= max_frames_idx; ++i) {
         const auto &imu_preint_block = imu_blocks[idx_of_imu_block];
         ++idx_of_imu_block;
@@ -389,7 +391,8 @@ bool Backend::PropagateAllBasedOnFirstCameraFrameForInitializaion(const std::vec
         auto frame = data_manager_->visual_local_map()->frame(i);
         frame->q_wc() = q_c0c0 * imu_q_ij;
         frame->p_wc() = q_ci * imu_p_ij + p_c0c0 + v_c0c0 * dt - 0.5f * gracity_c0 * dt * dt;
-        frame->v_w() = q_ci * imu_v_ij + v_c0c0 - gracity_c0 * dt;
+        ++it;
+        it->v_wi = q_ci * imu_v_ij + v_c0c0 - gracity_c0 * dt;
     }
 
     return true;

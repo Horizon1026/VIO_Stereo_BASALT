@@ -90,20 +90,16 @@ bool Backend::TransformAllStatesToWorldFrameForInitialization(const Vec3 &gravit
     ReportInfo(GREEN "[Backend] Estimated q_wc0 is " << LogQuat(q_wc0) << "." << RESET_COLOR);
 
     // Iterate all frames, transform all states of them from i0 to w.
-    // Determine the scope of all frames.
-    const uint32_t max_frames_idx = data_manager_->visual_local_map()->frames().back().id();
-    const uint32_t min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
+    auto it = data_manager_->frames_with_bias().begin();
+    for (auto &frame : data_manager_->visual_local_map()->frames()) {
+        const Quat q_c0c = frame.q_wc();
+        const Vec3 p_c0c = frame.p_wc();
+        const Vec3 v_c0c = it->v_wi;
 
-    // Iterate all frames to propagate states.
-    for (uint32_t i = min_frames_idx; i <= max_frames_idx; ++i) {
-        auto frame = data_manager_->visual_local_map()->frame(i);
-        const Quat q_c0c = frame->q_wc();
-        const Vec3 p_c0c = frame->p_wc();
-        const Vec3 v_c0c = frame->v_w();
-
-        frame->q_wc() = q_wc0 * q_c0c;
-        frame->p_wc() = q_wc0 * p_c0c;
-        frame->v_w() = q_wc0 * v_c0c;
+        frame.q_wc() = q_wc0 * q_c0c;
+        frame.p_wc() = q_wc0 * p_c0c;
+        it->v_wi = q_wc0 * v_c0c;
+        ++it;
     }
 
     return true;

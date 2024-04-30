@@ -69,9 +69,6 @@ void DataManager::RegisterLogPackages() {
         package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "q_wc_x"});
         package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "q_wc_y"});
         package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "q_wc_z"});
-        package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "v_wc_x"});
-        package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "v_wc_y"});
-        package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "v_wc_z"});
         if (!logger_.RegisterPackage(package_ptr)) {
             ReportError("[DataManager] Failed to register package for covisible graph log.");
         }
@@ -157,9 +154,6 @@ void DataManager::RecordCovisibleGraph(const float time_stamp_s) {
         log_package.q_wc_x = frame.q_wc().x();
         log_package.q_wc_y = frame.q_wc().y();
         log_package.q_wc_z = frame.q_wc().z();
-        log_package.v_wc_x = frame.v_w().x();
-        log_package.v_wc_y = frame.v_w().y();
-        log_package.v_wc_z = frame.v_w().z();
 
         logger_.RecordPackage(package_id, reinterpret_cast<const char *>(&log_package), time_stamp_s);
         ++package_id;

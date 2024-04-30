@@ -50,6 +50,8 @@ struct FrameWithBias {
     // Measurement of raw imu(gyro, acc), raw image(left, right) and visual features.
     std::unique_ptr<PackedMeasurement> packed_measure = nullptr;
     std::unique_ptr<FrontendOutputData> visual_measure = nullptr;
+    // States based on imu.
+    Vec3 v_wi = Vec3::Zero();
 };
 
 /* Class Data Manager Declaration. */

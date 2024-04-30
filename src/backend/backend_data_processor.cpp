@@ -184,7 +184,6 @@ bool Backend::AddNewestFrameWithBiasIntoLocalMap() {
                                                                newest_frame_imu.time_stamp_s,
                                                                frame_id,
                                                                raw_images);
-    auto &newest_frame = data_manager_->visual_local_map()->frames().back();
 
     // Predict position, velocity and attitude of newest frame.
     Vec3 p_wi = Vec3::Zero();
@@ -196,12 +195,12 @@ bool Backend::AddNewestFrameWithBiasIntoLocalMap() {
     const float dt = newest_frame_imu.imu_preint_block.integrate_time_s();
     const Quat new_q_wi = q_wi * newest_frame_imu.imu_preint_block.q_ij();
     const Vec3 new_p_wi = q_wi * newest_frame_imu.imu_preint_block.p_ij() + p_wi +
-        sub_new_frame.v_w() * dt - 0.5f * options_.kGravityInWordFrame * dt * dt;
-    newest_frame.v_w() = q_wi * newest_frame_imu.imu_preint_block.v_ij() + sub_new_frame.v_w() -
+        sub_new_frame_with_imu.v_wi * dt - 0.5f * options_.kGravityInWordFrame * dt * dt;
+    newest_frame_imu.v_wi = q_wi * newest_frame_imu.imu_preint_block.v_ij() + sub_new_frame_with_imu.v_wi -
         options_.kGravityInWordFrame * dt;
 
+    auto &newest_frame = data_manager_->visual_local_map()->frames().back();
     Utility::ComputeTransformTransform(new_p_wi, new_q_wi, p_ic, q_ic, newest_frame.p_wc(), newest_frame.q_wc());
-
     return data_manager_->visual_local_map()->SelfCheck();
 }
 
@@ -290,7 +289,7 @@ void Backend::UpdateBackendStates() {
         data_manager_->camera_extrinsics().front().p_ic,
         data_manager_->camera_extrinsics().front().q_ic,
         states_.motion.p_wi, states_.motion.q_wi);
-    states_.motion.v_wi = newest_frame.v_w();
+    states_.motion.v_wi = newest_frame_with_bias.v_wi;
     states_.motion.ba = newest_frame_with_bias.imu_preint_block.bias_accel();
     states_.motion.bg = newest_frame_with_bias.imu_preint_block.bias_gyro();
 }

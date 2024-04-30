@@ -77,6 +77,7 @@ void Backend::UpdateAllStatesAfterEstimation(const Graph<DorF> &problem, const u
     // Update all frame pose in local map.
     const Vec3 &p_ic = data_manager_->camera_extrinsics().front().p_ic;
     const Quat &q_ic = data_manager_->camera_extrinsics().front().q_ic;
+    auto it = data_manager_->frames_with_bias().begin();
     for (uint32_t i = 0; i < graph_.vertices.all_frames_p_wi.size(); ++i) {
         auto frame_ptr = data_manager_->visual_local_map()->frame(graph_.vertices.all_frames_id[i]);
         const Vec3 p_wi = graph_.vertices.all_frames_p_wi[i]->param().cast<float>();
@@ -86,9 +87,11 @@ void Backend::UpdateAllStatesAfterEstimation(const Graph<DorF> &problem, const u
                                graph_.vertices.all_frames_q_wi[i]->param()(3));
         Utility::ComputeTransformTransform(p_wi, q_wi, p_ic, q_ic, frame_ptr->p_wc(), frame_ptr->q_wc());
 
+        auto &imu_based_frame_ptr = it;
         if (i >= idx_offset) {
             const uint32_t j = i - idx_offset;
-            frame_ptr->v_w() = graph_.vertices.all_new_frames_v_wi[j]->param().cast<float>();
+            imu_based_frame_ptr->v_wi = graph_.vertices.all_new_frames_v_wi[j]->param().cast<float>();
+            ++it;
         }
     }
 

@@ -34,9 +34,6 @@ struct DataManagerCovisibleGraphLog {
     float q_wc_x = 0.0f;
     float q_wc_y = 0.0f;
     float q_wc_z = 0.0f;
-    float v_wc_x = 0.0f;
-    float v_wc_y = 0.0f;
-    float v_wc_z = 0.0f;
 };
 #pragma pack()
 

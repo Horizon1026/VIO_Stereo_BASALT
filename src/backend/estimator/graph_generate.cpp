@@ -246,17 +246,12 @@ bool Backend::ConvertFeatureInvdepAndAddVisualFactor(const FeatureType &feature,
 
 void Backend::ConvertImuMotionStatesToVertices() {
     // [Vertices] Velocity of each new frame.
-    const uint32_t min_frames_idx = data_manager_->visual_local_map()->frames().front().id();
-    const uint32_t max_frames_idx = data_manager_->visual_local_map()->frames().back().id();
-    const uint32_t idx_offset = data_manager_->visual_local_map()->frames().size() - data_manager_->frames_with_bias().size();
-    for (uint32_t frame_idx = min_frames_idx + idx_offset; frame_idx <= max_frames_idx; ++frame_idx) {
-        graph_.vertices.all_new_frames_v_wi.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
-        graph_.vertices.all_new_frames_v_wi.back()->param() = data_manager_->visual_local_map()->frame(frame_idx)->v_w().cast<DorF>();
-        graph_.vertices.all_new_frames_v_wi.back()->name() = std::string("v_wi") + std::to_string(frame_idx);
-    }
-
     // [Vertices] Bias_accel and bias_gyro of each new frame.
     for (const auto &frame : data_manager_->frames_with_bias()) {
+        // Add vertex of velocity.
+        graph_.vertices.all_new_frames_v_wi.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
+        graph_.vertices.all_new_frames_v_wi.back()->param() = frame.v_wi.cast<DorF>();
+        graph_.vertices.all_new_frames_v_wi.back()->name() = std::string("v_wi");
         // Add vertex of bias_accel and bias_gyro.
         graph_.vertices.all_new_frames_ba.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
         graph_.vertices.all_new_frames_ba.back()->param() = frame.imu_preint_block.bias_accel().cast<DorF>();
