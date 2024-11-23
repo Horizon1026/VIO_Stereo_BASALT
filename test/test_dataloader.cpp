@@ -12,7 +12,7 @@
 #include "data_loader.h"
 #include "data_manager.h"
 
-#include "log_report.h"
+#include "slam_log_reporter.h"
 #include "datatype_basic.h"
 #include "datatype_image.h"
 
