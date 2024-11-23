@@ -1,7 +1,7 @@
 #ifndef _VIO_STEREO_BASALT_BACKEND_H_
 #define _VIO_STEREO_BASALT_BACKEND_H_
 
-#include "datatype_basic.h"
+#include "basic_type.h"
 
 #include "data_manager.h"
 #include "imu.h"

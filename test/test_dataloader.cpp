@@ -13,7 +13,7 @@
 #include "data_manager.h"
 
 #include "slam_log_reporter.h"
-#include "datatype_basic.h"
+#include "basic_type.h"
 #include "datatype_image.h"
 
 using namespace SLAM_VISUALIZOR;
