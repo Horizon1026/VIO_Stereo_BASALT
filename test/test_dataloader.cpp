@@ -4,7 +4,7 @@
 #include "unistd.h"
 #include "thread"
 
-#include "visualizor.h"
+#include "visualizor_2d.h"
 #include "tick_tock.h"
 
 #include "frontend.h"

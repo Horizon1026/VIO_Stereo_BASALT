@@ -1,6 +1,6 @@
 #include "backend.h"
 #include "slam_log_reporter.h"
-#include "geometry_triangulation.h"
+#include "point_triangulator.h"
 
 namespace VIO {
 
@@ -80,8 +80,8 @@ bool Backend::TriangulizeVisualFeature(std::vector<Quat> &q_wc_vec,
                                        std::vector<Vec2> &norm_xy_vec,
                                        FeatureType &feature) {
     using namespace VISION_GEOMETRY;
-    Triangulator solver;
-    solver.options().kMethod = Triangulator::TriangulationMethod::kAnalytic;
+    PointTriangulator solver;
+    solver.options().kMethod = PointTriangulator::TriangulationMethod::kAnalytic;
 
     q_wc_vec.clear();
     p_wc_vec.clear();
