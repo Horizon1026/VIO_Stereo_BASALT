@@ -45,7 +45,7 @@ void Backend::ConvertCameraPoseAndExtrinsicToVertices() {
         graph_.vertices.all_cameras_p_ic.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
         graph_.vertices.all_cameras_p_ic.back()->param() = extrinsic.p_ic.cast<DorF>();
         graph_.vertices.all_cameras_p_ic.back()->name() = std::string("p_ic");
-        graph_.vertices.all_cameras_q_ic.emplace_back(std::make_unique<VertexQuat<DorF>>(4, 3));
+        graph_.vertices.all_cameras_q_ic.emplace_back(std::make_unique<VertexQuat<DorF>>());
         graph_.vertices.all_cameras_q_ic.back()->param() << extrinsic.q_ic.w(),
             extrinsic.q_ic.x(), extrinsic.q_ic.y(), extrinsic.q_ic.z();
         graph_.vertices.all_cameras_q_ic.back()->name() = std::string("q_ic");
@@ -64,7 +64,7 @@ void Backend::ConvertCameraPoseAndExtrinsicToVertices() {
         graph_.vertices.all_frames_p_wi.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
         graph_.vertices.all_frames_p_wi.back()->param() = p_wi.cast<DorF>();
         graph_.vertices.all_frames_p_wi.back()->name() = std::string("p_wi") + std::to_string(frame.id());
-        graph_.vertices.all_frames_q_wi.emplace_back(std::make_unique<VertexQuat<DorF>>(4, 3));
+        graph_.vertices.all_frames_q_wi.emplace_back(std::make_unique<VertexQuat<DorF>>());
         graph_.vertices.all_frames_q_wi.back()->param() << q_wi.w(), q_wi.x(), q_wi.y(), q_wi.z();
         graph_.vertices.all_frames_q_wi.back()->name() = std::string("q_wi") + std::to_string(frame.id());
     }
