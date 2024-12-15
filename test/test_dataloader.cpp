@@ -99,7 +99,7 @@ void PublishCameraData(const std::string &csv_file_path,
         image_file_name.erase(std::remove(image_file_name.begin(), image_file_name.end(), ','), image_file_name.end());
 
         GrayImage image;
-        Visualizor::LoadImage(image_file_root + image_file_name, image);
+        Visualizor2D::LoadImage(image_file_root + image_file_name, image);
         image.memory_owner() = false;
         if (image.data() == nullptr) {
             ReportError("Failed to load image file.");
@@ -140,15 +140,15 @@ void TestPopSingleMeasurement(const int32_t period_us = 5000, const int32_t max_
         }
 
         if (meas.left_image != nullptr) {
-            Visualizor::ShowImage("Left camera image", GrayImage(meas.left_image->image));
+            Visualizor2D::ShowImage("Left camera image", GrayImage(meas.left_image->image));
             ReportInfo("Data loader pop left camera measure at time " << meas.left_image->time_stamp_s << " s.");
         }
 
         if (meas.right_image != nullptr) {
-            Visualizor::ShowImage("Right camera image", GrayImage(meas.right_image->image));
+            Visualizor2D::ShowImage("Right camera image", GrayImage(meas.right_image->image));
             ReportInfo("Data loader pop right camera measure at time " << meas.right_image->time_stamp_s << " s.");
         }
-        Visualizor::WaitKey(1);
+        Visualizor2D::WaitKey(1);
 
         cnt = max_wait_ticks;
     }
@@ -177,15 +177,15 @@ void TestPopPackedMeasurement(const int32_t period_us = 50000, const int32_t max
         }
 
         if (meas.left_image != nullptr) {
-            Visualizor::ShowImage("Left camera image", GrayImage(meas.left_image->image));
+            Visualizor2D::ShowImage("Left camera image", GrayImage(meas.left_image->image));
             ReportInfo("Data loader pop left camera measure at time " << meas.left_image->time_stamp_s << " s.");
         }
 
         if (meas.right_image != nullptr) {
-            Visualizor::ShowImage("Right camera image", GrayImage(meas.right_image->image));
+            Visualizor2D::ShowImage("Right camera image", GrayImage(meas.right_image->image));
             ReportInfo("Data loader pop right camera measure at time " << meas.right_image->time_stamp_s << " s.");
         }
-        Visualizor::WaitKey(1);
+        Visualizor2D::WaitKey(1);
 
         cnt = max_wait_ticks;
     }

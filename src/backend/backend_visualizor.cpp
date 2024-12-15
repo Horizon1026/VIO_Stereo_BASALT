@@ -91,16 +91,16 @@ void Backend::ShowFeaturePairsBetweenTwoFrames(const uint32_t ref_frame_id,
         visual_frontend_->camera_models()[0]->CorrectDistortedImage(ref_image, ref_rectify_image);
         visual_frontend_->camera_models()[0]->CorrectDistortedImage(cur_image, cur_rectify_image);
 
-        Visualizor::ShowImageWithTrackedFeatures(std::string("Recify image [ ") + std::to_string(ref_frame_id) + std::string(" | ") +
+        Visualizor2D::ShowImageWithTrackedFeatures(std::string("Recify image [ ") + std::to_string(ref_frame_id) + std::string(" | ") +
             std::to_string(cur_frame_id) + std::string(" ] covisible features"), ref_rectify_image, cur_rectify_image,
             ref_pixel_uv, cur_pixel_uv, tracked_status);
     } else {
-        Visualizor::ShowImageWithTrackedFeatures(std::string("Raw image [ ") + std::to_string(ref_frame_id) + std::string(" | ") +
+        Visualizor2D::ShowImageWithTrackedFeatures(std::string("Raw image [ ") + std::to_string(ref_frame_id) + std::string(" | ") +
             std::to_string(cur_frame_id) + std::string(" ] covisible features"), ref_image, cur_image,
             ref_pixel_uv, cur_pixel_uv, tracked_status);
     }
 
-    Visualizor::WaitKey(delay_ms);
+    Visualizor2D::WaitKey(delay_ms);
 }
 
 void Backend::ShowMatrixImage(const std::string &title, const TMat<DorF> &matrix) {
@@ -108,8 +108,8 @@ void Backend::ShowMatrixImage(const std::string &title, const TMat<DorF> &matrix
     uint8_t *buf = (uint8_t *)malloc(matrix.rows() * matrix.cols() * scale * scale * sizeof(uint8_t));
     GrayImage image_matrix(buf, matrix.rows() * scale, matrix.cols() * scale, true);
     ImagePainter::ConvertMatrixToImage<DorF>(matrix, image_matrix, 100.0f, scale);
-    Visualizor::ShowImage(title, image_matrix);
-    Visualizor::WaitKey(1);
+    Visualizor2D::ShowImage(title, image_matrix);
+    Visualizor2D::WaitKey(1);
 }
 
 void Backend::ShowLocalMapFramesAndFeatures(const int32_t feature_id, const int32_t camera_id, const bool use_rectify, const int32_t delay_ms) {
@@ -187,8 +187,8 @@ void Backend::ShowLocalMapFramesAndFeatures(const int32_t feature_id, const int3
 
     const std::string status_of_distortion = use_rectify ? "rectify" : "distorted";
     const std::vector<std::string> camera_name = {"left", "right"};
-    Visualizor::ShowImage(std::string("Local map [") + camera_name[camera_id] + std::string("] <") + status_of_distortion + std::string(">"), show_image);
-    Visualizor::WaitKey(delay_ms);
+    Visualizor2D::ShowImage(std::string("Local map [") + camera_name[camera_id] + std::string("] <") + status_of_distortion + std::string(">"), show_image);
+    Visualizor2D::WaitKey(delay_ms);
 }
 
 void Backend::ShowAllFramesWithBias(const bool use_rectify, const int32_t delay_ms) {
@@ -260,8 +260,8 @@ void Backend::ShowAllFramesWithBias(const bool use_rectify, const int32_t delay_
     }
 
     const std::string status_of_distortion = use_rectify ? "rectify" : "distorted";
-    Visualizor::ShowImage(std::string("New frames with bias [left] <") + status_of_distortion + std::string(">"), show_image);
-    Visualizor::WaitKey(delay_ms);
+    Visualizor2D::ShowImage(std::string("New frames with bias [left] <") + status_of_distortion + std::string(">"), show_image);
+    Visualizor2D::WaitKey(delay_ms);
 }
 
 void Backend::ShowLocalMapInWorldFrame(const int32_t delay_ms, const bool block_in_loop) {
