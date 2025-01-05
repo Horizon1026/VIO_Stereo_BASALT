@@ -155,7 +155,7 @@ bool Backend::ConvertFeatureInvdepAndAddVisualFactorForMarginalization() {
         const auto &frame = data_manager_->visual_local_map()->frame(feature.first_frame_id());
         const Vec3 p_c = frame->q_wc().inverse() * (feature.param() - frame->p_wc());
         const float invdep = 1.0f / p_c.z();
-        CONTINUE_IF(std::isinf(invdep) || std::isnan(invdep) || p_c.z() < kZero);
+        CONTINUE_IF(std::isinf(invdep) || std::isnan(invdep) || p_c.z() < kZerofloat);
 
         // Convert feature invdep to vertices, and add visual factors.
         RETURN_FALSE_IF(!ConvertFeatureInvdepAndAddVisualFactor(feature, invdep, visual_info_matrix, feature.final_frame_id()));
