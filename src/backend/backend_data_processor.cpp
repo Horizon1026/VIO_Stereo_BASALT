@@ -81,7 +81,7 @@ bool Backend::TriangulizeVisualFeature(std::vector<Quat> &q_wc_vec,
                                        FeatureType &feature) {
     using namespace VISION_GEOMETRY;
     PointTriangulator solver;
-    solver.options().kMethod = PointTriangulator::TriangulationMethod::kAnalytic;
+    solver.options().kMethod = PointTriangulator::Method::kAnalytic;
 
     q_wc_vec.clear();
     p_wc_vec.clear();
