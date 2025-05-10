@@ -162,7 +162,7 @@ void DataManager::RecordCovisibleGraph(const float time_stamp_s) {
 
 // Transform packed measurements to a new frame.
 bool DataManager::ProcessMeasure(std::unique_ptr<PackedMeasurement> &new_packed_measure,
-                                 std::unique_ptr<FrontendOutputData> &new_visual_measure) {
+                                 std::unique_ptr<VisualPointsMeasure> &new_visual_measure) {
     if (new_packed_measure == nullptr || new_visual_measure == nullptr) {
         ReportError("[DataManager] Input new_packed_measure or new_visual_measure is nullptr.");
         return false;
