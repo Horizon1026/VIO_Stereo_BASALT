@@ -9,12 +9,12 @@ set( CMAKE_CXX_STANDARD 20 )
 
 # Add stack backward.
 set( SLAM_UTILITY_PATH ${PROJECT_SOURCE_DIR}/../Slam_Utility )
-if ( NOT TARGET lib_stack_backward )
+if( NOT TARGET lib_stack_backward )
     add_subdirectory( ${SLAM_UTILITY_PATH}/3rd_libraries/backward ${PROJECT_SOURCE_DIR}/build/lib_stack_backward )
 endif()
 
 # Add vio stereo basalt
-if ( NOT TARGET lib_vio_stereo_basalt )
+if( NOT TARGET lib_vio_stereo_basalt )
     add_subdirectory( src ${PROJECT_SOURCE_DIR}/build/lib_vio_stereo_basalt )
 endif()
 
