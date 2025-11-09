@@ -4,8 +4,8 @@
 
 #include "optical_flow_basic_klt.h"
 
-#include "feature_point_fast_detector.h"
 #include "feature_point_detector.h"
+#include "feature_point_fast_detector.h"
 
 #include "slam_log_reporter.h"
 #include "slam_operations.h"
