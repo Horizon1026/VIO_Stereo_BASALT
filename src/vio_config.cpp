@@ -4,11 +4,11 @@
 
 #include "optical_flow_basic_klt.h"
 
-#include "feature_point_detector.h"
 #include "feature_fast.h"
+#include "feature_point_detector.h"
 
-#include "slam_operations.h"
 #include "slam_log_reporter.h"
+#include "slam_operations.h"
 
 namespace VIO {
 
@@ -60,7 +60,7 @@ bool Vio::ConfigComponentOfDataManager() {
     }
     const uint32_t max_camera_num = options_.data_manager.all_R_ic.size();
     for (uint32_t i = 0; i < max_camera_num; ++i) {
-        data_manager_->camera_extrinsics().emplace_back(CameraExtrinsic{
+        data_manager_->camera_extrinsics().emplace_back(CameraExtrinsic {
             .q_ic = Quat(options_.data_manager.all_R_ic[i]),
             .p_ic = options_.data_manager.all_t_ic[i],
         });
@@ -102,12 +102,11 @@ bool Vio::ConfigComponentOfFrontend() {
 
     // Config camera model.
     frontend_->camera_models().clear();
-    for (const auto &camera_options : options_.cameras) {
+    for (const auto &camera_options: options_.cameras) {
         frontend_->camera_models().emplace_back(std::make_unique<CameraType>());
-        frontend_->camera_models().back()->SetIntrinsicParameter(
-            camera_options.fx, camera_options.fy, camera_options.cx, camera_options.cy);
-        frontend_->camera_models().back()->SetDistortionParameter(std::vector<float>{
-            camera_options.k1, camera_options.k2, camera_options.k3, camera_options.p1, camera_options.p2});
+        frontend_->camera_models().back()->SetIntrinsicParameter(camera_options.fx, camera_options.fy, camera_options.cx, camera_options.cy);
+        frontend_->camera_models().back()->SetDistortionParameter(
+            std::vector<float> {camera_options.k1, camera_options.k2, camera_options.k3, camera_options.p1, camera_options.p2});
     }
 
     // Config feature detector.
@@ -155,4 +154,4 @@ bool Vio::ConfigComponentOfBackend() {
     return true;
 }
 
-}
+}  // namespace VIO

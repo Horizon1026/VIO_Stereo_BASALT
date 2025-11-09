@@ -3,9 +3,9 @@
 #include "inertial_edges.h"
 #include "visual_inertial_edges.h"
 
+#include "slam_basic_math.h"
 #include "slam_log_reporter.h"
 #include "tick_tock.h"
-#include "slam_basic_math.h"
 
 namespace VIO {
 
@@ -43,7 +43,7 @@ bool Backend::CheckGraphOptimizationFactors() {
 
 bool Backend::CheckGraphOptimizationFactors(std::vector<std::unique_ptr<Edge<DorF>>> &edges) {
     bool is_factor_valid = true;
-    for (auto &edge : edges) {
+    for (auto &edge: edges) {
         if (!edge->SelfCheckJacobians()) {
             is_factor_valid = false;
         }
@@ -52,4 +52,4 @@ bool Backend::CheckGraphOptimizationFactors(std::vector<std::unique_ptr<Edge<Dor
     return is_factor_valid;
 }
 
-}
+}  // namespace VIO

@@ -100,6 +100,6 @@ struct VioOptions {
     VioOptionsOfDataManager data_manager;
 };
 
-}
+}  // namespace VIO
 
-#endif // end of _VIO_STEREO_BASALT_CONFIG_H_
+#endif  // end of _VIO_STEREO_BASALT_CONFIG_H_

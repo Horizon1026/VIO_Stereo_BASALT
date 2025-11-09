@@ -4,12 +4,12 @@
 #include "basic_type.h"
 
 #include "data_manager.h"
+#include "general_graph_optimizor.h"
 #include "imu.h"
 #include "visual_frontend.h"
-#include "general_graph_optimizor.h"
 
-#include "binary_data_log.h"
 #include "backend_log.h"
+#include "binary_data_log.h"
 
 namespace VIO {
 
@@ -114,12 +114,8 @@ public:
     // Backend initializor.
     bool TryToInitialize();
     bool ConvertNewFramesToCovisibleGraphForInitialization();
-    bool EstimatePureRotationOfCameraFrame(const uint32_t ref_frame_id,
-                                           const uint32_t cur_frame_id,
-                                           const uint32_t min_frame_id,
-                                           std::vector<Vec2> &ref_norm_xy,
-                                           std::vector<Vec2> &cur_norm_xy,
-                                           Quat &q_cr);
+    bool EstimatePureRotationOfCameraFrame(const uint32_t ref_frame_id, const uint32_t cur_frame_id, const uint32_t min_frame_id,
+                                           std::vector<Vec2> &ref_norm_xy, std::vector<Vec2> &cur_norm_xy, Quat &q_cr);
     // Estimate gyro bias for initialization.
     bool EstimateGyroBiasAndRotationForInitialization();
     bool EstimateGyroBiasByMethodOneForInitialization();
@@ -150,7 +146,8 @@ public:
     bool AddPriorFactorWhenNoPrior();
     bool ConvertFeatureInvdepAndAddVisualFactorForEstimation();
     bool ConvertFeatureInvdepAndAddVisualFactorForMarginalization();
-    bool ConvertFeatureInvdepAndAddVisualFactor(const FeatureType &feature, const float invdep, const TMat2<DorF> &visual_info_matrix, const uint32_t max_frame_id);
+    bool ConvertFeatureInvdepAndAddVisualFactor(const FeatureType &feature, const float invdep, const TMat2<DorF> &visual_info_matrix,
+                                                const uint32_t max_frame_id);
     void ConvertImuMotionStatesToVertices();
     bool AddImuPreintegrationFactorForEstimation(const uint32_t idx_offset);
     bool AddImuPreintegrationFactorForMarginalization(const uint32_t idx_offset);
@@ -161,10 +158,7 @@ public:
     void RecomputeImuPreintegration();
     bool TriangulizeAllNewVisualFeatures();
     bool TriangulizeAllVisualFeatures();
-    bool TriangulizeVisualFeature(std::vector<Quat> &q_wc_vec,
-                                  std::vector<Vec3> &p_wc_vec,
-                                  std::vector<Vec2> &norm_xy_vec,
-                                  FeatureType &feature);
+    bool TriangulizeVisualFeature(std::vector<Quat> &q_wc_vec, std::vector<Vec3> &p_wc_vec, std::vector<Vec2> &norm_xy_vec, FeatureType &feature);
     bool ControlLocalMapDimension();
     void UpdateBackendStates();
     bool AddNewestFrameWithBiasIntoLocalMap();
@@ -227,6 +221,6 @@ private:
     bool should_quit_ = false;  // You can kill all relative threads by checking this flag.
 };
 
-}
+}  // namespace VIO
 
-#endif // end of _VIO_STEREO_BASALT_BACKEND_H_
+#endif  // end of _VIO_STEREO_BASALT_BACKEND_H_

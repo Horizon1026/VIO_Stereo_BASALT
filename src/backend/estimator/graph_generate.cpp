@@ -3,12 +3,12 @@
 #include "inertial_edges.h"
 #include "visual_inertial_edges.h"
 
-#include "solver_lm.h"
 #include "solver_dogleg.h"
+#include "solver_lm.h"
 
+#include "slam_basic_math.h"
 #include "slam_log_reporter.h"
 #include "tick_tock.h"
-#include "slam_basic_math.h"
 
 namespace VIO {
 
@@ -33,33 +33,31 @@ void Backend::ClearBackendGraph() {
 TMat2<DorF> Backend::GetVisualObserveInformationMatrix() {
     const auto &camera_model = visual_frontend_->camera_models().front();
     const DorF residual_in_pixel = 1.0;
-    const TVec2<DorF> visual_observe_info_vec = TVec2<DorF>(camera_model->fx() * camera_model->fx(),
-        camera_model->fy() * camera_model->fy()) / residual_in_pixel;
+    const TVec2<DorF> visual_observe_info_vec =
+        TVec2<DorF>(camera_model->fx() * camera_model->fx(), camera_model->fy() * camera_model->fy()) / residual_in_pixel;
     return visual_observe_info_vec.asDiagonal();
 }
 
 void Backend::ConvertCameraPoseAndExtrinsicToVertices() {
     // Generate vertices of states to be optimized.
     // [Vertices] Extrinsics of each camera.
-    for (const auto &extrinsic : data_manager_->camera_extrinsics()) {
+    for (const auto &extrinsic: data_manager_->camera_extrinsics()) {
         graph_.vertices.all_cameras_p_ic.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
         graph_.vertices.all_cameras_p_ic.back()->param() = extrinsic.p_ic.cast<DorF>();
         graph_.vertices.all_cameras_p_ic.back()->name() = std::string("p_ic");
         graph_.vertices.all_cameras_q_ic.emplace_back(std::make_unique<VertexQuat<DorF>>());
-        graph_.vertices.all_cameras_q_ic.back()->param() << extrinsic.q_ic.w(),
-            extrinsic.q_ic.x(), extrinsic.q_ic.y(), extrinsic.q_ic.z();
+        graph_.vertices.all_cameras_q_ic.back()->param() << extrinsic.q_ic.w(), extrinsic.q_ic.x(), extrinsic.q_ic.y(), extrinsic.q_ic.z();
         graph_.vertices.all_cameras_q_ic.back()->name() = std::string("q_ic");
     }
 
     // [Vertices] Camera pose of each frame.
-    for (const auto &frame : data_manager_->visual_local_map()->frames()) {
+    for (const auto &frame: data_manager_->visual_local_map()->frames()) {
         graph_.vertices.all_frames_id.emplace_back(frame.id());
 
         Vec3 p_wi = Vec3::Zero();
         Quat q_wi = Quat::Identity();
-        Utility::ComputeTransformTransformInverse(frame.p_wc(), frame.q_wc(),
-            data_manager_->camera_extrinsics().front().p_ic,
-            data_manager_->camera_extrinsics().front().q_ic, p_wi, q_wi);
+        Utility::ComputeTransformTransformInverse(frame.p_wc(), frame.q_wc(), data_manager_->camera_extrinsics().front().p_ic,
+                                                  data_manager_->camera_extrinsics().front().q_ic, p_wi, q_wi);
 
         graph_.vertices.all_frames_p_wi.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
         graph_.vertices.all_frames_p_wi.back()->param() = p_wi.cast<DorF>();
@@ -115,7 +113,7 @@ bool Backend::ConvertFeatureInvdepAndAddVisualFactorForEstimation() {
 
     // [Vertices] Inverse depth of each feature.
     // [Edges] Visual reprojection factor.
-    for (const auto &pair : data_manager_->visual_local_map()->features()) {
+    for (const auto &pair: data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
 
         // Select features which has at least two observations.
@@ -142,7 +140,7 @@ bool Backend::ConvertFeatureInvdepAndAddVisualFactorForMarginalization() {
 
     // [Vertices] Inverse depth of each feature.
     // [Edges] Visual reprojection factor.
-    for (const auto &pair : data_manager_->visual_local_map()->features()) {
+    for (const auto &pair: data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
         // Select features which has at least two observations.
         CONTINUE_IF(feature.observes().size() < 2 && feature.observes().front().size() < 2);
@@ -164,7 +162,8 @@ bool Backend::ConvertFeatureInvdepAndAddVisualFactorForMarginalization() {
     return true;
 }
 
-bool Backend::ConvertFeatureInvdepAndAddVisualFactor(const FeatureType &feature, const float invdep, const TMat2<DorF> &visual_info_matrix, const uint32_t max_frame_id) {
+bool Backend::ConvertFeatureInvdepAndAddVisualFactor(const FeatureType &feature, const float invdep, const TMat2<DorF> &visual_info_matrix,
+                                                     const uint32_t max_frame_id) {
     // Determine the range of all observations of this feature.
     const uint32_t min_frame_id = feature.first_frame_id();
     const uint32_t idx_offset = min_frame_id - data_manager_->visual_local_map()->frames().front().id() + 1;
@@ -247,7 +246,7 @@ bool Backend::ConvertFeatureInvdepAndAddVisualFactor(const FeatureType &feature,
 void Backend::ConvertImuMotionStatesToVertices() {
     // [Vertices] Velocity of each new frame.
     // [Vertices] Bias_accel and bias_gyro of each new frame.
-    for (const auto &frame : data_manager_->frames_with_bias()) {
+    for (const auto &frame: data_manager_->frames_with_bias()) {
         // Add vertex of velocity.
         graph_.vertices.all_new_frames_v_wi.emplace_back(std::make_unique<Vertex<DorF>>(3, 3));
         graph_.vertices.all_new_frames_v_wi.back()->param() = frame.v_wi.cast<DorF>();
@@ -272,8 +271,8 @@ bool Backend::AddImuPreintegrationFactorForEstimation(const uint32_t idx_offset)
         // The imu preintegration block combined with the oldest 'new frame with bias' is useless.
         // Add edges of imu preintegration.
         const auto &frame = *it;
-        graph_.edges.all_imu_factors.emplace_back(std::make_unique<EdgeImuPreintegrationBetweenRelativePose<DorF>>(
-            frame.imu_preint_block, options_.kGravityInWordFrame));
+        graph_.edges.all_imu_factors.emplace_back(
+            std::make_unique<EdgeImuPreintegrationBetweenRelativePose<DorF>>(frame.imu_preint_block, options_.kGravityInWordFrame));
         auto &imu_factor = graph_.edges.all_imu_factors.back();
         imu_factor->SetVertex(graph_.vertices.all_frames_p_wi[frame_idx].get(), 0);
         imu_factor->SetVertex(graph_.vertices.all_frames_q_wi[frame_idx].get(), 1);
@@ -306,8 +305,8 @@ bool Backend::AddImuPreintegrationFactorForMarginalization(const uint32_t idx_of
     const uint32_t new_frame_idx = 0;
     const auto &frame = *std::next(data_manager_->frames_with_bias().begin());
 
-    graph_.edges.all_imu_factors.emplace_back(std::make_unique<EdgeImuPreintegrationBetweenRelativePose<DorF>>(
-        frame.imu_preint_block, options_.kGravityInWordFrame));
+    graph_.edges.all_imu_factors.emplace_back(
+        std::make_unique<EdgeImuPreintegrationBetweenRelativePose<DorF>>(frame.imu_preint_block, options_.kGravityInWordFrame));
     auto &imu_factor = graph_.edges.all_imu_factors.back();
     imu_factor->SetVertex(graph_.vertices.all_frames_p_wi[frame_idx].get(), 0);
     imu_factor->SetVertex(graph_.vertices.all_frames_q_wi[frame_idx].get(), 1);
@@ -341,34 +340,30 @@ void Backend::ConstructGraphOptimizationProblem(const uint32_t idx_offset, Graph
             problem.AddVertex(graph_.vertices.all_new_frames_bg[j].get());
         }
     }
-    for (auto &vertex : graph_.vertices.all_features_invdep) {
+    for (auto &vertex: graph_.vertices.all_features_invdep) {
         problem.AddVertex(vertex.get(), false);
     }
-    for (auto &edge : graph_.edges.all_prior_factors) {
+    for (auto &edge: graph_.edges.all_prior_factors) {
         problem.AddEdge(edge.get());
     }
-    for (auto &edge : graph_.edges.all_visual_reproj_factors) {
+    for (auto &edge: graph_.edges.all_visual_reproj_factors) {
         problem.AddEdge(edge.get());
     }
-    for (auto &edge : graph_.edges.all_imu_factors) {
+    for (auto &edge: graph_.edges.all_imu_factors) {
         problem.AddEdge(edge.get());
     }
 
     // Report information.
     const std::string prior_str = states_.prior.is_valid ? ", and prior information." : ".";
-    ReportInfo("[Backend] Estimator adds " <<
-        graph_.vertices.all_cameras_p_ic.size() << " cameras_p_ic, " <<
-        graph_.vertices.all_cameras_q_ic.size() << " cameras_q_ic, " <<
-        graph_.vertices.all_features_invdep.size() << " features_invdep, " <<
-        graph_.vertices.all_frames_p_wi.size() << " frames_p_wi, " <<
-        graph_.vertices.all_frames_q_wi.size() << " frames_q_wi, " <<
-        graph_.vertices.all_new_frames_v_wi.size() << " new_frames_v_wi, " <<
-        graph_.vertices.all_new_frames_ba.size() << " new_frames_ba, " <<
-        graph_.vertices.all_new_frames_bg.size() << " new_frames_bg, and " <<
+    ReportInfo("[Backend] Estimator adds " << graph_.vertices.all_cameras_p_ic.size() << " cameras_p_ic, " << graph_.vertices.all_cameras_q_ic.size()
+                                           << " cameras_q_ic, " << graph_.vertices.all_features_invdep.size() << " features_invdep, "
+                                           << graph_.vertices.all_frames_p_wi.size() << " frames_p_wi, " << graph_.vertices.all_frames_q_wi.size()
+                                           << " frames_q_wi, " << graph_.vertices.all_new_frames_v_wi.size() << " new_frames_v_wi, "
+                                           << graph_.vertices.all_new_frames_ba.size() << " new_frames_ba, " << graph_.vertices.all_new_frames_bg.size()
+                                           << " new_frames_bg, and " <<
 
-        graph_.edges.all_prior_factors.size() << " prior_factors, " <<
-        graph_.edges.all_visual_reproj_factors.size() << " visual_reproj_factors, " <<
-        graph_.edges.all_imu_factors.size() << " imu_factors" << prior_str);
+               graph_.edges.all_prior_factors.size() << " prior_factors, " << graph_.edges.all_visual_reproj_factors.size() << " visual_reproj_factors, "
+                                           << graph_.edges.all_imu_factors.size() << " imu_factors" << prior_str);
 
     // Add prior information if valid.
     if (states_.prior.is_valid) {
@@ -379,4 +374,4 @@ void Backend::ConstructGraphOptimizationProblem(const uint32_t idx_offset, Graph
     }
 }
 
-}
+}  // namespace VIO

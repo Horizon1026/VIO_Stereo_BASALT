@@ -1,18 +1,16 @@
 #include "backend.h"
-#include "slam_log_reporter.h"
 #include "point_triangulator.h"
+#include "slam_log_reporter.h"
 
 namespace VIO {
 
 void Backend::RecomputeImuPreintegration() {
     // Compute imu preintegration.
-    for (auto &frame : data_manager_->frames_with_bias()) {
+    for (auto &frame: data_manager_->frames_with_bias()) {
         frame.imu_preint_block.Reset();
 
-        frame.imu_preint_block.SetImuNoiseSigma(imu_model_->options().kAccelNoiseSigma,
-                                                imu_model_->options().kGyroNoiseSigma,
-                                                imu_model_->options().kAccelRandomWalkSigma,
-                                                imu_model_->options().kGyroRandomWalkSigma);
+        frame.imu_preint_block.SetImuNoiseSigma(imu_model_->options().kAccelNoiseSigma, imu_model_->options().kGyroNoiseSigma,
+                                                imu_model_->options().kAccelRandomWalkSigma, imu_model_->options().kGyroRandomWalkSigma);
         const int32_t max_idx = static_cast<int32_t>(frame.packed_measure->imus.size());
         for (int32_t i = 1; i < max_idx; ++i) {
             frame.imu_preint_block.Propagate(*frame.packed_measure->imus[i - 1], *frame.packed_measure->imus[i]);
@@ -31,11 +29,11 @@ bool Backend::TriangulizeAllNewVisualFeatures() {
     norm_xy_vec.reserve(max_capacity);
 
     // Iterate all feature in visual_local_map to triangulize.
-    for (auto &frame : data_manager_->visual_local_map()->frames()) {
+    for (auto &frame: data_manager_->visual_local_map()->frames()) {
         // Only triangulize features firstly observed in newest key frame and all new frames.
         CONTINUE_IF(frame.id() < data_manager_->GetNewestKeyframeId());
 
-        for (auto &pair : frame.features()) {
+        for (auto &pair: frame.features()) {
             auto &feature = *(pair.second);
             CONTINUE_IF(feature.status() == FeatureSolvedStatus::kMarginalized);
             if (feature.observes().empty() || (feature.observes().size() < 2 && feature.observes().front().size() < 2)) {
@@ -61,7 +59,7 @@ bool Backend::TriangulizeAllVisualFeatures() {
     norm_xy_vec.reserve(max_capacity);
 
     // Iterate all feature in visual_local_map to triangulize.
-    for (auto &pair : data_manager_->visual_local_map()->features()) {
+    for (auto &pair: data_manager_->visual_local_map()->features()) {
         auto &feature = pair.second;
         CONTINUE_IF(feature.status() == FeatureSolvedStatus::kMarginalized);
         if (feature.observes().empty() || (feature.observes().size() < 2 && feature.observes().front().size() < 2)) {
@@ -75,10 +73,7 @@ bool Backend::TriangulizeAllVisualFeatures() {
     return true;
 }
 
-bool Backend::TriangulizeVisualFeature(std::vector<Quat> &q_wc_vec,
-                                       std::vector<Vec3> &p_wc_vec,
-                                       std::vector<Vec2> &norm_xy_vec,
-                                       FeatureType &feature) {
+bool Backend::TriangulizeVisualFeature(std::vector<Quat> &q_wc_vec, std::vector<Vec3> &p_wc_vec, std::vector<Vec2> &norm_xy_vec, FeatureType &feature) {
     using namespace VISION_GEOMETRY;
     PointTriangulator solver;
     solver.options().kMethod = PointTriangulator::Method::kAnalytic;
@@ -122,7 +117,8 @@ bool Backend::TriangulizeVisualFeature(std::vector<Quat> &q_wc_vec,
                                 = [R_wc0 * R_ic0.t  -R_wc0 * R_ic0.t * t_ic0 + t_wc0] * [R_ici  t_ici]
                                     [       0                        1                ]   [  0      1  ]
                                 = [R_wc0 * R_ic0.t * R_ici  R_wc0 * R_ic0.t * t_ici - R_wc0 * R_ic0.t * t_ic0 + t_wc0]
-                                    [           0                                          1                           ] */
+                                    [           0                                          1                           ]
+             */
             const Quat q_wci = q_wi * q_ici;
             const Vec3 p_wci = q_wi * p_ici - q_wi * p_ic0 + p_wc;
             const Vec2 norm_xy_i = obv[i].rectified_norm_xy;
@@ -158,10 +154,8 @@ bool Backend::AddNewestFrameWithBiasIntoLocalMap() {
     auto &sub_new_frame_with_imu = *std::prev(std::prev(data_manager_->frames_with_bias().end()));
     newest_frame_imu.imu_preint_block.bias_gyro() = sub_new_frame_with_imu.imu_preint_block.bias_gyro();
     newest_frame_imu.imu_preint_block.bias_accel() = sub_new_frame_with_imu.imu_preint_block.bias_accel();
-    newest_frame_imu.imu_preint_block.SetImuNoiseSigma(imu_model_->options().kAccelNoiseSigma,
-                                                       imu_model_->options().kGyroNoiseSigma,
-                                                       imu_model_->options().kAccelRandomWalkSigma,
-                                                       imu_model_->options().kGyroRandomWalkSigma);
+    newest_frame_imu.imu_preint_block.SetImuNoiseSigma(imu_model_->options().kAccelNoiseSigma, imu_model_->options().kGyroNoiseSigma,
+                                                       imu_model_->options().kAccelRandomWalkSigma, imu_model_->options().kGyroRandomWalkSigma);
     const int32_t max_idx = static_cast<int32_t>(newest_frame_imu.packed_measure->imus.size());
     for (int32_t i = 1; i < max_idx; ++i) {
         newest_frame_imu.imu_preint_block.Propagate(*newest_frame_imu.packed_measure->imus[i - 1], *newest_frame_imu.packed_measure->imus[i]);
@@ -179,11 +173,8 @@ bool Backend::AddNewestFrameWithBiasIntoLocalMap() {
             raw_images.emplace_back(newest_frame_imu.packed_measure->right_image->image);
         }
     }
-    data_manager_->visual_local_map()->AddNewFrameWithFeatures(newest_frame_imu.visual_measure->features_id,
-                                                               newest_frame_imu.visual_measure->observes_per_frame,
-                                                               newest_frame_imu.time_stamp_s,
-                                                               frame_id,
-                                                               raw_images);
+    data_manager_->visual_local_map()->AddNewFrameWithFeatures(
+        newest_frame_imu.visual_measure->features_id, newest_frame_imu.visual_measure->observes_per_frame, newest_frame_imu.time_stamp_s, frame_id, raw_images);
 
     // Predict position, velocity and attitude of newest frame.
     Vec3 p_wi = Vec3::Zero();
@@ -194,10 +185,9 @@ bool Backend::AddNewestFrameWithBiasIntoLocalMap() {
 
     const float dt = newest_frame_imu.imu_preint_block.integrate_time_s();
     const Quat new_q_wi = q_wi * newest_frame_imu.imu_preint_block.q_ij();
-    const Vec3 new_p_wi = q_wi * newest_frame_imu.imu_preint_block.p_ij() + p_wi +
-        sub_new_frame_with_imu.v_wi * dt - 0.5f * options_.kGravityInWordFrame * dt * dt;
-    newest_frame_imu.v_wi = q_wi * newest_frame_imu.imu_preint_block.v_ij() + sub_new_frame_with_imu.v_wi -
-        options_.kGravityInWordFrame * dt;
+    const Vec3 new_p_wi =
+        q_wi * newest_frame_imu.imu_preint_block.p_ij() + p_wi + sub_new_frame_with_imu.v_wi * dt - 0.5f * options_.kGravityInWordFrame * dt * dt;
+    newest_frame_imu.v_wi = q_wi * newest_frame_imu.imu_preint_block.v_ij() + sub_new_frame_with_imu.v_wi - options_.kGravityInWordFrame * dt;
 
     auto &newest_frame = data_manager_->visual_local_map()->frames().back();
     Utility::ComputeTransformTransform(new_p_wi, new_q_wi, p_ic, q_ic, newest_frame.p_wc(), newest_frame.q_wc());
@@ -218,8 +208,7 @@ bool Backend::ControlLocalMapDimension() {
             break;
         }
         case BackendMarginalizeType::kMarginalizeSubnewFrame: {
-            const auto subnew_frame_id = data_manager_->visual_local_map()->frames().back().id() -
-                data_manager_->options().kMaxStoredNewFrames + 1;
+            const auto subnew_frame_id = data_manager_->visual_local_map()->frames().back().id() - data_manager_->options().kMaxStoredNewFrames + 1;
             data_manager_->visual_local_map()->RemoveFrame(subnew_frame_id);
             break;
         }
@@ -231,7 +220,7 @@ bool Backend::ControlLocalMapDimension() {
 
     const uint32_t newest_keyframe_id = data_manager_->GetNewestKeyframeId();
     const uint32_t newest_frame_id = data_manager_->visual_local_map()->frames().back().id();
-    for (const auto &pair : data_manager_->visual_local_map()->features()) {
+    for (const auto &pair: data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
         // Remove features that cannot has more observations.
         if (feature.observes().empty() || (feature.observes().size() == 1 && feature.first_frame_id() < newest_frame_id)) {
@@ -250,7 +239,7 @@ bool Backend::ControlLocalMapDimension() {
     }
 
     // Remove selected features.
-    for (const auto &id : features_id) {
+    for (const auto &id: features_id) {
         data_manager_->visual_local_map()->RemoveFeature(id);
     }
 
@@ -285,13 +274,11 @@ void Backend::UpdateBackendStates() {
     // If backend is initialized, update states with visual local map.
     const auto &newest_frame = data_manager_->visual_local_map()->frames().back();
     const auto &newest_frame_with_bias = data_manager_->frames_with_bias().back();
-    Utility::ComputeTransformTransformInverse(newest_frame.p_wc(), newest_frame.q_wc(),
-        data_manager_->camera_extrinsics().front().p_ic,
-        data_manager_->camera_extrinsics().front().q_ic,
-        states_.motion.p_wi, states_.motion.q_wi);
+    Utility::ComputeTransformTransformInverse(newest_frame.p_wc(), newest_frame.q_wc(), data_manager_->camera_extrinsics().front().p_ic,
+                                              data_manager_->camera_extrinsics().front().q_ic, states_.motion.p_wi, states_.motion.q_wi);
     states_.motion.v_wi = newest_frame_with_bias.v_wi;
     states_.motion.ba = newest_frame_with_bias.imu_preint_block.bias_accel();
     states_.motion.bg = newest_frame_with_bias.imu_preint_block.bias_gyro();
 }
 
-}
+}  // namespace VIO

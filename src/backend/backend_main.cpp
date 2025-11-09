@@ -146,4 +146,4 @@ void Backend::ResetToReintialize() {
     states_.is_initialized = false;
 }
 
-}
+}  // namespace VIO

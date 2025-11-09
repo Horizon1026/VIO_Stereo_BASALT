@@ -1,28 +1,27 @@
-#include "string"
 #include "fstream"
 #include "sstream"
-#include "unistd.h"
+#include "string"
 #include "thread"
+#include "unistd.h"
 
-#include "visualizor_2d.h"
 #include "tick_tock.h"
+#include "visualizor_2d.h"
 
-#include "frontend.h"
 #include "backend.h"
 #include "data_loader.h"
 #include "data_manager.h"
+#include "frontend.h"
 
-#include "slam_log_reporter.h"
 #include "basic_type.h"
 #include "datatype_image.h"
+#include "slam_log_reporter.h"
 
 using namespace SLAM_VISUALIZOR;
 
 VIO::DataLoader dataloader;
 double time_stamp_offset = 1403638518.0;
 
-void PublishImuData(const std::string &csv_file_path,
-                    const float period_ms) {
+void PublishImuData(const std::string &csv_file_path, const float period_ms) {
     std::ifstream file(csv_file_path.c_str());
     if (!file.is_open()) {
         ReportError("Failed to load imu data file " << csv_file_path);
@@ -68,10 +67,7 @@ void PublishImuData(const std::string &csv_file_path,
     file.close();
 }
 
-void PublishCameraData(const std::string &csv_file_path,
-                       const std::string &image_file_root,
-                       const float period_ms,
-                       const bool is_left_camera) {
+void PublishCameraData(const std::string &csv_file_path, const std::string &image_file_root, const float period_ms, const bool is_left_camera) {
     std::ifstream file(csv_file_path.c_str());
     if (!file.is_open()) {
         ReportError("Failed to load camera data file " << csv_file_path);
@@ -171,8 +167,8 @@ void TestPopPackedMeasurement(const int32_t period_us = 50000, const int32_t max
         ReportInfo(">> Data loader popped one packed measurement.");
 
         if (!meas.imus.empty()) {
-            ReportInfo("Data loader pop " << meas.imus.size() << " imu measure at time " << meas.imus.front()->time_stamp_s <<
-                " - " << meas.imus.back()->time_stamp_s << " s.");
+            ReportInfo("Data loader pop " << meas.imus.size() << " imu measure at time " << meas.imus.front()->time_stamp_s << " - "
+                                          << meas.imus.back()->time_stamp_s << " s.");
             cnt = max_wait_ticks;
         }
 
@@ -203,9 +199,11 @@ int main(int argc, char **argv) {
     // Start threads for data pipeline and vio node.
     const float imu_timeout_ms = 3.5f;
     const float image_timeout_ms = 30.0f;
-    std::thread thread_pub_imu_data{PublishImuData, dataset_root_dir + "mav0/imu0/data.csv", imu_timeout_ms};
-    std::thread thread_pub_cam_left_data(PublishCameraData, dataset_root_dir + "mav0/cam0/data.csv", dataset_root_dir + "mav0/cam0/data/", image_timeout_ms, true);
-    std::thread thread_pub_cam_right_data(PublishCameraData, dataset_root_dir + "mav0/cam1/data.csv", dataset_root_dir + "mav0/cam1/data/", image_timeout_ms, false);
+    std::thread thread_pub_imu_data {PublishImuData, dataset_root_dir + "mav0/imu0/data.csv", imu_timeout_ms};
+    std::thread thread_pub_cam_left_data(PublishCameraData, dataset_root_dir + "mav0/cam0/data.csv", dataset_root_dir + "mav0/cam0/data/", image_timeout_ms,
+                                         true);
+    std::thread thread_pub_cam_right_data(PublishCameraData, dataset_root_dir + "mav0/cam1/data.csv", dataset_root_dir + "mav0/cam1/data/", image_timeout_ms,
+                                          false);
     // std::thread thread_test_pop(TestPopSingleMeasurement, 1000, 10);
     std::thread thread_test_pop(TestPopPackedMeasurement, 2000, 10);
 

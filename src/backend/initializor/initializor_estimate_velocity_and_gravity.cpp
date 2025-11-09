@@ -1,6 +1,6 @@
 #include "backend.h"
-#include "slam_log_reporter.h"
 #include "polynomial_solver.h"
+#include "slam_log_reporter.h"
 
 namespace VIO {
 
@@ -29,8 +29,8 @@ bool Backend::EstimateVelocityAndGravityForInitialization(Vec3 &gravity_i0) {
     }
     const Vec3 v_i0i0 = rhs.head<3>();
     gravity_i0 = rhs.tail<3>().normalized() * options_.kGravityInWordFrame.norm();
-    ReportInfo(GREEN "[Backend] Estimated v_i0i0 is " << LogVec(v_i0i0) << ", gravity_i0 is " << LogVec(gravity_i0) <<
-        ", gravity norm is " << gravity_i0.norm() << RESET_COLOR);
+    ReportInfo(GREEN "[Backend] Estimated v_i0i0 is " << LogVec(v_i0i0) << ", gravity_i0 is " << LogVec(gravity_i0) << ", gravity norm is " << gravity_i0.norm()
+                                                      << RESET_COLOR);
 
     // Propagate states of all frames based on frame i0(imu).
     if (!PropagateAllBasedOnFirstCameraFrameForInitializaion(imu_blocks, v_i0i0, gravity_i0)) {
@@ -68,10 +68,7 @@ bool Backend::ComputeImuPreintegrationBasedOnFirstFrameForInitialization(std::ve
     return true;
 }
 
-bool Backend::SelectTwoFramesWithMaxParallax(CovisibleGraphType *local_map,
-                                             const FeatureType &feature,
-                                             int32_t &frame_id_l,
-                                             int32_t &frame_id_r) {
+bool Backend::SelectTwoFramesWithMaxParallax(CovisibleGraphType *local_map, const FeatureType &feature, int32_t &frame_id_l, int32_t &frame_id_r) {
     const int32_t num_of_observes = feature.observes().size();
     RETURN_FALSE_IF(feature.observes().size() < 3);
 
@@ -121,14 +118,13 @@ bool Backend::ConstructLigtFunction(const std::vector<ImuPreintegrateBlock<>> &i
     A.setZero();
     b.setZero();
     Q = 0.0f;
-    for (const auto &pair : data_manager_->visual_local_map()->features()) {
+    for (const auto &pair: data_manager_->visual_local_map()->features()) {
         const auto &feature = pair.second;
 
         // Select two frames with max parallex angle.
         int32_t frame_id_l = 0;
         int32_t frame_id_r = 0;
-        CONTINUE_IF(!SelectTwoFramesWithMaxParallax(data_manager_->visual_local_map(),
-            feature, frame_id_l, frame_id_r));
+        CONTINUE_IF(!SelectTwoFramesWithMaxParallax(data_manager_->visual_local_map(), feature, frame_id_l, frame_id_r));
 
         // Extract frame l/r.
         const auto frame_ptr_l = data_manager_->visual_local_map()->frame(frame_id_l);
@@ -144,8 +140,8 @@ bool Backend::ConstructLigtFunction(const std::vector<ImuPreintegrateBlock<>> &i
         const auto &obv_l = feature.observe(frame_id_l);
         const auto &obv_r = feature.observe(frame_id_r);
         if (obv_l.empty() || obv_r.empty()) {
-            ReportError("[Backend] Backend failed to find observations of frame " << frame_id_l << " and " << frame_id_r << ", obv_l.size() is " <<
-                obv_l.size() << ", obv_r.size() is " << obv_r.size() << ".");
+            ReportError("[Backend] Backend failed to find observations of frame " << frame_id_l << " and " << frame_id_r << ", obv_l.size() is " << obv_l.size()
+                                                                                  << ", obv_r.size() is " << obv_r.size() << ".");
             return false;
         }
         const Vec3 norm_xyz_l = Vec3(obv_l[0].rectified_norm_xy.x(), obv_l[0].rectified_norm_xy.y(), 1.0f);
@@ -185,7 +181,7 @@ bool Backend::ConstructLigtFunction(const std::vector<ImuPreintegrateBlock<>> &i
 
             const Mat3 B = skew_norm_xyz_i * R_cicl * norm_xyz_l * a_lr_t * R_wcr.transpose();
             const Mat3 C = theta_lr * skew_norm_xyz_i * R_wci.transpose();
-            const Mat3 D = - B - C;
+            const Mat3 D = -B - C;
             const Mat3 B_prime = B * R_cb;
             const Mat3 C_prime = C * R_cb;
             const Mat3 D_prime = D * R_cb;
@@ -216,8 +212,8 @@ bool Backend::ConstructLigtFunction(const std::vector<ImuPreintegrateBlock<>> &i
 
             Mat3x6 A_tmp;
             A_tmp.block<3, 3>(0, 0) = B_prime * t_1r + C_prime * t_1i + D_prime * t_1l;
-            A_tmp.block<3, 3>(0, 3) = - (B_prime * t_1r * t_1r + C_prime * t_1i * t_1i + D_prime * t_1l * t_1l) * 0.5f * gravity_norm;
-            const Vec3 b_tmp = - B_prime * S_1r - C_prime * S_1i - D_prime * S_1l;
+            A_tmp.block<3, 3>(0, 3) = -(B_prime * t_1r * t_1r + C_prime * t_1i * t_1i + D_prime * t_1l * t_1l) * 0.5f * gravity_norm;
+            const Vec3 b_tmp = -B_prime * S_1r - C_prime * S_1i - D_prime * S_1l;
 
             A += A_tmp.transpose() * A_tmp;
             b += A_tmp.transpose() * b_tmp;
@@ -238,11 +234,7 @@ bool Backend::ConstructLigtFunction(const std::vector<ImuPreintegrateBlock<>> &i
     return true;
 }
 
-bool Backend::RefineGravityForInitialization(const Mat &M,
-                                             const Vec &m,
-                                             const float Q,
-                                             const float gravity_mag,
-                                             Vec &rhs) {
+bool Backend::RefineGravityForInitialization(const Mat &M, const Vec &m, const float Q, const float gravity_mag, Vec &rhs) {
 
     const int32_t q = M.rows() - 3;
     Mat A = 2.0f * M.block(0, 0, q, q);
@@ -285,19 +277,12 @@ bool Backend::RefineGravityForInitialization(const Mat &M,
     const float s11 = S(1, 1), s12 = S(1, 2), s22 = S(2, 2);
 
     const float t1 = s00 + s11 + s22;
-    const float t2 = s00 * s11 + s00 * s22 + s11 * s22
-                        - std::pow(s01, 2) - std::pow(s02, 2) - std::pow(s12, 2);
-    const float t3 = s00 * s11 * s22 + 2.0f * s01 * s02 * s12
-                        - s00 * std::pow(s12, 2) - s11 * std::pow(s02, 2) - s22 * std::pow(s01, 2);
+    const float t2 = s00 * s11 + s00 * s22 + s11 * s22 - std::pow(s01, 2) - std::pow(s02, 2) - std::pow(s12, 2);
+    const float t3 = s00 * s11 * s22 + 2.0f * s01 * s02 * s12 - s00 * std::pow(s12, 2) - s11 * std::pow(s02, 2) - s22 * std::pow(s01, 2);
 
     Vec coeffs(7);
-    coeffs << 64.0f,
-              64.0f * t1,
-              16.0f * (std::pow(t1, 2) + 2.0f * t2),
-              16.0f * (t1 * t2 + t3),
-              4.0f * (std::pow(t2, 2) + 2.0f * t1 * t3),
-              4.0f * t3 * t2,
-              std::pow(t3, 2);
+    coeffs << 64.0f, 64.0f * t1, 16.0f * (std::pow(t1, 2) + 2.0f * t2), 16.0f * (t1 * t2 + t3), 4.0f * (std::pow(t2, 2) + 2.0f * t1 * t3), 4.0f * t3 * t2,
+        std::pow(t3, 2);
 
     const float G2i = 1.0f / std::pow(gravity_mag, 2);
 
@@ -348,16 +333,15 @@ bool Backend::RefineGravityForInitialization(const Mat &M,
     const float constraint = solution.transpose() * W * solution;
 
     if (constraint < 0.0f || std::abs(std::sqrt(constraint) - gravity_mag) / gravity_mag > 1e-3f) {
-        ReportWarn("[Backend] Constraint is " << constraint << ". Constraint error is " <<
-            100.0f * std::abs(std::sqrt(constraint) - gravity_mag) / gravity_mag);
+        ReportWarn("[Backend] Constraint is " << constraint << ". Constraint error is "
+                                              << 100.0f * std::abs(std::sqrt(constraint) - gravity_mag) / gravity_mag);
     }
 
     rhs = solution;
     return true;
 }
 
-bool Backend::PropagateAllBasedOnFirstCameraFrameForInitializaion(const std::vector<ImuPreintegrateBlock<>> &imu_blocks,
-                                                                  const Vec3 &v_i0i0,
+bool Backend::PropagateAllBasedOnFirstCameraFrameForInitializaion(const std::vector<ImuPreintegrateBlock<>> &imu_blocks, const Vec3 &v_i0i0,
                                                                   const Vec3 &gravity_i0) {
     // Localize the left camera extrinsic.
     const Quat q_ic = data_manager_->camera_extrinsics().front().q_ic;
@@ -398,4 +382,4 @@ bool Backend::PropagateAllBasedOnFirstCameraFrameForInitializaion(const std::vec
     return true;
 }
 
-}
+}  // namespace VIO

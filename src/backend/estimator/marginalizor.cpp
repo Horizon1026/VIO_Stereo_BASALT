@@ -3,9 +3,9 @@
 #include "inertial_edges.h"
 #include "visual_inertial_edges.h"
 
+#include "slam_basic_math.h"
 #include "slam_log_reporter.h"
 #include "tick_tock.h"
-#include "slam_basic_math.h"
 
 namespace VIO {
 
@@ -23,7 +23,7 @@ BackendMarginalizeType Backend::DecideMarginalizeType() {
             return BackendMarginalizeType::kMarginalizeSubnewFrame;
         }
 
-    // Backend select keyframes.
+        // Backend select keyframes.
     } else {
         ReportInfo("[Backend] Backend select keyframe.");
 
@@ -98,17 +98,13 @@ bool Backend::MarginalizeOldestFrame() {
     Graph<DorF> graph_optimization_problem;
     ConstructGraphOptimizationProblem(idx_offset, graph_optimization_problem);
     if (states_.prior.is_valid) {
-        ReportInfo("[Backend] Before marginalization, prior residual squared norm [" <<
-            graph_optimization_problem.prior_residual().squaredNorm() << "]");
+        ReportInfo("[Backend] Before marginalization, prior residual squared norm [" << graph_optimization_problem.prior_residual().squaredNorm() << "]");
     }
 
     // Set vertices to be marged.
     std::vector<Vertex<DorF> *> vertices_to_be_marged = {
-        graph_.vertices.all_frames_p_wi.front().get(),
-        graph_.vertices.all_frames_q_wi.front().get(),
-        graph_.vertices.all_new_frames_v_wi.front().get(),
-        graph_.vertices.all_new_frames_ba.front().get(),
-        graph_.vertices.all_new_frames_bg.front().get(),
+        graph_.vertices.all_frames_p_wi.front().get(),   graph_.vertices.all_frames_q_wi.front().get(),   graph_.vertices.all_new_frames_v_wi.front().get(),
+        graph_.vertices.all_new_frames_ba.front().get(), graph_.vertices.all_new_frames_bg.front().get(),
     };
 
     // Do marginalization.
@@ -129,9 +125,8 @@ bool Backend::MarginalizeOldestFrame() {
     }
 
     // Report marginalization result.
-    ReportInfo("[Backend] Marginalized prior size [" << states_.prior.residual.rows() <<
-        "], squared norm [" << marger.problem()->prior_residual().squaredNorm() <<
-        "], cost of problem [" << marger.cost_of_problem() << "]");
+    ReportInfo("[Backend] Marginalized prior size [" << states_.prior.residual.rows() << "], squared norm [" << marger.problem()->prior_residual().squaredNorm()
+                                                     << "], cost of problem [" << marger.cost_of_problem() << "]");
     if (options_.kEnableReportAllInformation) {
         ShowMatrixImage("marg hessian", marger.problem()->hessian());
         ShowMatrixImage("reverse hessian", marger.reverse_hessian());
@@ -149,8 +144,8 @@ bool Backend::MarginalizeSubnewFrame() {
     }
 
     // Discard relative prior information.
-    const uint32_t min_size = 6 * (data_manager_->options().kMaxStoredKeyFrames - data_manager_->options().kMaxStoredNewFrames) +
-        6 * data_manager_->camera_extrinsics().size();
+    const uint32_t min_size =
+        6 * (data_manager_->options().kMaxStoredKeyFrames - data_manager_->options().kMaxStoredNewFrames) + 6 * data_manager_->camera_extrinsics().size();
 
     if (min_size == 0) {
         states_.prior.is_valid = false;
@@ -167,13 +162,11 @@ bool Backend::MarginalizeSubnewFrame() {
         // marger.Marginalize(states_.prior.hessian, states_.prior.bias, min_size, 15);
 
         // Prior jacobian_t_inv and residual should be decomposed by hessian and bias.
-        marger.DecomposeHessianAndBias(states_.prior.hessian, states_.prior.bias,
-            states_.prior.jacobian, states_.prior.residual, states_.prior.jacobian_t_inv);
+        marger.DecomposeHessianAndBias(states_.prior.hessian, states_.prior.bias, states_.prior.jacobian, states_.prior.residual, states_.prior.jacobian_t_inv);
     }
 
     // Report marginalization result.
-    ReportInfo("[Backend] Marginalized prior size [" << states_.prior.residual.rows() <<
-        "], squared norm [" << states_.prior.residual.squaredNorm() << "]");
+    ReportInfo("[Backend] Marginalized prior size [" << states_.prior.residual.rows() << "], squared norm [" << states_.prior.residual.squaredNorm() << "]");
     if (options_.kEnableReportAllInformation) {
         ShowMatrixImage("prior", states_.prior.hessian);
     }
@@ -181,4 +174,4 @@ bool Backend::MarginalizeSubnewFrame() {
     return true;
 }
 
-}
+}  // namespace VIO

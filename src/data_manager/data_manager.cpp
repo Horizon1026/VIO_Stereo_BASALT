@@ -5,7 +5,7 @@ namespace VIO {
 namespace {
     constexpr uint32_t kDataManagerLocalMapLogIndex = 0;
     constexpr uint32_t kDataManagerCovisibleGraphLogIndex = 1;
-}
+}  // namespace
 
 void DataManager::Clear() {
     if (visual_local_map_ != nullptr) {
@@ -37,15 +37,15 @@ void DataManager::RegisterLogPackages() {
     std::unique_ptr<PackageInfo> package_ptr = std::make_unique<PackageInfo>();
     package_ptr->id = kDataManagerLocalMapLogIndex;
     package_ptr->name = "local map";
-    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_features"});
-    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_solved_features"});
-    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_marginalized_features"});
-    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_unsolved_features"});
-    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_features_observed_in_newest_keyframe"});
-    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_solved_features_observed_in_newest_keyframe"});
-    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_frames"});
-    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_keyframes"});
-    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_newframes"});
+    package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint32, .name = "num_of_features"});
+    package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint32, .name = "num_of_solved_features"});
+    package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint32, .name = "num_of_marginalized_features"});
+    package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint32, .name = "num_of_unsolved_features"});
+    package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint32, .name = "num_of_features_observed_in_newest_keyframe"});
+    package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint32, .name = "num_of_solved_features_observed_in_newest_keyframe"});
+    package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint32, .name = "num_of_frames"});
+    package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint32, .name = "num_of_keyframes"});
+    package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint32, .name = "num_of_newframes"});
     if (!logger_.RegisterPackage(package_ptr)) {
         ReportError("[DataManager] Failed to register package for data manager log.");
     }
@@ -56,19 +56,19 @@ void DataManager::RegisterLogPackages() {
         std::unique_ptr<PackageInfo> package_ptr = std::make_unique<PackageInfo>();
         package_ptr->id = package_id + i;
         package_ptr->name = std::string("frame ") + std::to_string(i + 1) + std::string(" in local map");
-        package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_observed_features"});
-        package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_solved_features"});
-        package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_tracked_features_from_prev_frame"});
-        package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_solved_tracked_features_from_prev_frame"});
+        package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint32, .name = "num_of_observed_features"});
+        package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint32, .name = "num_of_solved_features"});
+        package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint32, .name = "num_of_tracked_features_from_prev_frame"});
+        package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint32, .name = "num_of_solved_tracked_features_from_prev_frame"});
 
-        package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "time_stamp_s"});
-        package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "p_wc_x"});
-        package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "p_wc_y"});
-        package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "p_wc_z"});
-        package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "q_wc_w"});
-        package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "q_wc_x"});
-        package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "q_wc_y"});
-        package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "q_wc_z"});
+        package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "time_stamp_s"});
+        package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "p_wc_x"});
+        package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "p_wc_y"});
+        package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "p_wc_z"});
+        package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "q_wc_w"});
+        package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "q_wc_x"});
+        package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "q_wc_y"});
+        package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "q_wc_z"});
         if (!logger_.RegisterPackage(package_ptr)) {
             ReportError("[DataManager] Failed to register package for covisible graph log.");
         }
@@ -87,7 +87,7 @@ void DataManager::RecordLocalMap(const float time_stamp_s) {
     DataManagerLocalMapLog log_package;
 
     log_package.num_of_features = visual_local_map_->features().size();
-    for (const auto &pair : visual_local_map_->features()) {
+    for (const auto &pair: visual_local_map_->features()) {
         const auto &feature = pair.second;
         switch (feature.status()) {
             case FeatureSolvedStatus::kUnsolved: {
@@ -102,13 +102,14 @@ void DataManager::RecordLocalMap(const float time_stamp_s) {
                 ++log_package.num_of_marginalized_features;
                 break;
             }
-            default: break;
+            default:
+                break;
         }
     }
 
     const auto frame_ptr = visual_local_map_->frame(GetNewestKeyframeId());
     if (frame_ptr != nullptr) {
-        for (const auto &pair : frame_ptr->features()) {
+        for (const auto &pair: frame_ptr->features()) {
             const auto &feature_ptr = pair.second;
             ++log_package.num_of_features_observed_in_newest_keyframe;
             if (feature_ptr->status() == FeatureSolvedStatus::kSolved) {
@@ -119,8 +120,7 @@ void DataManager::RecordLocalMap(const float time_stamp_s) {
 
     log_package.num_of_frames = visual_local_map_->frames().size();
     log_package.num_of_newframes = frames_with_bias_.size();
-    log_package.num_of_keyframes = visual_local_map_->frames().empty() ? 0 :
-        visual_local_map_->frames().size() - frames_with_bias_.size();
+    log_package.num_of_keyframes = visual_local_map_->frames().empty() ? 0 : visual_local_map_->frames().size() - frames_with_bias_.size();
 
     logger_.RecordPackage(kDataManagerLocalMapLogIndex, reinterpret_cast<const char *>(&log_package), time_stamp_s);
 }
@@ -129,10 +129,10 @@ void DataManager::RecordCovisibleGraph(const float time_stamp_s) {
     RETURN_IF(visual_local_map_->frames().empty());
 
     uint16_t package_id = kDataManagerCovisibleGraphLogIndex;
-    for (const auto &frame : visual_local_map_->frames()) {
+    for (const auto &frame: visual_local_map_->frames()) {
         DataManagerCovisibleGraphLog log_package;
 
-        for (const auto &pair : frame.features()) {
+        for (const auto &pair: frame.features()) {
             const auto &feature_ptr = pair.second;
             ++log_package.num_of_observed_features;
             if (feature_ptr->status() == FeatureSolvedStatus::kSolved) {
@@ -161,14 +161,13 @@ void DataManager::RecordCovisibleGraph(const float time_stamp_s) {
 }
 
 // Transform packed measurements to a new frame.
-bool DataManager::ProcessMeasure(std::unique_ptr<PackedMeasurement> &new_packed_measure,
-                                 std::unique_ptr<VisualPointsMeasure> &new_visual_measure) {
+bool DataManager::ProcessMeasure(std::unique_ptr<PackedMeasurement> &new_packed_measure, std::unique_ptr<VisualPointsMeasure> &new_visual_measure) {
     if (new_packed_measure == nullptr || new_visual_measure == nullptr) {
         ReportError("[DataManager] Input new_packed_measure or new_visual_measure is nullptr.");
         return false;
     }
 
-    frames_with_bias_.emplace_back(FrameWithBias{});
+    frames_with_bias_.emplace_back(FrameWithBias {});
     FrameWithBias &frame_with_bias = frames_with_bias_.back();
     frame_with_bias.time_stamp_s = new_packed_measure->left_image->time_stamp_s;
     frame_with_bias.packed_measure = std::move(new_packed_measure);
@@ -183,9 +182,7 @@ uint32_t DataManager::GetNewestKeyframeId() {
 }
 
 // Get specified frame timestamp.
-float DataManager::GetNewestStateTimeStamp() {
-    return frames_with_bias_.empty() ? 0.0f : frames_with_bias_.back().time_stamp_s;
-}
+float DataManager::GetNewestStateTimeStamp() { return frames_with_bias_.empty() ? 0.0f : frames_with_bias_.back().time_stamp_s; }
 
 // Self check.
 bool DataManager::SelfCheckVisualLocalMap() {
@@ -195,25 +192,23 @@ bool DataManager::SelfCheckVisualLocalMap() {
     }
 
     // Iterate each frame to check all features.
-    for (const auto &frame : visual_local_map_->frames()) {
-        for (const auto &pair : frame.features()) {
+    for (const auto &frame: visual_local_map_->frames()) {
+        for (const auto &pair: frame.features()) {
             const auto feature_id = pair.first;
             const auto feature_ptr = pair.second;
             if (feature_id != feature_ptr->id()) {
-                ReportError("[DataManager] Visual local map self check frames, feature id error [" <<
-                    feature_id << "] != [" << feature_ptr->id() << "].");
+                ReportError("[DataManager] Visual local map self check frames, feature id error [" << feature_id << "] != [" << feature_ptr->id() << "].");
                 return false;
             }
         }
     }
 
     // Iterate each feature to check all observations.
-    for (const auto &pair : visual_local_map_->features()) {
+    for (const auto &pair: visual_local_map_->features()) {
         const auto feature_id = pair.first;
         const auto &feature = pair.second;
         if (feature_id != feature.id()) {
-            ReportError("[DataManager] Visual local map self check features, feature id error [" <<
-                feature_id << "] != [" << feature.id() << "].");
+            ReportError("[DataManager] Visual local map self check features, feature id error [" << feature_id << "] != [" << feature.id() << "].");
             return false;
         }
     }
@@ -224,28 +219,28 @@ bool DataManager::SelfCheckVisualLocalMap() {
 
 bool DataManager::SelfCheckFramesWithBias() {
     // Iterate each frame with bias.
-    for (const auto &frame_with_bias : frames_with_bias_) {
+    for (const auto &frame_with_bias: frames_with_bias_) {
         // Check timestamp of imu and images.
         const auto latest_imu_time_stamp_s = frame_with_bias.packed_measure->imus.back()->time_stamp_s;
         const auto oldest_imu_time_stamp_s = frame_with_bias.packed_measure->imus.front()->time_stamp_s;
         if (latest_imu_time_stamp_s - oldest_imu_time_stamp_s > 0.055f) {
-            ReportError("[DataManager] Frames with bias self check imus, imu timestamp error [" <<
-                latest_imu_time_stamp_s << "] - [" << oldest_imu_time_stamp_s << "] > 0.055f.");
+            ReportError("[DataManager] Frames with bias self check imus, imu timestamp error [" << latest_imu_time_stamp_s << "] - [" << oldest_imu_time_stamp_s
+                                                                                                << "] > 0.055f.");
             return false;
         }
         if (frame_with_bias.packed_measure->left_image != nullptr) {
             const auto left_image_time_stamp_s = frame_with_bias.packed_measure->left_image->time_stamp_s;
             if (latest_imu_time_stamp_s != left_image_time_stamp_s) {
-                ReportError("[DataManager] Frames with bias self check imu and left image, feature observe timestamp error [" <<
-                    latest_imu_time_stamp_s << "] != [" << left_image_time_stamp_s << "].");
+                ReportError("[DataManager] Frames with bias self check imu and left image, feature observe timestamp error ["
+                            << latest_imu_time_stamp_s << "] != [" << left_image_time_stamp_s << "].");
                 return false;
             }
         }
         if (frame_with_bias.packed_measure->right_image != nullptr) {
             const auto left_image_time_stamp_s = frame_with_bias.packed_measure->right_image->time_stamp_s;
             if (latest_imu_time_stamp_s != left_image_time_stamp_s) {
-                ReportError("[DataManager] Frames with bias self check imu and right image, feature observe timestamp error [" <<
-                    latest_imu_time_stamp_s << "] != [" << left_image_time_stamp_s << "].");
+                ReportError("[DataManager] Frames with bias self check imu and right image, feature observe timestamp error ["
+                            << latest_imu_time_stamp_s << "] != [" << left_image_time_stamp_s << "].");
                 return false;
             }
         }
@@ -255,4 +250,4 @@ bool DataManager::SelfCheckFramesWithBias() {
     return true;
 }
 
-}
+}  // namespace VIO

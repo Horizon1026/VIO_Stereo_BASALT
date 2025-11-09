@@ -37,6 +37,6 @@ struct DataManagerCovisibleGraphLog {
 };
 #pragma pack()
 
-}
+}  // namespace VIO
 
-#endif // end of _VIO_STEREO_BASALT_DATA_MANAGER_LOG_H_
+#endif  // end of _VIO_STEREO_BASALT_DATA_MANAGER_LOG_H_

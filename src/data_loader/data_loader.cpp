@@ -1,6 +1,6 @@
 #include "data_loader.h"
-#include "slam_log_reporter.h"
 #include "memory"
+#include "slam_log_reporter.h"
 
 namespace VIO {
 
@@ -9,7 +9,7 @@ namespace {
     constexpr uint32_t kImuRawDataLogIndex = 1;
     constexpr uint32_t kLeftImageRawDataLogIndex = 2;
     constexpr uint32_t kRightImageRawDataLogIndex = 3;
-}
+}  // namespace
 
 void DataLoader::Clear() {
     imu_buffer_.clear();
@@ -39,12 +39,12 @@ void DataLoader::RegisterLogPackages() {
     std::unique_ptr<PackageInfo> package_ptr = std::make_unique<PackageInfo>();
     package_ptr->id = kDataLoaderLogIndex;
     package_ptr->name = "data_loader";
-    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_imu_in_package"});
-    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint8, .name = "is_left_image_valid_in_package"});
-    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint8, .name = "is_right_image_valid_in_package"});
-    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_imu_in_buffer"});
-    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_left_image_in_buffer"});
-    package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_right_image_in_buffer"});
+    package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint32, .name = "num_of_imu_in_package"});
+    package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint8, .name = "is_left_image_valid_in_package"});
+    package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint8, .name = "is_right_image_valid_in_package"});
+    package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint32, .name = "num_of_imu_in_buffer"});
+    package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint32, .name = "num_of_left_image_in_buffer"});
+    package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint32, .name = "num_of_right_image_in_buffer"});
     if (!logger_.RegisterPackage(package_ptr)) {
         ReportError("[DataLoader] Failed to register package for data loader log.");
     }
@@ -53,13 +53,13 @@ void DataLoader::RegisterLogPackages() {
         std::unique_ptr<PackageInfo> imu_package_ptr = std::make_unique<PackageInfo>();
         imu_package_ptr->id = kImuRawDataLogIndex;
         imu_package_ptr->name = "imu_raw_data";
-        imu_package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "time_stamp_s"});
-        imu_package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "accel_x_ms2"});
-        imu_package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "accel_y_ms2"});
-        imu_package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "accel_z_ms2"});
-        imu_package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "gyro_x_rads"});
-        imu_package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "gyro_y_rads"});
-        imu_package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "gyro_z_rads"});
+        imu_package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "time_stamp_s"});
+        imu_package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "accel_x_ms2"});
+        imu_package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "accel_y_ms2"});
+        imu_package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "accel_z_ms2"});
+        imu_package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "gyro_x_rads"});
+        imu_package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "gyro_y_rads"});
+        imu_package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "gyro_z_rads"});
         if (!logger_.RegisterPackage(imu_package_ptr)) {
             ReportError("[DataLoader] Failed to register package for imu raw data.");
         }
@@ -67,7 +67,7 @@ void DataLoader::RegisterLogPackages() {
         std::unique_ptr<PackageInfo> left_image_package_ptr = std::make_unique<PackageInfo>();
         left_image_package_ptr->id = kLeftImageRawDataLogIndex;
         left_image_package_ptr->name = "raw_left_image";
-        left_image_package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kImage, .name = "left image"});
+        left_image_package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kImage, .name = "left image"});
         if (!logger_.RegisterPackage(left_image_package_ptr)) {
             ReportError("[DataLoader] Failed to register package for left image raw data.");
         }
@@ -75,7 +75,7 @@ void DataLoader::RegisterLogPackages() {
         std::unique_ptr<PackageInfo> right_image_package_ptr = std::make_unique<PackageInfo>();
         right_image_package_ptr->id = kRightImageRawDataLogIndex;
         right_image_package_ptr->name = "raw_right_image";
-        right_image_package_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kImage, .name = "right image"});
+        right_image_package_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kImage, .name = "right image"});
         if (!logger_.RegisterPackage(right_image_package_ptr)) {
             ReportError("[DataLoader] Failed to register package for right image raw data.");
         }
@@ -83,12 +83,10 @@ void DataLoader::RegisterLogPackages() {
 }
 
 // Push measurements into dataloader.
-bool DataLoader::PushImuMeasurement(const Vec3 &accel,
-                                    const Vec3 &gyro,
-                                    const float &time_stamp_s) {
+bool DataLoader::PushImuMeasurement(const Vec3 &accel, const Vec3 &gyro, const float &time_stamp_s) {
     if (!imu_buffer_.empty() && imu_buffer_.back()->time_stamp_s > time_stamp_s) {
-        ReportWarn("[DataLoader] Imu measurement pushed has invalid timestamp. Latest in buffer is "
-            << imu_buffer_.back()->time_stamp_s << " s, but pushed is " << time_stamp_s << " s.");
+        ReportWarn("[DataLoader] Imu measurement pushed has invalid timestamp. Latest in buffer is " << imu_buffer_.back()->time_stamp_s << " s, but pushed is "
+                                                                                                     << time_stamp_s << " s.");
         return false;
     }
 
@@ -103,17 +101,14 @@ bool DataLoader::PushImuMeasurement(const Vec3 &accel,
     return true;
 }
 
-bool DataLoader::PushImageMeasurement(uint8_t *image_ptr,
-                                      const int32_t image_rows,
-                                      const int32_t image_cols,
-                                      const float &time_stamp_s,
+bool DataLoader::PushImageMeasurement(uint8_t *image_ptr, const int32_t image_rows, const int32_t image_cols, const float &time_stamp_s,
                                       const bool is_left_image) {
     const auto image_buffer_ptr = is_left_image ? &left_image_buffer_ : &right_image_buffer_;
     auto &image_mutex = is_left_image ? left_image_mutex_ : right_image_mutex_;
 
     if (!image_buffer_ptr->empty() && image_buffer_ptr->back()->time_stamp_s > time_stamp_s) {
-        ReportWarn("[DataLoader] Camera measurement pushed has invalid timestamp. Latest in buffer is "
-            << image_buffer_ptr->back()->time_stamp_s << " s, but pushed is " << time_stamp_s << " s.");
+        ReportWarn("[DataLoader] Camera measurement pushed has invalid timestamp. Latest in buffer is " << image_buffer_ptr->back()->time_stamp_s
+                                                                                                        << " s, but pushed is " << time_stamp_s << " s.");
         return false;
     }
 
@@ -352,4 +347,4 @@ bool DataLoader::PopPackedMeasurement(PackedMeasurement &measure) {
     return true;
 }
 
-}
+}  // namespace VIO

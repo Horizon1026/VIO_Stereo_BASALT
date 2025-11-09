@@ -49,7 +49,7 @@ bool Backend::ConvertNewFramesToCovisibleGraphForInitialization() {
     auto local_map_ptr = data_manager_->visual_local_map();
     local_map_ptr->Clear();
     int32_t frame_id = 1;
-    for (const auto &frame : data_manager_->frames_with_bias()) {
+    for (const auto &frame: data_manager_->frames_with_bias()) {
         RETURN_FALSE_IF(frame.visual_measure == nullptr);
 
         std::vector<MatImg> raw_images;
@@ -62,10 +62,7 @@ bool Backend::ConvertNewFramesToCovisibleGraphForInitialization() {
             }
         }
 
-        local_map_ptr->AddNewFrameWithFeatures(frame.visual_measure->features_id,
-                                               frame.visual_measure->observes_per_frame,
-                                               frame.time_stamp_s,
-                                               frame_id,
+        local_map_ptr->AddNewFrameWithFeatures(frame.visual_measure->features_id, frame.visual_measure->observes_per_frame, frame.time_stamp_s, frame_id,
                                                raw_images);
         ++frame_id;
     }
@@ -91,7 +88,7 @@ bool Backend::TransformAllStatesToWorldFrameForInitialization(const Vec3 &gravit
 
     // Iterate all frames, transform all states of them from i0 to w.
     auto it = data_manager_->frames_with_bias().begin();
-    for (auto &frame : data_manager_->visual_local_map()->frames()) {
+    for (auto &frame: data_manager_->visual_local_map()->frames()) {
         const Quat q_c0c = frame.q_wc();
         const Vec3 p_c0c = frame.p_wc();
         const Vec3 v_c0c = it->v_wi;
@@ -105,4 +102,4 @@ bool Backend::TransformAllStatesToWorldFrameForInitialization(const Vec3 &gravit
     return true;
 }
 
-}
+}  // namespace VIO

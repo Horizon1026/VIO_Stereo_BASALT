@@ -15,28 +15,28 @@ void Backend::RegisterLogPackages() {
     std::unique_ptr<PackageInfo> package_states_ptr = std::make_unique<PackageInfo>();
     package_states_ptr->id = kBackendStatesLogIndex;
     package_states_ptr->name = "backend states";
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "time_stamp_s"});
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "p_wi_x"});
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "p_wi_y"});
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "p_wi_z"});
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "q_wi_w"});
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "q_wi_x"});
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "q_wi_y"});
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "q_wi_z"});
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "q_wi_pitch"});
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "q_wi_roll"});
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "q_wi_yaw"});
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "v_wi_x"});
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "v_wi_y"});
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "v_wi_z"});
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "bias_a_x"});
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "bias_a_y"});
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "bias_a_z"});
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "bias_g_x"});
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "bias_g_y"});
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "bias_g_z"});
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint8, .name = "is_prior_valid"});
-    package_states_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "prior_residual"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "time_stamp_s"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "p_wi_x"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "p_wi_y"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "p_wi_z"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "q_wi_w"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "q_wi_x"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "q_wi_y"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "q_wi_z"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "q_wi_pitch"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "q_wi_roll"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "q_wi_yaw"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "v_wi_x"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "v_wi_y"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "v_wi_z"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "bias_a_x"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "bias_a_y"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "bias_a_z"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "bias_g_x"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "bias_g_y"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "bias_g_z"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint8, .name = "is_prior_valid"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "prior_residual"});
     if (!logger_.RegisterPackage(package_states_ptr)) {
         ReportError("[Backend] Failed to register package for backend states log.");
     }
@@ -44,9 +44,9 @@ void Backend::RegisterLogPackages() {
     std::unique_ptr<PackageInfo> package_status_flags_ptr = std::make_unique<PackageInfo>();
     package_status_flags_ptr->id = kBackendStatusLogIndex;
     package_status_flags_ptr->name = "backend status";
-    package_status_flags_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint8, .name = "is_initialized"});
-    package_status_flags_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint8, .name = "marginalize_type"});
-    package_status_flags_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kUint32, .name = "num_of_valid_loop"});
+    package_status_flags_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint8, .name = "is_initialized"});
+    package_status_flags_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint8, .name = "marginalize_type"});
+    package_status_flags_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kUint32, .name = "num_of_valid_loop"});
     if (!logger_.RegisterPackage(package_status_flags_ptr)) {
         ReportError("[Backend] Failed to register package for backend status flags log.");
     }
@@ -54,12 +54,12 @@ void Backend::RegisterLogPackages() {
     std::unique_ptr<PackageInfo> package_cost_time_ptr = std::make_unique<PackageInfo>();
     package_cost_time_ptr->id = kBackendCostTimeLogIndex;
     package_cost_time_ptr->name = "backend cost time";
-    package_cost_time_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "total_loop(ms)"});
-    package_cost_time_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "add_newest_frame_into_local_map(ms)"});
-    package_cost_time_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "triangulize_all_visual_features(ms)"});
-    package_cost_time_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "initialize(ms)"});
-    package_cost_time_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "estimate(ms)"});
-    package_cost_time_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kFloat, .name = "marginalize(ms)"});
+    package_cost_time_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "total_loop(ms)"});
+    package_cost_time_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "add_newest_frame_into_local_map(ms)"});
+    package_cost_time_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "triangulize_all_visual_features(ms)"});
+    package_cost_time_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "initialize(ms)"});
+    package_cost_time_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "estimate(ms)"});
+    package_cost_time_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "marginalize(ms)"});
     if (!logger_.RegisterPackage(package_cost_time_ptr)) {
         ReportError("[Backend] Failed to register package for backend cost time log.");
     }
@@ -67,7 +67,7 @@ void Backend::RegisterLogPackages() {
     std::unique_ptr<PackageInfo> package_prior_hessian_ptr = std::make_unique<PackageInfo>();
     package_prior_hessian_ptr->id = kBackendPriorHessianLogIndex;
     package_prior_hessian_ptr->name = "backend prior";
-    package_prior_hessian_ptr->items.emplace_back(PackageItemInfo{.type = ItemType::kMatrix, .name = "hessian"});
+    package_prior_hessian_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kMatrix, .name = "hessian"});
     if (!logger_.RegisterPackage(package_prior_hessian_ptr)) {
         ReportError("[Backend] Failed to register package for backend prior hessian log.");
     }
@@ -138,4 +138,4 @@ void Backend::RecordBackendLogPriorInformation() {
     }
 }
 
-}
+}  // namespace VIO

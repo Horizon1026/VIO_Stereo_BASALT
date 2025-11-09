@@ -3,12 +3,12 @@
 #include "inertial_edges.h"
 #include "visual_inertial_edges.h"
 
-#include "solver_lm.h"
 #include "solver_dogleg.h"
+#include "solver_lm.h"
 
+#include "slam_basic_math.h"
 #include "slam_log_reporter.h"
 #include "tick_tock.h"
-#include "slam_basic_math.h"
 
 namespace VIO {
 
@@ -81,10 +81,8 @@ void Backend::UpdateAllStatesAfterEstimation(const Graph<DorF> &problem, const u
     for (uint32_t i = 0; i < graph_.vertices.all_frames_p_wi.size(); ++i) {
         auto frame_ptr = data_manager_->visual_local_map()->frame(graph_.vertices.all_frames_id[i]);
         const Vec3 p_wi = graph_.vertices.all_frames_p_wi[i]->param().cast<float>();
-        const Quat q_wi = Quat(graph_.vertices.all_frames_q_wi[i]->param()(0),
-                               graph_.vertices.all_frames_q_wi[i]->param()(1),
-                               graph_.vertices.all_frames_q_wi[i]->param()(2),
-                               graph_.vertices.all_frames_q_wi[i]->param()(3));
+        const Quat q_wi = Quat(graph_.vertices.all_frames_q_wi[i]->param()(0), graph_.vertices.all_frames_q_wi[i]->param()(1),
+                               graph_.vertices.all_frames_q_wi[i]->param()(2), graph_.vertices.all_frames_q_wi[i]->param()(3));
         Utility::ComputeTransformTransform(p_wi, q_wi, p_ic, q_ic, frame_ptr->p_wc(), frame_ptr->q_wc());
 
         auto &imu_based_frame_ptr = it;
@@ -119,14 +117,12 @@ void Backend::UpdateAllStatesAfterEstimation(const Graph<DorF> &problem, const u
 
     // Update imu preintegration.
     uint32_t idx = 0;
-    for (auto &frame : data_manager_->frames_with_bias()) {
+    for (auto &frame: data_manager_->frames_with_bias()) {
         frame.imu_preint_block.Reset();
         frame.imu_preint_block.bias_accel() = graph_.vertices.all_new_frames_ba[idx]->param().cast<float>();
         frame.imu_preint_block.bias_gyro() = graph_.vertices.all_new_frames_bg[idx]->param().cast<float>();
-        frame.imu_preint_block.SetImuNoiseSigma(imu_model_->options().kAccelNoiseSigma,
-                                                imu_model_->options().kGyroNoiseSigma,
-                                                imu_model_->options().kAccelRandomWalkSigma,
-                                                imu_model_->options().kGyroRandomWalkSigma);
+        frame.imu_preint_block.SetImuNoiseSigma(imu_model_->options().kAccelNoiseSigma, imu_model_->options().kGyroNoiseSigma,
+                                                imu_model_->options().kAccelRandomWalkSigma, imu_model_->options().kGyroRandomWalkSigma);
         ++idx;
 
         const int32_t max_idx = static_cast<int32_t>(frame.packed_measure->imus.size());
@@ -146,4 +142,4 @@ void Backend::UpdateAllStatesAfterEstimation(const Graph<DorF> &problem, const u
     }
 }
 
-}
+}  // namespace VIO
