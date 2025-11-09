@@ -10,7 +10,7 @@
 #include "slam_log_reporter.h"
 #include "tick_tock.h"
 
-namespace VIO {
+namespace vio {
 
 void Backend::ClearBackendGraph() {
     graph_.vertices.all_cameras_p_ic.clear();
@@ -374,4 +374,4 @@ void Backend::ConstructGraphOptimizationProblem(const uint32_t idx_offset, Graph
     }
 }
 
-}  // namespace VIO
+}  // namespace vio

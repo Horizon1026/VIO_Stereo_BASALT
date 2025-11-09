@@ -6,10 +6,10 @@
 #include "visualizor_2d.h"
 #include "visualizor_3d.h"
 
-using namespace SLAM_VISUALIZOR;
-using namespace IMAGE_PAINTER;
+using namespace slam_visualizor;
+using namespace image_painter;
 
-namespace VIO {
+namespace vio {
 
 namespace {
     constexpr int32_t kMaxImageNumInOneRow = 4;
@@ -355,4 +355,4 @@ void Backend::ShowTinyInformationOfVisualLocalMap() {
     }
 }
 
-}  // namespace VIO
+}  // namespace vio

@@ -1,6 +1,6 @@
 #include "data_manager.h"
 
-namespace VIO {
+namespace vio {
 
 namespace {
     constexpr uint32_t kDataManagerLocalMapLogIndex = 0;
@@ -32,7 +32,7 @@ bool DataManager::Configuration(const std::string &log_file_name) {
 }
 
 void DataManager::RegisterLogPackages() {
-    using namespace SLAM_DATA_LOG;
+    using namespace slam_data_log;
 
     std::unique_ptr<PackageInfo> package_ptr = std::make_unique<PackageInfo>();
     package_ptr->id = kDataManagerLocalMapLogIndex;
@@ -250,4 +250,4 @@ bool DataManager::SelfCheckFramesWithBias() {
     return true;
 }
 
-}  // namespace VIO
+}  // namespace vio

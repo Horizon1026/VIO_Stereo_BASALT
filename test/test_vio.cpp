@@ -11,9 +11,9 @@
 
 #include "enable_stack_backward.h"
 
-using namespace SLAM_VISUALIZOR;
+using namespace slam_visualizor;
 
-VIO::Vio vio;
+vio::Vio vio_system;
 double time_stamp_offset = 1403638518.0;
 
 void PublishImuData(const std::string &csv_file_path, const float period_ms) {
@@ -47,19 +47,19 @@ void PublishImuData(const std::string &csv_file_path, const float period_ms) {
             ++i;
         }
 
-        // Send data to dataloader of vio.
+        // Send data to dataloader of vio_system.
         const double time_stamp_s = temp[0];
         const Vec3 accel = Vec3(temp[4], temp[5], temp[6]);
         const Vec3 gyro = Vec3(temp[1], temp[2], temp[3]);
-        vio.data_loader()->PushImuMeasurement(accel.cast<float>(), gyro.cast<float>(), static_cast<float>(time_stamp_s * 1e-9 - time_stamp_offset));
+        vio_system.data_loader()->PushImuMeasurement(accel.cast<float>(), gyro.cast<float>(), static_cast<float>(time_stamp_s * 1e-9 - time_stamp_offset));
 
         // Waiting for next timestamp.
-        while (timer.TockInMillisecond() < period_ms || vio.data_loader()->IsImuBufferFull()) {
+        while (timer.TockInMillisecond() < period_ms || vio_system.data_loader()->IsImuBufferFull()) {
             usleep(100);
-            BREAK_IF(vio.backend()->should_quit());
+            BREAK_IF(vio_system.backend()->should_quit());
         }
 
-        BREAK_IF(vio.backend()->should_quit());
+        BREAK_IF(vio_system.backend()->should_quit());
     }
 
     file.close();
@@ -100,17 +100,17 @@ void PublishCameraData(const std::string &csv_file_path, const std::string &imag
             return;
         }
 
-        // Send data to dataloader of vio.
-        vio.data_loader()->PushImageMeasurement(image.data(), image.rows(), image.cols(), static_cast<float>(time_stamp_s * 1e-9 - time_stamp_offset),
+        // Send data to dataloader of vio_system.
+        vio_system.data_loader()->PushImageMeasurement(image.data(), image.rows(), image.cols(), static_cast<float>(time_stamp_s * 1e-9 - time_stamp_offset),
                                                 is_left_camera);
 
         // Waiting for next timestamp.
-        while (timer.TockInMillisecond() < period_ms || vio.data_loader()->IsImageBufferFull()) {
+        while (timer.TockInMillisecond() < period_ms || vio_system.data_loader()->IsImageBufferFull()) {
             usleep(100);
-            BREAK_IF(vio.backend()->should_quit());
+            BREAK_IF(vio_system.backend()->should_quit());
         }
 
-        BREAK_IF(vio.backend()->should_quit());
+        BREAK_IF(vio_system.backend()->should_quit());
     }
 
     file.close();
@@ -122,22 +122,22 @@ void TestRunVio(const uint32_t max_wait_ticks) {
     const uint32_t max_valid_steps = 500;
     uint32_t valid_steps = 0;
     while (cnt) {
-        const bool res = vio.RunOnce();
+        const bool res = vio_system.RunOnce();
         if (res) {
             ++valid_steps;
         }
         if (valid_steps > max_valid_steps) {
-            vio.backend()->should_quit() = true;
+            vio_system.backend()->should_quit() = true;
         }
 
-        if (vio.backend()->should_quit()) {
-            // for (const auto &pair : vio.data_manager()->visual_local_map()->features()) {
-            //     vio.backend()->ShowLocalMapFramesAndFeatures(pair.second.id(), 0, true, 0);
+        if (vio_system.backend()->should_quit()) {
+            // for (const auto &pair : vio_system.data_manager()->visual_local_map()->features()) {
+            //     vio_system.backend()->ShowLocalMapFramesAndFeatures(pair.second.id(), 0, true, 0);
             // }
-            vio.backend()->ShowLocalMapInWorldFrame(30, true);
+            vio_system.backend()->ShowLocalMapInWorldFrame(30, true);
             break;
-        } else if (vio.backend()->states().is_initialized) {
-            vio.backend()->ShowLocalMapInWorldFrame(1, false);
+        } else if (vio_system.backend()->states().is_initialized) {
+            vio_system.backend()->ShowLocalMapInWorldFrame(1, false);
         }
 
         if (!res) {
@@ -160,29 +160,29 @@ int main(int argc, char **argv) {
     // Config std::cout print into files.
     // std::cout.rdbuf(g_txt_log.rdbuf());
 
-    // Fill configuration of vio.
+    // Fill configuration of vio_system.
     ReportInfo(YELLOW ">> Test vio on " << dataset_root_dir << "." RESET_COLOR);
-    vio.options().frontend.image_rows = 480;
-    vio.options().frontend.image_cols = 752;
+    vio_system.options().frontend.image_rows = 480;
+    vio_system.options().frontend.image_cols = 752;
 
     // Fill left camera extrinsics.
     Mat3 R_i_cl;
     R_i_cl << 0.0148655429818, -0.999880929698, 0.00414029679422, 0.999557249008, 0.0149672133247, 0.025715529948, -0.0257744366974, 0.00375618835797,
         0.999660727178;
     const Vec3 p_i_cl = Vec3(-0.0216401454975, -0.064676986768, 0.00981073058949);
-    vio.options().data_manager.all_R_ic.emplace_back(R_i_cl);
-    vio.options().data_manager.all_t_ic.emplace_back(p_i_cl);
+    vio_system.options().data_manager.all_R_ic.emplace_back(R_i_cl);
+    vio_system.options().data_manager.all_t_ic.emplace_back(p_i_cl);
 
     // Fill right camera extrinsics.
     Mat3 R_i_cr;
     R_i_cr << 0.0125552670891, -0.999755099723, 0.0182237714554, 0.999598781151, 0.0130119051815, 0.0251588363115, -0.0253898008918, 0.0179005838253,
         0.999517347078;
     const Vec3 p_i_cr = Vec3(-0.0198435579556, 0.0453689425024, 0.00786212447038);
-    vio.options().data_manager.all_R_ic.emplace_back(R_i_cr);
-    vio.options().data_manager.all_t_ic.emplace_back(p_i_cr);
+    vio_system.options().data_manager.all_R_ic.emplace_back(R_i_cr);
+    vio_system.options().data_manager.all_t_ic.emplace_back(p_i_cr);
 
     // Fill left camera intrinsics.
-    const VIO::VioOptionsOfCamera left_camera_intrinsics {
+    const vio::VioOptionsOfCamera left_camera_intrinsics {
         .fx = 458.654f,
         .fy = 457.296f,
         .cx = 367.215f,
@@ -193,10 +193,10 @@ int main(int argc, char **argv) {
         .p1 = 0.00019359f,
         .p2 = 1.76187114e-05f,
     };
-    vio.options().cameras.emplace_back(left_camera_intrinsics);
+    vio_system.options().cameras.emplace_back(left_camera_intrinsics);
 
     // Fill right camera intrinsics.
-    const VIO::VioOptionsOfCamera right_camera_intrinsics {
+    const vio::VioOptionsOfCamera right_camera_intrinsics {
         .fx = 457.587f,
         .fy = 456.134f,
         .cx = 379.999,
@@ -207,10 +207,10 @@ int main(int argc, char **argv) {
         .p1 = -0.00010473f,
         .p2 = -3.55590700e-05f,
     };
-    vio.options().cameras.emplace_back(right_camera_intrinsics);
+    vio_system.options().cameras.emplace_back(right_camera_intrinsics);
 
-    // Config vio.
-    vio.ConfigAllComponents();
+    // Config vio_system.
+    vio_system.ConfigAllComponents();
 
     // Config visualizor 3d.
     Visualizor3D::camera_view().q_wc = Quat(1.0, -1.0, 0, 0).normalized();

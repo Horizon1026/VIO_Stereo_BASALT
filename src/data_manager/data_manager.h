@@ -14,10 +14,10 @@
 #include "deque"
 #include "memory"
 
-namespace VIO {
+namespace vio {
 
-using namespace SLAM_UTILITY;
-using namespace SENSOR_MODEL;
+using namespace slam_utility;
+using namespace sensor_model;
 
 /* Options for Data Manager. */
 struct DataManagerOptions {
@@ -102,9 +102,9 @@ private:
     std::vector<CameraExtrinsic> camera_extrinsics_;
 
     // Record log.
-    SLAM_DATA_LOG::BinaryDataLog logger_;
+    slam_data_log::BinaryDataLog logger_;
 };
 
-}  // namespace VIO
+}  // namespace vio
 
 #endif  // end of _VIO_STEREO_BASALT_DATA_MANAGER_H_

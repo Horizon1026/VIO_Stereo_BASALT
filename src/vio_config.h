@@ -4,7 +4,7 @@
 #include "basic_type.h"
 #include "string"
 
-namespace VIO {
+namespace vio {
 
 struct VioOptionsOfCamera {
     float fx = 0.0f;
@@ -100,6 +100,6 @@ struct VioOptions {
     VioOptionsOfDataManager data_manager;
 };
 
-}  // namespace VIO
+}  // namespace vio
 
 #endif  // end of _VIO_STEREO_BASALT_CONFIG_H_

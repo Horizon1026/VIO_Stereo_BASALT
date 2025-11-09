@@ -3,7 +3,7 @@
 #include "slam_log_reporter.h"
 #include "slam_operations.h"
 
-namespace VIO {
+namespace vio {
 
 bool Vio::RunOnce() {
     // Try to load packed measurements.
@@ -55,4 +55,4 @@ void Vio::HeartBeat() {
     }
 }
 
-}  // namespace VIO
+}  // namespace vio

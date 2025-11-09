@@ -2,7 +2,7 @@
 #include "polynomial_solver.h"
 #include "slam_log_reporter.h"
 
-namespace VIO {
+namespace vio {
 
 bool Backend::EstimateVelocityAndGravityForInitialization(Vec3 &gravity_i0) {
     // Compute imu blocks based on the first frame.
@@ -382,4 +382,4 @@ bool Backend::PropagateAllBasedOnFirstCameraFrameForInitializaion(const std::vec
     return true;
 }
 
-}  // namespace VIO
+}  // namespace vio

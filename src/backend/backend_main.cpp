@@ -2,7 +2,7 @@
 #include "slam_log_reporter.h"
 #include "tick_tock.h"
 
-namespace VIO {
+namespace vio {
 
 bool Backend::Configuration(const std::string &log_file_name) {
     if (options_.kEnableRecordBinaryCurveLog) {
@@ -146,4 +146,4 @@ void Backend::ResetToReintialize() {
     states_.is_initialized = false;
 }
 
-}  // namespace VIO
+}  // namespace vio

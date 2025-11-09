@@ -16,9 +16,9 @@
 #include "datatype_image.h"
 #include "slam_log_reporter.h"
 
-using namespace SLAM_VISUALIZOR;
+using namespace slam_visualizor;
 
-VIO::DataLoader dataloader;
+vio::DataLoader dataloader;
 double time_stamp_offset = 1403638518.0;
 
 void PublishImuData(const std::string &csv_file_path, const float period_ms) {
@@ -120,7 +120,7 @@ void TestPopSingleMeasurement(const int32_t period_us = 5000, const int32_t max_
     while (cnt) {
         usleep(period_us);
 
-        VIO::SingleMeasurement meas;
+        vio::SingleMeasurement meas;
         const bool res = dataloader.PopSingleMeasurement(meas);
 
         if (!res) {
@@ -156,7 +156,7 @@ void TestPopPackedMeasurement(const int32_t period_us = 50000, const int32_t max
     while (cnt) {
         usleep(period_us);
 
-        VIO::PackedMeasurement meas;
+        vio::PackedMeasurement meas;
         const bool res = dataloader.PopPackedMeasurement(meas);
 
         if (!res) {

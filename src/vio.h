@@ -11,7 +11,7 @@
 
 #include "memory"
 
-namespace VIO {
+namespace vio {
 
 /* Class Vio Declaration. */
 class Vio final {
@@ -65,6 +65,6 @@ private:
     TickTock measure_invalid_timer_;
 };
 
-}  // namespace VIO
+}  // namespace vio
 
 #endif

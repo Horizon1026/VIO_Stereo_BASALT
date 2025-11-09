@@ -4,7 +4,7 @@
 #include "basic_type.h"
 #include "data_manager.h"
 
-namespace VIO {
+namespace vio {
 
 /* Packages of log to be recorded. */
 #pragma pack(1)
@@ -50,6 +50,6 @@ struct BackendLogCostTime {
 };
 #pragma pack()
 
-}  // namespace VIO
+}  // namespace vio
 
 #endif  // end of _VIO_STEREO_BASALT_BACKEND_LOG_H_

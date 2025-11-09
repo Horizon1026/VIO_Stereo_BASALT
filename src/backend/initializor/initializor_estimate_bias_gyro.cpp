@@ -2,7 +2,7 @@
 #include "relative_rotation.h"
 #include "slam_log_reporter.h"
 
-namespace VIO {
+namespace vio {
 
 bool Backend::EstimateGyroBiasAndRotationForInitialization() {
     switch (options_.kMethodIndexToEstimateGyroBiasForInitialization) {
@@ -33,7 +33,7 @@ bool Backend::EstimatePureRotationOfCameraFrame(const uint32_t ref_frame_id, con
     }
 
     // Estimate pure rotation.
-    using namespace VISION_GEOMETRY;
+    using namespace vision_geometry;
     RelativeRotation solver;
     RETURN_FALSE_IF(!solver.EstimateRotationByBnb(ref_norm_xy, cur_norm_xy, q_cr));
 
@@ -131,7 +131,7 @@ bool Backend::EstimateGyroBiasByMethodTwoForInitialization() {
     cur_norm_xy.reserve(200);
 
     // Something should be recorded.
-    using namespace VISION_GEOMETRY;
+    using namespace vision_geometry;
     std::vector<SummationTerms> all_summation_terms;
     std::vector<Mat3> all_dr_dbgs;
     all_summation_terms.reserve(max_frames_idx - min_frames_idx + 1);
@@ -273,4 +273,4 @@ bool Backend::EstimateGyroBiasByMethodThreeForInitialization() {
     return true;
 }
 
-}  // namespace VIO
+}  // namespace vio

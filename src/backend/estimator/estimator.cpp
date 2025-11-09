@@ -10,7 +10,7 @@
 #include "slam_log_reporter.h"
 #include "tick_tock.h"
 
-namespace VIO {
+namespace vio {
 
 bool Backend::TryToEstimate() {
     // Clear all vectors of vertices and edges.
@@ -142,4 +142,4 @@ void Backend::UpdateAllStatesAfterEstimation(const Graph<DorF> &problem, const u
     }
 }
 
-}  // namespace VIO
+}  // namespace vio

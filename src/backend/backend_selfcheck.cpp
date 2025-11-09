@@ -7,7 +7,7 @@
 #include "slam_log_reporter.h"
 #include "tick_tock.h"
 
-namespace VIO {
+namespace vio {
 
 bool Backend::CheckGraphOptimizationFactors() {
     // Clear all vectors of vertices and edges.
@@ -52,4 +52,4 @@ bool Backend::CheckGraphOptimizationFactors(std::vector<std::unique_ptr<Edge<Dor
     return is_factor_valid;
 }
 
-}  // namespace VIO
+}  // namespace vio

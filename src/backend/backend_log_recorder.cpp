@@ -2,7 +2,7 @@
 #include "slam_log_reporter.h"
 #include "tick_tock.h"
 
-namespace VIO {
+namespace vio {
 
 constexpr uint32_t kBackendStatesLogIndex = 1;
 constexpr uint32_t kBackendStatusLogIndex = 2;
@@ -10,7 +10,7 @@ constexpr uint32_t kBackendCostTimeLogIndex = 3;
 constexpr uint32_t kBackendPriorHessianLogIndex = 4;
 
 void Backend::RegisterLogPackages() {
-    using namespace SLAM_DATA_LOG;
+    using namespace slam_data_log;
 
     std::unique_ptr<PackageInfo> package_states_ptr = std::make_unique<PackageInfo>();
     package_states_ptr->id = kBackendStatesLogIndex;
@@ -138,4 +138,4 @@ void Backend::RecordBackendLogPriorInformation() {
     }
 }
 
-}  // namespace VIO
+}  // namespace vio

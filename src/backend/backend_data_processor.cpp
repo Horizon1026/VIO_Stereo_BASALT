@@ -2,7 +2,7 @@
 #include "point_triangulator.h"
 #include "slam_log_reporter.h"
 
-namespace VIO {
+namespace vio {
 
 void Backend::RecomputeImuPreintegration() {
     // Compute imu preintegration.
@@ -74,7 +74,7 @@ bool Backend::TriangulizeAllVisualFeatures() {
 }
 
 bool Backend::TriangulizeVisualFeature(std::vector<Quat> &q_wc_vec, std::vector<Vec3> &p_wc_vec, std::vector<Vec2> &norm_xy_vec, FeatureType &feature) {
-    using namespace VISION_GEOMETRY;
+    using namespace vision_geometry;
     PointTriangulator solver;
     solver.options().kMethod = PointTriangulator::Method::kAnalytic;
 
@@ -281,4 +281,4 @@ void Backend::UpdateBackendStates() {
     states_.motion.bg = newest_frame_with_bias.imu_preint_block.bias_gyro();
 }
 
-}  // namespace VIO
+}  // namespace vio

@@ -1,7 +1,7 @@
 #include "backend.h"
 #include "slam_log_reporter.h"
 
-namespace VIO {
+namespace vio {
 
 bool Backend::TryToInitialize() {
     if (data_manager_->frames_with_bias().size() < data_manager_->options().kMaxStoredNewFrames) {
@@ -102,4 +102,4 @@ bool Backend::TransformAllStatesToWorldFrameForInitialization(const Vec3 &gravit
     return true;
 }
 
-}  // namespace VIO
+}  // namespace vio
