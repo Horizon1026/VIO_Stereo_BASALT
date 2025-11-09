@@ -149,16 +149,16 @@ void TestRunVio(const uint32_t max_wait_ticks) {
     }
 }
 
-static std::ofstream g_txt_log("../output/vio_log.txt");
 int main(int argc, char **argv) {
     // Root direction of Euroc dataset.
     std::string dataset_root_dir = "D:/My_Github/Datasets/Euroc/MH_01_easy/";
-    if (argc == 2) {
+    if (argc >= 2) {
         dataset_root_dir = argv[1];
     }
-
-    // Config std::cout print into files.
-    // std::cout.rdbuf(g_txt_log.rdbuf());
+    std::string log_output_root_dir = "../../Workspace/output/";
+    if (argc >= 3) {
+        log_output_root_dir = argv[2];
+    }
 
     // Fill configuration of vio_system.
     ReportInfo(YELLOW ">> Test vio on " << dataset_root_dir << "." RESET_COLOR);
@@ -209,6 +209,9 @@ int main(int argc, char **argv) {
     };
     vio_system.options().cameras.emplace_back(right_camera_intrinsics);
 
+    // Fill log file root name.
+    vio_system.options().log_file_root_name = log_output_root_dir;
+
     // Config vio_system.
     vio_system.ConfigAllComponents();
 
@@ -219,10 +222,10 @@ int main(int argc, char **argv) {
     // Start threads for data pipeline and vio node.
     const float imu_timeout_ms = 3.5f;
     const float image_timeout_ms = 30.0f;
-    std::thread thread_pub_imu_data {PublishImuData, dataset_root_dir + "mav0/imu0/data.csv", imu_timeout_ms};
-    std::thread thread_pub_cam_left_data(PublishCameraData, dataset_root_dir + "mav0/cam0/data.csv", dataset_root_dir + "mav0/cam0/data/", image_timeout_ms,
+    std::thread thread_pub_imu_data {PublishImuData, dataset_root_dir + "imu0/imu_data.csv", imu_timeout_ms};
+    std::thread thread_pub_cam_left_data(PublishCameraData, dataset_root_dir + "camera0/image_filenames.csv", dataset_root_dir + "camera0/", image_timeout_ms,
                                          true);
-    std::thread thread_pub_cam_right_data(PublishCameraData, dataset_root_dir + "mav0/cam1/data.csv", dataset_root_dir + "mav0/cam1/data/", image_timeout_ms,
+    std::thread thread_pub_cam_right_data(PublishCameraData, dataset_root_dir + "camera1/image_filenames.csv", dataset_root_dir + "camera1/", image_timeout_ms,
                                           false);
     std::thread thread_test_vio(TestRunVio, 1500);
 
