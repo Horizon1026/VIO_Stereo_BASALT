@@ -23,8 +23,8 @@ void Backend::RegisterLogPackages() {
     package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "q_wi_x"});
     package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "q_wi_y"});
     package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "q_wi_z"});
-    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "q_wi_pitch"});
     package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "q_wi_roll"});
+    package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "q_wi_pitch"});
     package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "q_wi_yaw"});
     package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "v_wi_x"});
     package_states_ptr->items.emplace_back(PackageItemInfo {.type = ItemType::kFloat, .name = "v_wi_y"});
@@ -82,10 +82,10 @@ void Backend::RecordBackendLogStates() {
     log_package_states_.p_wi_y = states_.motion.p_wi.y();
     log_package_states_.p_wi_z = states_.motion.p_wi.z();
 
-    const Vec3 euler = Utility::QuaternionToEuler(states_.motion.q_wi);
-    log_package_states_.q_wi_pitch = euler.x();
-    log_package_states_.q_wi_roll = euler.y();
-    log_package_states_.q_wi_yaw = euler.z();
+    const Vec3 euler_rpy = Utility::QuaternionToEuler(states_.motion.q_wi);
+    log_package_states_.q_wi_roll = euler_rpy.x();
+    log_package_states_.q_wi_pitch = euler_rpy.y();
+    log_package_states_.q_wi_yaw = euler_rpy.z();
 
     log_package_states_.q_wi_w = states_.motion.q_wi.w();
     log_package_states_.q_wi_x = states_.motion.q_wi.x();
